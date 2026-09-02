@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <title>獨立書店地圖 - 管理員後台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 p-6">
+
+  <!-- 登入驗證 -->
+  <div id="login-box" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md mt-10">
+    <h2 class="text-xl font-bold mb-4 text-center">管理員登入</h2>
+    <input type="password" id="admin-pass" class="w-full border rounded px-3 py-2 text-sm mb-4" placeholder="密碼 (預設: Bookshop123)">
+    <button onclick="login()" class="w-full bg-amber-900 text-white py-2 rounded-lg text-sm">登入</button>
+  </div>
+
+  <!-- 後台主頁 -->
+  <div id="admin-main" class="max-w-4xl mx-auto hidden space-y-8">
+    <h1 class="text-2xl font-bold border-b pb-4">後台管理系統</h1>
+
+    <!-- 新增書店 -->
+    <div class="bg-white p-6 rounded-xl shadow-sm space-y-3">
+      <h2 class="font-bold text-lg">➕ 新增獨立書店</h2>
+      <input type="text" id="s-name" class="w-full border rounded p-2 text-sm" placeholder="書店名稱 *">
+      <select id="s-region" class="w-full border rounded p-2 text-sm">
+        <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option><option value="離島">離島</option>
+      </select>
+      <input type="text" id="s-address" class="w-full border rounded p-2 text-sm" placeholder="地址">
+      <input type="text" id="s-hours" class="w-full border rounded p-2 text-sm" placeholder="營業時間 (例: 12:00-20:00)">
+      <button onclick="addShop()" class="bg-amber-900 text-white px-4 py-2 rounded text-sm">新增書店</button>
+    </div>
+
+    <!-- 新增商品 -->
+    <div class="bg-white p-6 rounded-xl shadow-sm space-y-3">
+      <h2 class="font-bold text-lg">➕ 上架商品</h2>
+      <input type="text" id="p-name" class="w-full border rounded p-2 text-sm" placeholder="商品名稱 *">
+      <input type="number" id="p-price" class="w-full border rounded p-2 text-sm" placeholder="價格 (HKD) *">
+      <button onclick="addProduct()" class="bg-emerald-700 text-white px-4 py-2 rounded text-sm">上架商品</button>
+    </div>
+
+    <!-- 訂單列表 -->
+    <div class="bg-white p-6 rounded-xl shadow-sm">
+      <h2 class="font-bold text-lg mb-3">📦 顧客訂單紀錄</h2>
+      <div id="orders-list" class="text-xs space-y-2">載入中...</div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ 請替換為你 Supabase 的 Project URL 與 Key
+    const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function login() {
+      if(document.getElementById('admin-pass').value === 'Bookshop123') {
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('admin-main').classList.remove('hidden');
+        loadOrders();
+      } else alert("密碼錯誤！");
+    }
+
+    async function addShop() {
+      const name = document.getElementById('s-name').value;
+      const region = document.getElementById('s-region').value;
+      const address = document.getElementById('s-address').value;
+      const hours = document.getElementById('s-hours').value;
+      if(!name) return alert("請填寫書店名稱！");
+
+      await supabase.from('bookshops').insert([{ name, region, address, opening_hours: hours }]);
+      alert("✅ 新增成功！");
+      location.reload();
+    }
+
+    async function addProduct() {
+      const name = document.getElementById('p-name').value;
+      const price = parseFloat(document.getElementById('p-price').value);
+      if(!name || isNaN(price)) return alert("請填寫完整商品資料！");
+
+      await supabase.from('shop_products').insert([{ name, price }]);
+      alert("✅ 上架成功！");
+      location.reload();
+    }
+
+    async function loadOrders() {
+      const { data } = await supabase.from('shop_orders').select('*').order('created_at', { ascending: false });
+      const container = document.getElementById('orders-list');
+      if(!data || data.length === 0) {
+        container.innerHTML = '目前無訂單'; return;
+      }
+      container.innerHTML = data.map(o => `
+        <div class="border-b pb-2">
+          <p><strong>單號：</strong> ${o.order_no} | <strong>顧客：</strong> ${o.customer_name} (${o.customer_phone})</p>
+          <p><strong>金額：</strong> HK$ ${o.total_amount} \vert{} <strong>付款：</strong> ${o.payment_method}</p>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
