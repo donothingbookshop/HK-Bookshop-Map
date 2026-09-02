@@ -16,15 +16,16 @@
 
   <!-- 導航欄 -->
   <header class="bg-amber-900 text-amber-50 sticky top-0 z-50 shadow-md">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
       <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('map')">
         <i class="fa-solid fa-book-bookmark text-2xl text-amber-400"></i>
         <h1 class="text-xl font-bold tracking-wide">香港書店地圖</h1>
       </div>
-      <nav class="hidden md:flex space-x-6 text-sm font-medium">
-        <button onclick="switchTab('map')" class="hover:text-amber-300 transition">🗺️ 書店地圖</button>
-        <button onclick="switchTab('directory')" class="hover:text-amber-300 transition">📚 文化檔案</button>
-        <button onclick="switchTab('shop')" class="hover:text-amber-300 transition">🛒 網上商店</button>
+      <!-- 移動端與桌面端通用的分頁按鈕 -->
+      <nav class="flex space-x-3 text-xs sm:text-sm font-medium">
+        <button onclick="switchTab('map')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">🗺️ 書店地圖</button>
+        <button onclick="switchTab('directory')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">📚 文化檔案</button>
+        <button onclick="switchTab('shop')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">🛒 網上商店</button>
       </nav>
       <div class="relative cursor-pointer" onclick="switchTab('shop')">
         <i class="fa-solid fa-cart-shopping text-xl hover:text-amber-300"></i>
@@ -61,11 +62,11 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-3 border-b pb-2 text-amber-900"><i class="fa-solid fa-pen-nib mr-2"></i>獨立作者</h3>
-          <div id="author-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">載入中...</p></div>
+          <div id="author-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">暫無作者資料</p></div>
         </div>
         <div class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-3 border-b pb-2 text-amber-900"><i class="fa-solid fa-building-columns mr-2"></i>獨立出版社</h3>
-          <div id="publisher-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">載入中...</p></div>
+          <div id="publisher-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">暫無出版社資料</p></div>
         </div>
       </div>
     </section>
@@ -106,10 +107,11 @@
   </footer>
 
   <script>
-    // ⚠️ 請替換為你 Supabase 的 Project URL 與 Key
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // 修正 Supabase 初始化寫法
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allBookshops = [];
     let cart = [];
@@ -126,8 +128,12 @@
     }
 
     async function fetchBookshops() {
-      const { data, error } = await supabase.from('bookshops').select('*').order('id', { ascending: true });
-      if (error) return;
+      const { data, error } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
+      if (error) {
+        console.error(error);
+        document.getElementById('bookshop-list').innerHTML = `<p class="text-red-500 col-span-full">載入失敗，請檢查資料庫連線。</p>`;
+        return;
+      }
       allBookshops = data || [];
       renderBookshops(allBookshops);
     }
@@ -135,7 +141,7 @@
     function renderBookshops(list) {
       const container = document.getElementById('bookshop-list');
       if (list.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`;
+        container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無書店紀錄。請先於管理員後台 (admin.html) 新增書店。</p>`;
         return;
       }
       container.innerHTML = list.map(shop => `
@@ -162,7 +168,7 @@
     }
 
     async function fetchProducts() {
-      const { data } = await supabase.from('shop_products').select('*');
+      const { data } = await _supabase.from('shop_products').select('*');
       const container = document.getElementById('product-list');
       if (!data || data.length === 0) {
         container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無商品上架。</p>`;
@@ -183,14 +189,14 @@
     }
 
     async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await supabase.from('authors').select('*');
-      const { data: publishers } = await supabase.from('publishers').select('*');
+      const { data: authors } = await _supabase.from('authors').select('*');
+      const { data: publishers } = await _supabase.from('publishers').select('*');
       
       if(authors && authors.length > 0) {
-        document.getElementById('author-list').innerHTML = authors.map(a => `<p>• <strong>${a.name}</strong> -${a.bio || ''}</p>`).join('');
+        document.getElementById('author-list').innerHTML = authors.map(a => `<p>• <strong>${a.name}</strong> - ${a.bio || ''}</p>`).join('');
       }
       if(publishers && publishers.length > 0) {
-        document.getElementById('publisher-list').innerHTML = publishers.map(p => `<p>• <strong>${p.name}</strong> -${p.description || ''}</p>`).join('');
+        document.getElementById('publisher-list').innerHTML = publishers.map(p => `<p>• <strong>${p.name}</strong> - ${p.description || ''}</p>`).join('');
       }
     }
 
@@ -225,7 +231,7 @@
       const total = cart.reduce((sum, item) => sum + item.price, 0);
       const orderNo = 'ORD-' + Date.now();
 
-      const { error } = await supabase.from('shop_orders').insert([{
+      const { error } = await _supabase.from('shop_orders').insert([{
         order_no: orderNo, customer_name: name, customer_phone: phone, payment_method: method, total_amount: total, items_json: cart
       }]);
 
