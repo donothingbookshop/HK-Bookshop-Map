@@ -8,363 +8,598 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    .admin-tab { display: none; }
-    .admin-tab.active { display: block; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
+<body class="bg-slate-100 text-slate-800 flex flex-col min-h-screen">
 
-  <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full mx-4 text-center">
-      <h2 class="text-2xl font-bold mb-6 text-slate-800">管理員登入</h2>
-      <input type="password" id="admin-pass" class="w-full border rounded-lg px-4 py-2 mb-4 text-center text-lg focus:outline-none focus:ring-2 focus:ring-amber-800" placeholder="輸入密碼 (預設: 123456)">
-      <button onclick="checkAdminPass()" class="w-full bg-amber-900 text-white font-bold py-2.5 rounded-lg hover:bg-amber-800 transition">登入</button>
-    </div>
-  </div>
-
-  <div id="admin-panel" class="hidden">
-    <header class="bg-amber-950 text-amber-50 py-4 px-6 shadow flex justify-between items-center">
-      <h1 class="text-xl font-bold"><i class="fa-solid fa-gear mr-2"></i>獨立書店地圖 — 後台管理系統</h1>
-      <a href="index.html" class="bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs px-3 py-1.5 rounded transition">返回前台首頁 ↗</a>
-    </header>
-
-    <div class="max-w-6xl mx-auto p-6">
-      <div class="flex space-x-2 border-b border-slate-300 mb-6 pb-2 overflow-x-auto">
-        <button onclick="switchAdminTab('bookshops')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">🏪 實體書店</button>
-        <button onclick="switchAdminTab('authors')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">✍️ 獨立作者</button>
-        <button onclick="switchAdminTab('publishers')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">🏛️ 獨立出版社</button>
-        <button onclick="switchAdminTab('products')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">🛒 網店商品</button>
-        <button onclick="switchAdminTab('eco')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">🌱 農業/環保</button>
-        <button onclick="switchAdminTab('theatre')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">🎭 劇團</button>
-        <button onclick="switchAdminTab('orders')" class="px-3 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900 whitespace-nowrap">📦 訂單紀錄</button>
+  <!-- 頂部導航 -->
+  <header class="bg-amber-950 text-amber-50 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-gear text-amber-400 text-xl"></i>
+        <h1 class="text-lg font-bold tracking-wide">後台管理系統</h1>
       </div>
+      <a href="index.html" class="text-xs bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-lg transition">返回前台首頁 ↗</a>
+    </div>
+  </header>
 
-      <section id="admin-bookshops" class="admin-tab active">
-        <h2 class="text-xl font-bold mb-4">新增實體書店 / 圖書館</h2>
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" id="shop-name" placeholder="書店/圖書館名稱 *" class="border p-2 rounded">
-          
-          <select id="shop-region" onchange="toggleCountrySelect()" class="border p-2 rounded">
-            <option value="香港島">香港島</option>
-            <option value="九龍">九龍</option>
-            <option value="新界">新界</option>
-            <option value="離島">離島</option>
-            <option value="外國香港書店/圖書館">外國香港書店 / 圖書館</option>
-            <option value="已結業書店">已結業書店</option>
-          </select>
-
-          <div id="country-wrapper" class="hidden md:col-span-2 bg-amber-50 p-3 rounded border border-amber-200 flex items-center gap-3">
-            <label class="text-sm font-bold text-amber-900">選擇國家 / 地區：</label>
-            <select id="shop-country" class="border p-2 rounded flex-grow">
-              <option value="英國">英國 (UK)</option>
-              <option value="台灣">台灣 (Taiwan)</option>
-              <option value="加拿大">加拿大 (Canada)</option>
-              <option value="澳洲">澳洲 (Australia)</option>
-              <option value="日本">日本 (Japan)</option>
-              <option value="美國">美國 (USA)</option>
-              <option value="德國">德國 (Germany)</option>
-              <option value="泰國">泰國 (Thailand)</option>
-              <option value="荷蘭">荷蘭 (Netherlands)</option>
-              <option value="馬來西亞">馬來西亞 (Malaysia)</option>
-              <option value="新加坡">新加坡 (Singapore)</option>
-              <option value="其他外國地區">其他外國地區</option>
-            </select>
-          </div>
-
-          <input type="text" id="shop-address" placeholder="詳細地址" class="border p-2 rounded">
-          <input type="text" id="shop-phone" placeholder="聯絡電話" class="border p-2 rounded">
-          <input type="text" id="shop-hours" placeholder="營業時間" class="border p-2 rounded">
-          <input type="text" id="shop-map" placeholder="Google Map 網址" class="border p-2 rounded">
-          <input type="text" id="shop-ig" placeholder="Instagram 網址" class="border p-2 rounded">
-          <input type="text" id="shop-fb" placeholder="Facebook 網址" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳書店相片 (選擇本地檔案)：</label>
-            <input type="file" id="shop-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <textarea id="shop-desc" placeholder="簡介描述" class="border p-2 rounded md:col-span-2" rows="3"></textarea>
-          <button onclick="addBookshop()" class="bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-600 md:col-span-2">新增書店資料</button>
-        </div>
-      </section>
-
-      <section id="admin-authors" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">新增獨立作者</h2>
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" id="author-name" placeholder="作者姓名 *" class="border p-2 rounded">
-          <input type="text" id="author-phone" placeholder="聯絡電話" class="border p-2 rounded">
-          <input type="text" id="author-ig" placeholder="Instagram 網址" class="border p-2 rounded">
-          <input type="text" id="author-fb" placeholder="Facebook 網址" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳作者相片 / 頭像：</label>
-            <input type="file" id="author-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <textarea id="author-bio" placeholder="作者簡介" class="border p-2 rounded md:col-span-2" rows="3"></textarea>
-          <button onclick="addAuthor()" class="bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-600 md:col-span-2">新增作者</button>
-        </div>
-      </section>
-
-      <section id="admin-publishers" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">新增獨立出版社</h2>
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" id="pub-name" placeholder="出版社名稱 *" class="border p-2 rounded">
-          <input type="text" id="pub-phone" placeholder="聯絡電話" class="border p-2 rounded">
-          <input type="text" id="pub-ig" placeholder="Instagram 網址" class="border p-2 rounded">
-          <input type="text" id="pub-fb" placeholder="Facebook 網址" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳 Logo / 相片：</label>
-            <input type="file" id="pub-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <textarea id="pub-desc" placeholder="出版社簡介" class="border p-2 rounded md:col-span-2" rows="3"></textarea>
-          <button onclick="addPublisher()" class="bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-600 md:col-span-2">新增出版社</button>
-        </div>
-      </section>
-
-      <section id="admin-products" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">網上商店商品管理</h2>
-        <div class="bg-white p-6 rounded-2xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">進貨類型：</label>
-            <select id="prod-stock-type" class="w-full border p-2 rounded"><option value="買斷">買斷</option><option value="寄售">寄售</option></select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">主題分類：</label>
-            <select id="prod-category" class="w-full border p-2 rounded">
-              <option value="文學小說">文學小說</option><option value="人文社科">人文社科</option><option value="藝術設計">藝術設計</option><option value="本地香港">本地香港</option><option value="獨立出版">獨立出版</option><option value="其他文創">其他文創</option>
-            </select>
-          </div>
-          <input type="text" id="prod-name" placeholder="書名 / 商品名稱 *" class="border p-2 rounded md:col-span-2">
-          <input type="text" id="prod-isbn" placeholder="ISBN 號碼" class="border p-2 rounded">
-          <input type="text" id="prod-author" placeholder="作者姓名" class="border p-2 rounded">
-          <input type="number" id="prod-price" placeholder="單價 (HKD) *" class="border p-2 rounded">
-          <input type="number" id="prod-qty" value="1" placeholder="庫存數量" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳商品 / 書籍封面：</label>
-            <input type="file" id="prod-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <button onclick="addProduct()" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-500 md:col-span-2">上架商品</button>
-        </div>
-      </section>
-
-      <section id="admin-eco" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">新增農業 / 環保機構與農地</h2>
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" id="eco-name" placeholder="名稱 *" class="border p-2 rounded">
-          <select id="eco-category" class="border p-2 rounded">
-            <option value="平台/大自然/教育">平台 / 大自然 / 教育</option>
-            <option value="農地">農地</option>
-            <option value="回收/環保">回收 / 環保</option>
-          </select>
-          <select id="eco-region" class="border p-2 rounded">
-            <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option><option value="離島">離島</option>
-          </select>
-          <input type="text" id="eco-address" placeholder="地址" class="border p-2 rounded">
-          <input type="text" id="eco-phone" placeholder="電話" class="border p-2 rounded">
-          <input type="text" id="eco-ig" placeholder="Instagram 網址" class="border p-2 rounded">
-          <input type="text" id="eco-fb" placeholder="Facebook 網址" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳相片：</label>
-            <input type="file" id="eco-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <textarea id="eco-desc" placeholder="簡介描述" class="border p-2 rounded md:col-span-2" rows="3"></textarea>
-          <button onclick="addEco()" class="bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-600 md:col-span-2">新增農業/環保紀錄</button>
-        </div>
-      </section>
-
-      <section id="admin-theatre" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">新增劇團</h2>
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" id="theatre-name" placeholder="劇團名稱 *" class="border p-2 rounded">
-          <select id="theatre-region" class="border p-2 rounded">
-            <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option><option value="離島">離島</option>
-          </select>
-          <input type="text" id="theatre-address" placeholder="地址 / 排練室" class="border p-2 rounded">
-          <input type="text" id="theatre-phone" placeholder="電話" class="border p-2 rounded">
-          <input type="text" id="theatre-ig" placeholder="Instagram 網址" class="border p-2 rounded">
-          <input type="text" id="theatre-fb" placeholder="Facebook 網址" class="border p-2 rounded">
-          
-          <div class="md:col-span-2 bg-slate-50 p-3 rounded border">
-            <label class="block text-xs font-bold text-slate-600 mb-1">上傳劇團相片 / Logo：</label>
-            <input type="file" id="theatre-file" accept="image/*" class="w-full text-sm">
-          </div>
-
-          <textarea id="theatre-desc" placeholder="劇團簡介" class="border p-2 rounded md:col-span-2" rows="3"></textarea>
-          <button onclick="addTheatre()" class="bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-600 md:col-span-2">新增劇團</button>
-        </div>
-      </section>
-
-      <section id="admin-orders" class="admin-tab">
-        <h2 class="text-xl font-bold mb-4">顧客訂單紀錄</h2>
-        <div id="order-list" class="space-y-4"><p class="text-slate-400 italic">載入訂單中...</p></div>
-      </section>
-
+  <!-- 登入區塊 (如果未登入會顯示) -->
+  <div id="login-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full">
+      <h2 class="text-xl font-bold mb-4 text-center text-amber-950"><i class="fa-solid fa-lock mr-2"></i>管理員登入</h2>
+      <div class="space-y-3">
+        <input type="email" id="login-email" placeholder="Email" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-800 outline-none">
+        <input type="password" id="login-password" placeholder="Password" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-800 outline-none">
+        <button onclick="handleLogin()" class="w-full bg-amber-900 text-white py-2.5 rounded-lg font-medium hover:bg-amber-800 transition text-sm">登入系統</button>
+      </div>
     </div>
   </div>
+
+  <!-- 後台主要內容 -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+    
+    <!-- 分頁選單 -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3">
+      <button onclick="switchTab('bookshops')" class="tab-btn active bg-amber-900 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition">🏪 實體書店</button>
+      <button onclick="switchTab('authors')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">✍️ 獨立作者</button>
+      <button onclick="switchTab('publishers')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🏛️ 獨立出版社</button>
+      <button onclick="switchTab('products')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🛒 網店商品</button>
+      <button onclick="switchTab('eco')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🌱 農業/環保</button>
+      <button onclick="switchTab('theatre')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🎭 劇團</button>
+      <button onclick="handleLogout()" class="ml-auto bg-red-100 text-red-700 hover:bg-red-200 px-3.5 py-2 rounded-lg text-xs font-medium transition">登出</button>
+    </div>
+
+    <!-- 1. 實體書店管理 -->
+    <section id="tab-bookshops" class="tab-content active">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-bookshop" onsubmit="saveBookshop(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="bookshop-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增實體書店/圖書館</h3>
+          <input type="hidden" id="bs-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">名稱 *</label><input type="text" id="bs-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">地區 *</label>
+              <select id="bs-region" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option><option value="離島">離島</option>
+                <option value="外國香港書店/圖書館">外國香港書店/圖書館</option><option value="已結業書店">已結業書店</option>
+              </select>
+            </div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">國家 (如適用)</label><input type="text" id="bs-country" placeholder="例: 英國" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">詳細地址</label><input type="text" id="bs-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="bs-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">營業時間</label><input type="text" id="bs-hours" placeholder="例: 12:00 - 20:00" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Google Map 連結</label><input type="url" id="bs-map" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="bs-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="bs-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="bs-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介描述</label><textarea id="bs-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('bookshop')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有書店清單</h3>
+          <div id="list-bookshops" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 獨立作者管理 -->
+    <section id="tab-authors" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-author" onsubmit="saveAuthor(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="author-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增獨立作者</h3>
+          <input type="hidden" id="au-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">作者姓名 *</label><input type="text" id="au-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="au-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="au-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="au-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">頭像/相片 URL</label><input type="url" id="au-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">個人簡介</label><textarea id="au-bio" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('author')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有作者清單</h3>
+          <div id="list-authors" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 獨立出版社管理 -->
+    <section id="tab-publishers" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-publisher" onsubmit="savePublisher(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="publisher-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增獨立出版社</h3>
+          <input type="hidden" id="pub-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">出版社名稱 *</label><input type="text" id="pub-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="pub-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="pub-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="pub-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">標誌/相片 URL</label><input type="url" id="pub-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介</label><textarea id="pub-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('publisher')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有出版社清單</h3>
+          <div id="list-publishers" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 網店商品管理 -->
+    <section id="tab-products" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-product" onsubmit="saveProduct(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="product-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增網店商品</h3>
+          <input type="hidden" id="prod-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">商品名稱 *</label><input type="text" id="prod-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">價格 (HK$) *</label><input type="number" id="prod-price" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">庫存類型</label>
+              <select id="prod-stock" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="買斷">買斷</option><option value="寄售">寄售</option>
+              </select>
+            </div>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">分類</label><input type="text" id="prod-cat" placeholder="例: 書籍/精品" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">作者</label><input type="text" id="prod-author" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">商品相片 URL</label><input type="url" id="prod-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('product')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有商品清單</h3>
+          <div id="list-products" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 農業/環保管理 -->
+    <section id="tab-eco" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-eco" onsubmit="saveEco(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="eco-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增農業/環保單位</h3>
+          <input type="hidden" id="eco-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">單位名稱 *</label><input type="text" id="eco-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">分類</label>
+            <select id="eco-cat" class="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="平台/大自然/教育">平台/大自然/教育</option><option value="農地">農地</option><option value="回收/環保">回收/環保</option>
+            </select>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="eco-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="eco-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="eco-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="eco-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="eco-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="eco-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('eco')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有農業/環保單位清單</h3>
+          <div id="list-eco" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. 劇團管理 -->
+    <section id="tab-theatre" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-theatre" onsubmit="saveTheatre(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <h3 id="theatre-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增劇團</h3>
+          <input type="hidden" id="th-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">劇團名稱 *</label><input type="text" id="th-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">地區</label>
+            <select id="th-region" class="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option>
+            </select>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="th-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="th-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="th-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="th-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="th-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="th-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="button" onclick="resetForm('theatre')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
+          </div>
+        </form>
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有劇團清單</h3>
+          <div id="list-theatre" class="space-y-3">載入中...</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <script>
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
-    
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function checkAdminPass() {
-      const pass = document.getElementById('admin-pass').value;
-      if (pass === '123456') {
-        document.getElementById('login-modal').classList.add('hidden');
-        document.getElementById('admin-panel').classList.remove('hidden');
-        fetchOrders();
-      } else alert('密碼錯誤！');
+    // 初始化 Supabase 並開啟持久化 Session 防止頻繁自動登出
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    let currentTab = 'bookshops';
+    let cacheData = {};
+
+    window.onload = async function() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        loadTabContent(currentTab);
+      }
+    };
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const { error } = await _supabase.auth.signInWithPassword({ email, password });
+      if (error) alert("登入失敗：" + error.message);
+      else { document.getElementById('login-overlay').classList.add('hidden'); loadTabContent(currentTab); }
     }
 
-    function switchAdminTab(tabName) {
-      document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
-      document.getElementById(`admin-${tabName}`).classList.add('active');
+    async function handleLogout() {
+      await _supabase.auth.signOut();
+      location.reload();
     }
 
-    function toggleCountrySelect() {
-      const region = document.getElementById('shop-region').value;
-      document.getElementById('country-wrapper').classList.toggle('hidden', region !== '外國香港書店/圖書館');
-    }
-
-    // 圖片檔案轉換為 Base64 字串函數
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        if (!file) resolve('');
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-900', 'text-white');
+        btn.classList.add('bg-white');
       });
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      event.currentTarget.classList.remove('bg-white');
+      event.currentTarget.classList.add('bg-amber-900', 'text-white');
+      loadTabContent(tab);
     }
 
-    async function addBookshop() {
-      const name = document.getElementById('shop-name').value.trim();
-      const region = document.getElementById('shop-region').value;
-      const country = (region === '外國香港書店/圖書館') ? document.getElementById('shop-country').value : '香港';
-      const address = document.getElementById('shop-address').value.trim();
-      const phone = document.getElementById('shop-phone').value.trim();
-      const opening_hours = document.getElementById('shop-hours').value.trim();
-      const google_map_url = document.getElementById('shop-map').value.trim();
-      const instagram_url = document.getElementById('shop-ig').value.trim();
-      const facebook_url = document.getElementById('shop-fb').value.trim();
-      const description = document.getElementById('shop-desc').value.trim();
-      const file = document.getElementById('shop-file').files[0];
-
-      if (!name) return alert('請填寫書店名稱！');
-
-      const image_url = await fileToBase64(file);
-      const { error } = await _supabase.from('bookshops').insert([{ name, region, country, address, phone, opening_hours, google_map_url, instagram_url, facebook_url, image_url, description }]);
-
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 書店資料新增成功！'); location.reload(); }
+    function loadTabContent(tab) {
+      if (tab === 'bookshops') fetchBookshops();
+      else if (tab === 'authors') fetchAuthors();
+      else if (tab === 'publishers') fetchPublishers();
+      else if (tab === 'products') fetchProducts();
+      else if (tab === 'eco') fetchEco();
+      else if (tab === 'theatre') fetchTheatre();
     }
 
-    async function addAuthor() {
-      const name = document.getElementById('author-name').value.trim();
-      const phone = document.getElementById('author-phone').value.trim();
-      const instagram_url = document.getElementById('author-ig').value.trim();
-      const facebook_url = document.getElementById('author-fb').value.trim();
-      const bio = document.getElementById('author-bio').value.trim();
-      const file = document.getElementById('author-file').files[0];
-
-      if (!name) return alert('請填寫作者姓名！');
-      const image_url = await fileToBase64(file);
-
-      const { error } = await _supabase.from('authors').insert([{ name, phone, instagram_url, facebook_url, image_url, bio }]);
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 作者新增成功！'); location.reload(); }
+    // --- 通用 CRUD 工具 ---
+    async function deleteRecord(table, id) {
+      if (!confirm("確定要刪除此筆紀錄？此動作無法復原！")) return;
+      const { error } = await _supabase.from(table).delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else { alert("✅ 已順利刪除"); loadTabContent(currentTab); }
     }
 
-    async function addPublisher() {
-      const name = document.getElementById('pub-name').value.trim();
-      const phone = document.getElementById('pub-phone').value.trim();
-      const instagram_url = document.getElementById('pub-ig').value.trim();
-      const facebook_url = document.getElementById('pub-fb').value.trim();
-      const description = document.getElementById('pub-desc').value.trim();
-      const file = document.getElementById('pub-file').files[0];
-
-      if (!name) return alert('請填寫出版社名稱！');
-      const image_url = await fileToBase64(file);
-
-      const { error } = await _supabase.from('publishers').insert([{ name, phone, instagram_url, facebook_url, image_url, description }]);
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 出版社新增成功！'); location.reload(); }
-    }
-
-    async function addProduct() {
-      const stock_type = document.getElementById('prod-stock-type').value;
-      const category = document.getElementById('prod-category').value;
-      const name = document.getElementById('prod-name').value.trim();
-      const isbn = document.getElementById('prod-isbn').value.trim();
-      const author = document.getElementById('prod-author').value.trim();
-      const price = parseFloat(document.getElementById('prod-price').value);
-      const stock_qty = parseInt(document.getElementById('prod-qty').value) || 1;
-      const file = document.getElementById('prod-file').files[0];
-
-      if (!name || isNaN(price)) return alert('請填寫商品名稱與價格！');
-      const image_url = await fileToBase64(file);
-
-      const { error } = await _supabase.from('shop_products').insert([{ stock_type, category, name, isbn, author, price, stock_qty, image_url }]);
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 商品上架成功！'); location.reload(); }
-    }
-
-    async function addEco() {
-      const name = document.getElementById('eco-name').value.trim();
-      const category = document.getElementById('eco-category').value;
-      const region = document.getElementById('eco-region').value;
-      const address = document.getElementById('eco-address').value.trim();
-      const phone = document.getElementById('eco-phone').value.trim();
-      const instagram_url = document.getElementById('eco-ig').value.trim();
-      const facebook_url = document.getElementById('eco-fb').value.trim();
-      const description = document.getElementById('eco-desc').value.trim();
-      const file = document.getElementById('eco-file').files[0];
-
-      if (!name) return alert('請填寫名稱！');
-      const image_url = await fileToBase64(file);
-
-      const { error } = await _supabase.from('eco_farms').insert([{ name, category, region, address, phone, instagram_url, facebook_url, image_url, description }]);
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 農業/環保紀錄新增成功！'); location.reload(); }
-    }
-
-    async function addTheatre() {
-      const name = document.getElementById('theatre-name').value.trim();
-      const region = document.getElementById('theatre-region').value;
-      const address = document.getElementById('theatre-address').address?.value.trim() || document.getElementById('theatre-address').value.trim();
-      const phone = document.getElementById('theatre-phone').value.trim();
-      const instagram_url = document.getElementById('theatre-ig').value.trim();
-      const facebook_url = document.getElementById('theatre-fb').value.trim();
-      const description = document.getElementById('theatre-desc').value.trim();
-      const file = document.getElementById('theatre-file').files[0];
-
-      if (!name) return alert('請填寫劇團名稱！');
-      const image_url = await fileToBase64(file);
-
-      const { error } = await _supabase.from('theatre_groups').insert([{ name, region, address, phone, instagram_url, facebook_url, image_url, description }]);
-      if (error) alert('新增失敗：' + error.message);
-      else { alert('✅ 劇團新增成功！'); location.reload(); }
-    }
-
-    async function fetchOrders() {
-      const { data } = await _supabase.from('shop_orders').select('*').order('created_at', { ascending: false });
-      const container = document.getElementById('order-list');
-      if (!data || data.length === 0) { container.innerHTML = '<p class="text-slate-400 italic">暫無任何訂單紀錄。</p>'; return; }
-      container.innerHTML = data.map(ord => `
-        <div class="bg-white p-5 rounded-xl border shadow-sm">
-          <p class="font-bold text-amber-900">${ord.order_no}</p>
-          <p class="text-sm"><strong>顧客：</strong> ${ord.customer_name} (${ord.customer_phone})</p>
-          <p class="text-sm"><strong>金額：</strong> HK$ ${ord.total_amount}</p>
+    // --- 1. 書店 CRUD ---
+    async function fetchBookshops() {
+      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
+      cacheData.bookshops = data || [];
+      const list = document.getElementById('list-bookshops');
+      if (cacheData.bookshops.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.bookshops.map(b => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div>
+            <h4 class="font-bold text-sm text-slate-800">${b.name} <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded ml-2">${b.region}</span></h4>
+            <p class="text-xs text-slate-500">${b.address || '無地址'}</p>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="editBookshop(${b.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('bookshops', ${b.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
         </div>
       `).join('');
+    }
+
+    async function saveBookshop(e) {
+      e.preventDefault();
+      const id = document.getElementById('bs-id').value;
+      const payload = {
+        name: document.getElementById('bs-name').value,
+        region: document.getElementById('bs-region').value,
+        country: document.getElementById('bs-country').value,
+        address: document.getElementById('bs-address').value,
+        phone: document.getElementById('bs-phone').value,
+        opening_hours: document.getElementById('bs-hours').value,
+        google_map_url: document.getElementById('bs-map').value,
+        instagram_url: document.getElementById('bs-ig').value,
+        facebook_url: document.getElementById('bs-fb').value,
+        image_url: document.getElementById('bs-image').value,
+        description: document.getElementById('bs-desc').value,
+      };
+      const { error } = id ? await _supabase.from('bookshops').update(payload).eq('id', id) : await _supabase.from('bookshops').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('bookshop'); fetchBookshops(); }
+    }
+
+    function editBookshop(id) {
+      const b = cacheData.bookshops.find(x => x.id === id);
+      if (!b) return;
+      document.getElementById('bs-id').value = b.id;
+      document.getElementById('bs-name').value = b.name || '';
+      document.getElementById('bs-region').value = b.region || '香港島';
+      document.getElementById('bs-country').value = b.country || '';
+      document.getElementById('bs-address').value = b.address || '';
+      document.getElementById('bs-phone').value = b.phone || '';
+      document.getElementById('bs-hours').value = b.opening_hours || '';
+      document.getElementById('bs-map').value = b.google_map_url || '';
+      document.getElementById('bs-ig').value = b.instagram_url || '';
+      document.getElementById('bs-fb').value = b.facebook_url || '';
+      document.getElementById('bs-image').value = b.image_url || '';
+      document.getElementById('bs-desc').value = b.description || '';
+      document.getElementById('bookshop-form-title').innerText = "編輯實體書店資料";
+    }
+
+    // --- 2. 作者 CRUD ---
+    async function fetchAuthors() {
+      const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
+      cacheData.authors = data || [];
+      const list = document.getElementById('list-authors');
+      if (cacheData.authors.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.authors.map(a => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div><h4 class="font-bold text-sm text-slate-800">${a.name}</h4><p class="text-xs text-slate-500">${a.phone || ''}</p></div>
+          <div class="flex space-x-2">
+            <button onclick="editAuthor(${a.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('authors', ${a.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveAuthor(e) {
+      e.preventDefault();
+      const id = document.getElementById('au-id').value;
+      const payload = {
+        name: document.getElementById('au-name').value,
+        phone: document.getElementById('au-phone').value,
+        instagram_url: document.getElementById('au-ig').value,
+        facebook_url: document.getElementById('au-fb').value,
+        image_url: document.getElementById('au-image').value,
+        bio: document.getElementById('au-bio').value
+      };
+      const { error } = id ? await _supabase.from('authors').update(payload).eq('id', id) : await _supabase.from('authors').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('author'); fetchAuthors(); }
+    }
+
+    function editAuthor(id) {
+      const a = cacheData.authors.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('au-id').value = a.id;
+      document.getElementById('au-name').value = a.name || '';
+      document.getElementById('au-phone').value = a.phone || '';
+      document.getElementById('au-ig').value = a.instagram_url || '';
+      document.getElementById('au-fb').value = a.facebook_url || '';
+      document.getElementById('au-image').value = a.image_url || '';
+      document.getElementById('au-bio').value = a.bio || '';
+      document.getElementById('author-form-title').innerText = "編輯獨立作者資料";
+    }
+
+    // --- 3. 出版社 CRUD ---
+    async function fetchPublishers() {
+      const { data } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
+      cacheData.publishers = data || [];
+      const list = document.getElementById('list-publishers');
+      if (cacheData.publishers.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.publishers.map(p => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div><h4 class="font-bold text-sm text-slate-800">${p.name}</h4><p class="text-xs text-slate-500">${p.phone || ''}</p></div>
+          <div class="flex space-x-2">
+            <button onclick="editPublisher(${p.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('publishers', ${p.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function savePublisher(e) {
+      e.preventDefault();
+      const id = document.getElementById('pub-id').value;
+      const payload = {
+        name: document.getElementById('pub-name').value,
+        phone: document.getElementById('pub-phone').value,
+        instagram_url: document.getElementById('pub-ig').value,
+        facebook_url: document.getElementById('pub-fb').value,
+        image_url: document.getElementById('pub-image').value,
+        description: document.getElementById('pub-desc').value
+      };
+      const { error } = id ? await _supabase.from('publishers').update(payload).eq('id', id) : await _supabase.from('publishers').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('publisher'); fetchPublishers(); }
+    }
+
+    function editPublisher(id) {
+      const p = cacheData.publishers.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('pub-id').value = p.id;
+      document.getElementById('pub-name').value = p.name || '';
+      document.getElementById('pub-phone').value = p.phone || '';
+      document.getElementById('pub-ig').value = p.instagram_url || '';
+      document.getElementById('pub-fb').value = p.facebook_url || '';
+      document.getElementById('pub-image').value = p.image_url || '';
+      document.getElementById('pub-desc').value = p.description || '';
+      document.getElementById('publisher-form-title').innerText = "編輯獨立出版社資料";
+    }
+
+    // --- 4. 商品 CRUD ---
+    async function fetchProducts() {
+      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
+      cacheData.products = data || [];
+      const list = document.getElementById('list-products');
+      if (cacheData.products.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.products.map(pr => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div><h4 class="font-bold text-sm text-slate-800">${pr.name} <span class="text-amber-900 text-xs font-bold">HK$${pr.price}</span></h4><p class="text-xs text-slate-500">${pr.stock_type || '買斷'}</p></div>
+          <div class="flex space-x-2">
+            <button onclick="editProduct(${pr.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('shop_products', ${pr.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('prod-id').value;
+      const payload = {
+        name: document.getElementById('prod-name').value,
+        price: parseFloat(document.getElementById('prod-price').value),
+        stock_type: document.getElementById('prod-stock').value,
+        category: document.getElementById('prod-cat').value,
+        author: document.getElementById('prod-author').value,
+        image_url: document.getElementById('prod-image').value
+      };
+      const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('product'); fetchProducts(); }
+    }
+
+    function editProduct(id) {
+      const pr = cacheData.products.find(x => x.id === id);
+      if (!pr) return;
+      document.getElementById('prod-id').value = pr.id;
+      document.getElementById('prod-name').value = pr.name || '';
+      document.getElementById('prod-price').value = pr.price || '';
+      document.getElementById('prod-stock').value = pr.stock_type || '買斷';
+      document.getElementById('prod-cat').value = pr.category || '';
+      document.getElementById('prod-author').value = pr.author || '';
+      document.getElementById('prod-image').value = pr.image_url || '';
+      document.getElementById('product-form-title').innerText = "編輯網店商品資料";
+    }
+
+    // --- 5. 農業/環保 CRUD ---
+    async function fetchEco() {
+      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
+      cacheData.eco = data || [];
+      const list = document.getElementById('list-eco');
+      if (cacheData.eco.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.eco.map(e => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div><h4 class="font-bold text-sm text-slate-800">${e.name} <span class="text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded ml-2">${e.category}</span></h4><p class="text-xs text-slate-500">${e.address || ''}</p></div>
+          <div class="flex space-x-2">
+            <button onclick="editEco(${e.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('eco_farms', ${e.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveEco(e) {
+      e.preventDefault();
+      const id = document.getElementById('eco-id').value;
+      const payload = {
+        name: document.getElementById('eco-name').value,
+        category: document.getElementById('eco-cat').value,
+        address: document.getElementById('eco-address').value,
+        phone: document.getElementById('eco-phone').value,
+        instagram_url: document.getElementById('eco-ig').value,
+        facebook_url: document.getElementById('eco-fb').value,
+        image_url: document.getElementById('eco-image').value,
+        description: document.getElementById('eco-desc').value
+      };
+      const { error } = id ? await _supabase.from('eco_farms').update(payload).eq('id', id) : await _supabase.from('eco_farms').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('eco'); fetchEco(); }
+    }
+
+    function editEco(id) {
+      const e = cacheData.eco.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById('eco-id').value = e.id;
+      document.getElementById('eco-name').value = e.name || '';
+      document.getElementById('eco-cat').value = e.category || '平台/大自然/教育';
+      document.getElementById('eco-address').value = e.address || '';
+      document.getElementById('eco-phone').value = e.phone || '';
+      document.getElementById('eco-ig').value = e.instagram_url || '';
+      document.getElementById('eco-fb').value = e.facebook_url || '';
+      document.getElementById('eco-image').value = e.image_url || '';
+      document.getElementById('eco-desc').value = e.description || '';
+      document.getElementById('eco-form-title').innerText = "編輯農業/環保資料";
+    }
+
+    // --- 6. 劇團 CRUD ---
+    async function fetchTheatre() {
+      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
+      cacheData.theatre = data || [];
+      const list = document.getElementById('list-theatre');
+      if (cacheData.theatre.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = cacheData.theatre.map(t => `
+        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
+          <div><h4 class="font-bold text-sm text-slate-800">${t.name} <span class="text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded ml-2">${t.region}</span></h4><p class="text-xs text-slate-500">${t.address || ''}</p></div>
+          <div class="flex space-x-2">
+            <button onclick="editTheatre(${t.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+            <button onclick="deleteRecord('theatre_groups', ${t.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveTheatre(e) {
+      e.preventDefault();
+      const id = document.getElementById('th-id').value;
+      const payload = {
+        name: document.getElementById('th-name').value,
+        region: document.getElementById('th-region').value,
+        address: document.getElementById('th-address').value,
+        phone: document.getElementById('th-phone').value,
+        instagram_url: document.getElementById('th-ig').value,
+        facebook_url: document.getElementById('th-fb').value,
+        image_url: document.getElementById('th-image').value,
+        description: document.getElementById('th-desc').value
+      };
+      const { error } = id ? await _supabase.from('theatre_groups').update(payload).eq('id', id) : await _supabase.from('theatre_groups').insert([payload]);
+      if (error) alert("操作失敗：" + error.message);
+      else { alert("✅ 儲存成功！"); resetForm('theatre'); fetchTheatre(); }
+    }
+
+    function editTheatre(id) {
+      const t = cacheData.theatre.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('th-id').value = t.id;
+      document.getElementById('th-name').value = t.name || '';
+      document.getElementById('th-region').value = t.region || '香港島';
+      document.getElementById('th-address').value = t.address || '';
+      document.getElementById('th-phone').value = t.phone || '';
+      document.getElementById('th-ig').value = t.instagram_url || '';
+      document.getElementById('th-fb').value = t.facebook_url || '';
+      document.getElementById('th-image').value = t.image_url || '';
+      document.getElementById('th-desc').value = t.description || '';
+      document.getElementById('theatre-form-title').innerText = "編輯劇團資料";
+    }
+
+    // 重置表單狀態
+    function resetForm(type) {
+      document.getElementById(`form-${type}`).reset();
+      const idInput = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-id`);
+      if (idInput) idInput.value = '';
+      const titleElem = document.getElementById(`${type}-form-title`);
+      if (titleElem) titleElem.innerText = `新增${type === 'bookshop' ? '實體書店/圖書館' : type === 'author' ? '獨立作者' : type === 'publisher' ? '獨立出版社' : type === 'product' ? '網店商品' : type === 'theatre' ? '劇團' : '農業/環保單位'}`;
     }
   </script>
 </body>
