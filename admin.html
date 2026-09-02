@@ -75,7 +75,12 @@
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="bs-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="bs-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="bs-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳圖片 / 圖片 URL</label>
+            <input type="file" id="bs-file" accept="image/*" onchange="uploadImage(this, 'bs-image', 'bs-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="bs-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="bs-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介描述</label><textarea id="bs-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
@@ -99,7 +104,12 @@
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="au-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="au-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="au-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">頭像/相片 URL</label><input type="url" id="au-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳頭像 / 相片 URL</label>
+            <input type="file" id="au-file" accept="image/*" onchange="uploadImage(this, 'au-image', 'au-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="au-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="au-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">個人簡介</label><textarea id="au-bio" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
@@ -123,7 +133,12 @@
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="pub-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="pub-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="pub-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">標誌/相片 URL</label><input type="url" id="pub-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳標誌 / 相片 URL</label>
+            <input type="file" id="pub-file" accept="image/*" onchange="uploadImage(this, 'pub-image', 'pub-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="pub-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="pub-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介</label><textarea id="pub-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
@@ -154,7 +169,12 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">分類</label><input type="text" id="prod-cat" placeholder="例: 書籍/精品" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">作者</label><input type="text" id="prod-author" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">商品相片 URL</label><input type="url" id="prod-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳商品相片 / 相片 URL</label>
+            <input type="file" id="prod-file" accept="image/*" onchange="uploadImage(this, 'prod-image', 'prod-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="prod-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="prod-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
             <button type="button" onclick="resetForm('product')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
@@ -185,7 +205,12 @@
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="eco-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="eco-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="eco-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳圖片 / 圖片 URL</label>
+            <input type="file" id="eco-file" accept="image/*" onchange="uploadImage(this, 'eco-image', 'eco-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="eco-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="eco-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="eco-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
@@ -217,7 +242,12 @@
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="th-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="th-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">圖片 URL</label><input type="url" id="th-image" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳圖片 / 圖片 URL</label>
+            <input type="file" id="th-file" accept="image/*" onchange="uploadImage(this, 'th-image', 'th-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="th-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="th-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="th-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
@@ -286,6 +316,35 @@
       else if (tab === 'products') fetchProducts();
       else if (tab === 'eco') fetchEco();
       else if (tab === 'theatre') fetchTheatre();
+    }
+
+    // --- 上傳圖片到 Supabase Storage ---
+    async function uploadImage(fileInput, targetInputId, statusId) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById(statusId);
+      statusEl.innerText = "⏳ 圖片上傳中...";
+      statusEl.classList.remove('hidden', 'text-red-600');
+      statusEl.classList.add('text-amber-800');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { data, error } = await _supabase.storage.from('images').upload(filePath, file);
+
+      if (error) {
+        statusEl.innerText = "❌ 上傳失敗：" + error.message;
+        statusEl.classList.remove('text-amber-800');
+        statusEl.classList.add('text-red-600');
+      } else {
+        const { data: publicUrlData } = _supabase.storage.from('images').getPublicUrl(filePath);
+        document.getElementById(targetInputId).value = publicUrlData.publicUrl;
+        statusEl.innerText = "✅ 上傳成功！網址已自動帶入";
+        statusEl.classList.remove('text-amber-800');
+        statusEl.classList.add('text-emerald-700');
+      }
     }
 
     // --- 通用 CRUD 工具 ---
@@ -598,6 +657,13 @@
       document.getElementById(`form-${type}`).reset();
       const idInput = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-id`);
       if (idInput) idInput.value = '';
+      
+      const fileInput = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-file`);
+      if (fileInput) fileInput.value = '';
+
+      const statusEl = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-upload-status`);
+      if (statusEl) statusEl.classList.add('hidden');
+
       const titleElem = document.getElementById(`${type}-form-title`);
       if (titleElem) titleElem.innerText = `新增${type === 'bookshop' ? '實體書店/圖書館' : type === 'author' ? '獨立作者' : type === 'publisher' ? '獨立出版社' : type === 'product' ? '網店商品' : type === 'theatre' ? '劇團' : '農業/環保單位'}`;
     }
