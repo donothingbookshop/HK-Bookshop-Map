@@ -2,96 +2,197 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <title>獨立書店地圖 - 管理員後台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>獨立書店地圖 - 後台管理</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .admin-tab { display: none; }
+    .admin-tab.active { display: block; }
+  </style>
 </head>
-<body class="bg-slate-100 p-6">
+<body class="bg-slate-100 min-h-screen text-slate-800">
 
-  <!-- 登入驗證 -->
-  <div id="login-box" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md mt-10">
-    <h2 class="text-xl font-bold mb-4 text-center">管理員登入</h2>
-    <input type="password" id="admin-pass" class="w-full border rounded px-3 py-2 text-sm mb-4" placeholder="密碼 (預設: Bookshop123)">
-    <button onclick="login()" class="w-full bg-amber-900 text-white py-2 rounded-lg text-sm">登入</button>
+  <!-- 登入界面 -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full mx-4 text-center">
+      <h2 class="text-2xl font-bold mb-6 text-slate-800">管理員登入</h2>
+      <input type="password" id="admin-pass" class="w-full border rounded-lg px-4 py-2 mb-4 text-center text-lg focus:outline-none focus:ring-2 focus:ring-amber-800" placeholder="輸入密碼 (預設: 123456)">
+      <button onclick="checkAdminPass()" class="w-full bg-amber-900 text-white font-bold py-2.5 rounded-lg hover:bg-amber-800 transition">登入</button>
+    </div>
   </div>
 
-  <!-- 後台主頁 -->
-  <div id="admin-main" class="max-w-4xl mx-auto hidden space-y-8">
-    <h1 class="text-2xl font-bold border-b pb-4">後台管理系統</h1>
+  <!-- 後台主內容 -->
+  <div id="admin-panel" class="hidden">
+    <header class="bg-amber-950 text-amber-50 py-4 px-6 shadow flex justify-between items-center">
+      <h1 class="text-xl font-bold"><i class="fa-solid fa-gear mr-2"></i>獨立書店地圖 — 後台管理系統</h1>
+      <a href="index.html" class="bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs px-3 py-1.5 rounded transition">返回前台首頁 ↗</a>
+    </header>
 
-    <!-- 新增書店 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm space-y-3">
-      <h2 class="font-bold text-lg">➕ 新增獨立書店</h2>
-      <input type="text" id="s-name" class="w-full border rounded p-2 text-sm" placeholder="書店名稱 *">
-      <select id="s-region" class="w-full border rounded p-2 text-sm">
-        <option value="香港島">香港島</option><option value="九龍">九龍</option><option value="新界">新界</option><option value="離島">離島</option>
-      </select>
-      <input type="text" id="s-address" class="w-full border rounded p-2 text-sm" placeholder="地址">
-      <input type="text" id="s-hours" class="w-full border rounded p-2 text-sm" placeholder="營業時間 (例: 12:00-20:00)">
-      <button onclick="addShop()" class="bg-amber-900 text-white px-4 py-2 rounded text-sm">新增書店</button>
-    </div>
+    <div class="max-w-6xl mx-auto p-6">
+      <!-- 導覽分頁 -->
+      <div class="flex space-x-2 border-b border-slate-300 mb-6 pb-2 overflow-x-auto">
+        <button onclick="switchAdminTab('bookshops')" class="px-4 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900">🏪 管理實體書店</button>
+        <button onclick="switchAdminTab('authors')" class="px-4 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900">✍️ 管理獨立作者</button>
+        <button onclick="switchAdminTab('publishers')" class="px-4 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900">🏛️ 管理獨立出版社</button>
+        <button onclick="switchAdminTab('products')" class="px-4 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900">🛒 管理網店商品</button>
+        <button onclick="switchAdminTab('orders')" class="px-4 py-2 font-semibold text-slate-700 hover:text-amber-900 focus:text-amber-900 border-b-2 border-transparent focus:border-amber-900">📦 查看訂單紀錄</button>
+      </div>
 
-    <!-- 新增商品 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm space-y-3">
-      <h2 class="font-bold text-lg">➕ 上架商品</h2>
-      <input type="text" id="p-name" class="w-full border rounded p-2 text-sm" placeholder="商品名稱 *">
-      <input type="number" id="p-price" class="w-full border rounded p-2 text-sm" placeholder="價格 (HKD) *">
-      <button onclick="addProduct()" class="bg-emerald-700 text-white px-4 py-2 rounded text-sm">上架商品</button>
-    </div>
+      <!-- 1. 書店管理 -->
+      <section id="admin-bookshops" class="admin-tab active">
+        <h2 class="text-xl font-bold mb-4">新增實體書店</h2>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="text" id="shop-name" placeholder="書店名稱 *" class="border p-2 rounded">
+          <select id="shop-region" class="border p-2 rounded">
+            <option value="香港島">香港島</option>
+            <option value="九龍">九龍</option>
+            <option value="新界">新界</option>
+            <option value="離島">離島</option>
+          </select>
+          <input type="text" id="shop-address" placeholder="地址" class="border p-2 rounded">
+          <input type="text" id="shop-hours" placeholder="營業時間 (例: 12:00 - 20:00)" class="border p-2 rounded">
+          <input type="text" id="shop-map" placeholder="Google Map 連結" class="border p-2 rounded md:col-span-2">
+          <textarea id="shop-desc" placeholder="簡介描述" class="border p-2 rounded md:col-span-2"></textarea>
+          <button onclick="addBookshop()" class="bg-emerald-700 text-white font-bold py-2 px-4 rounded hover:bg-emerald-600 md:col-span-2">新增書店</button>
+        </div>
+      </section>
 
-    <!-- 訂單列表 -->
-    <div class="bg-white p-6 rounded-xl shadow-sm">
-      <h2 class="font-bold text-lg mb-3">📦 顧客訂單紀錄</h2>
-      <div id="orders-list" class="text-xs space-y-2">載入中...</div>
+      <!-- 2. 作者管理 -->
+      <section id="admin-authors" class="admin-tab">
+        <h2 class="text-xl font-bold mb-4">新增獨立作者</h2>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 space-y-4">
+          <input type="text" id="author-name" placeholder="作者姓名 *" class="w-full border p-2 rounded">
+          <textarea id="author-bio" placeholder="作者簡介" class="w-full border p-2 rounded"></textarea>
+          <button onclick="addAuthor()" class="bg-emerald-700 text-white font-bold py-2 px-4 rounded hover:bg-emerald-600 w-full">新增作者</button>
+        </div>
+      </section>
+
+      <!-- 3. 出版社管理 -->
+      <section id="admin-publishers" class="admin-tab">
+        <h2 class="text-xl font-bold mb-4">新增獨立出版社</h2>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 space-y-4">
+          <input type="text" id="pub-name" placeholder="出版社名稱 *" class="w-full border p-2 rounded">
+          <textarea id="pub-desc" placeholder="出版社簡介" class="w-full border p-2 rounded"></textarea>
+          <button onclick="addPublisher()" class="bg-emerald-700 text-white font-bold py-2 px-4 rounded hover:bg-emerald-600 w-full">新增出版社</button>
+        </div>
+      </section>
+
+      <!-- 4. 商品管理 -->
+      <section id="admin-products" class="admin-tab">
+        <h2 class="text-xl font-bold mb-4">上架網店商品</h2>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8 space-y-4">
+          <input type="text" id="prod-name" placeholder="商品/書籍名稱 *" class="w-full border p-2 rounded">
+          <input type="number" id="prod-price" placeholder="價格 (HKD) *" class="w-full border p-2 rounded">
+          <input type="text" id="prod-img" placeholder="圖片 URL 網址 (可選)" class="w-full border p-2 rounded">
+          <button onclick="addProduct()" class="bg-emerald-700 text-white font-bold py-2 px-4 rounded hover:bg-emerald-600 w-full">上架商品</button>
+        </div>
+      </section>
+
+      <!-- 5. 訂單紀錄 -->
+      <section id="admin-orders" class="admin-tab">
+        <h2 class="text-xl font-bold mb-4">顧客訂單紀錄</h2>
+        <div id="order-list" class="space-y-4">
+          <p class="text-slate-400 italic">載入訂單中...</p>
+        </div>
+      </section>
+
     </div>
   </div>
 
   <script>
-    // ⚠️ 請替換為你 Supabase 的 Project URL 與 Key
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // 修正 Supabase 初始化寫法（避免變數同名衝突）
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function login() {
-      if(document.getElementById('admin-pass').value === 'Bookshop123') {
-        document.getElementById('login-box').classList.add('hidden');
-        document.getElementById('admin-main').classList.remove('hidden');
-        loadOrders();
-      } else alert("密碼錯誤！");
+    function checkAdminPass() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === '123456') {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.getElementById('admin-panel').classList.remove('hidden');
+        fetchOrders();
+      } else {
+        alert('密碼錯誤！');
+      }
     }
 
-    async function addShop() {
-      const name = document.getElementById('s-name').value;
-      const region = document.getElementById('s-region').value;
-      const address = document.getElementById('s-address').value;
-      const hours = document.getElementById('s-hours').value;
-      if(!name) return alert("請填寫書店名稱！");
+    function switchAdminTab(tabName) {
+      document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(`admin-${tabName}`).classList.add('active');
+    }
 
-      await supabase.from('bookshops').insert([{ name, region, address, opening_hours: hours }]);
-      alert("✅ 新增成功！");
-      location.reload();
+    async function addBookshop() {
+      const name = document.getElementById('shop-name').value.trim();
+      const region = document.getElementById('shop-region').value;
+      const address = document.getElementById('shop-address').value.trim();
+      const opening_hours = document.getElementById('shop-hours').value.trim();
+      const google_map_url = document.getElementById('shop-map').value.trim();
+      const description = document.getElementById('shop-desc').value.trim();
+
+      if (!name) return alert('請填寫書店名稱！');
+
+      const { error } = await _supabase.from('bookshops').insert([{ name, region, address, opening_hours, google_map_url, description }]);
+      if (error) alert('新增失敗：' + error.message);
+      else { alert('✅ 書店新增成功！'); location.reload(); }
+    }
+
+    async function addAuthor() {
+      const name = document.getElementById('author-name').value.trim();
+      const bio = document.getElementById('author-bio').value.trim();
+
+      if (!name) return alert('請填寫作者姓名！');
+
+      const { error } = await _supabase.from('authors').insert([{ name, bio }]);
+      if (error) alert('新增失敗：' + error.message);
+      else { alert('✅ 作者新增成功！'); location.reload(); }
+    }
+
+    async function addPublisher() {
+      const name = document.getElementById('pub-name').value.trim();
+      const description = document.getElementById('pub-desc').value.trim();
+
+      if (!name) return alert('請填寫出版社名稱！');
+
+      const { error } = await _supabase.from('publishers').insert([{ name, description }]);
+      if (error) alert('新增失敗：' + error.message);
+      else { alert('✅ 出版社新增成功！'); location.reload(); }
     }
 
     async function addProduct() {
-      const name = document.getElementById('p-name').value;
-      const price = parseFloat(document.getElementById('p-price').value);
-      if(!name || isNaN(price)) return alert("請填寫完整商品資料！");
+      const name = document.getElementById('prod-name').value.trim();
+      const price = parseFloat(document.getElementById('prod-price').value);
+      const image_url = document.getElementById('prod-img').value.trim();
 
-      await supabase.from('shop_products').insert([{ name, price }]);
-      alert("✅ 上架成功！");
-      location.reload();
+      if (!name || isNaN(price)) return alert('請完整填寫商品名稱與價格！');
+
+      const { error } = await _supabase.from('shop_products').insert([{ name, price, image_url }]);
+      if (error) alert('新增失敗：' + error.message);
+      else { alert('✅ 商品上架成功！'); location.reload(); }
     }
 
-    async function loadOrders() {
-      const { data } = await supabase.from('shop_orders').select('*').order('created_at', { ascending: false });
-      const container = document.getElementById('orders-list');
-      if(!data || data.length === 0) {
-        container.innerHTML = '目前無訂單'; return;
+    async function fetchOrders() {
+      const { data, error } = await _supabase.from('shop_orders').select('*').order('created_at', { ascending: false });
+      const container = document.getElementById('order-list');
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 italic">暫無任何訂單紀錄。</p>';
+        return;
       }
-      container.innerHTML = data.map(o => `
-        <div class="border-b pb-2">
-          <p><strong>單號：</strong> ${o.order_no} | <strong>顧客：</strong> ${o.customer_name} (${o.customer_phone})</p>
-          <p><strong>金額：</strong> HK$ ${o.total_amount} \vert{} <strong>付款：</strong> ${o.payment_method}</p>
+      container.innerHTML = data.map(ord => `
+        <div class="bg-white p-5 rounded-xl border shadow-sm">
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-amber-900">${ord.order_no}</span>
+            <span class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">${new Date(ord.created_at).toLocaleString('zh-HK')}</span>
+          </div>
+          <p class="text-sm"><strong>顧客：</strong> ${ord.customer_name} (${ord.customer_phone})</p>
+          <p class="text-sm"><strong>付款方式：</strong> ${ord.payment_method}</p>
+          <p class="text-sm mb-3"><strong>總金額：</strong> HK$ ${ord.total_amount}</p>
+          <div class="bg-slate-50 p-3 rounded text-xs text-slate-600">
+            <strong>購買項目：</strong>
+            ${Array.isArray(ord.items_json) ? ord.items_json.map(i => `<div>- ${i.name} ($${i.price})</div>`).join('') : ''}
+          </div>
         </div>
       `).join('');
     }
