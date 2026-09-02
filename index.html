@@ -214,7 +214,7 @@
       if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
       container.innerHTML = list.map(shop => `
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${shop.image_url ? `<div class="h-44 bg-slate-100 overflow-hidden"><img src="${shop.image_url}" class="w-full h-full object-cover"></div>` : ''}
+          ${shop.image_url ? `<div class="h-44 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${shop.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
           <div class="p-5 flex-grow">
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-lg text-slate-800">${shop.name}</h3>
@@ -260,7 +260,7 @@
       if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無農業/環保紀錄。</p>`; return; }
       container.innerHTML = list.map(item => `
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${item.image_url ? `<div class="h-40 bg-slate-100 overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-cover"></div>` : ''}
+          ${item.image_url ? `<div class="h-40 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
           <div class="p-5 flex-grow">
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-lg text-slate-800">${item.name}</h3>
@@ -294,7 +294,7 @@
       if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無劇團紀錄。</p>`; return; }
       container.innerHTML = list.map(item => `
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${item.image_url ? `<div class="h-40 bg-slate-100 overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-cover"></div>` : ''}
+          ${item.image_url ? `<div class="h-40 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
           <div class="p-5 flex-grow">
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-lg text-slate-800">${item.name}</h3>
@@ -323,8 +323,8 @@
       if (!data || data.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無商品。</p>`; return; }
       container.innerHTML = data.map(item => `
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          <div class="h-44 bg-slate-100 flex items-center justify-center relative">
-            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
+          <div class="h-44 bg-slate-50 flex items-center justify-center relative p-2">
+            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
             <span class="absolute top-2 left-2 bg-amber-900 text-amber-50 text-xs px-2 py-0.5 rounded">${item.stock_type || '買斷'}</span>
           </div>
           <div class="p-4 flex-grow flex flex-col justify-between">
@@ -349,7 +349,7 @@
       if(authors && authors.length > 0) {
         document.getElementById('author-list').innerHTML = authors.map(a => `
           <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
-            ${a.image_url ? `<img src="${a.image_url}" class="w-14 h-14 rounded-full object-cover">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-full text-xl font-bold">${a.name[0]}</div>`}
+            ${a.image_url ? `<img src="${a.image_url}" class="w-14 h-14 rounded-full object-contain bg-white border border-slate-200">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-full text-xl font-bold">${a.name[0]}</div>`}
             <div>
               <h4 class="font-bold text-base text-slate-800">${a.name}</h4>
               ${a.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${a.phone}</p>` : ''}
@@ -366,7 +366,7 @@
       if(publishers && publishers.length > 0) {
         document.getElementById('publisher-list').innerHTML = publishers.map(p => `
           <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
-            ${p.image_url ? `<img src="${p.image_url}" class="w-14 h-14 rounded-lg object-cover">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-lg text-xl font-bold">${p.name[0]}</div>`}
+            ${p.image_url ? `<img src="${p.image_url}" class="w-14 h-14 rounded-lg object-contain bg-white border border-slate-200">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-lg text-xl font-bold">${p.name[0]}</div>`}
             <div>
               <h4 class="font-bold text-base text-slate-800">${p.name}</h4>
               ${p.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${p.phone}</p>` : ''}
