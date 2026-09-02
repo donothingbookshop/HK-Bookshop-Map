@@ -21,11 +21,10 @@
         <i class="fa-solid fa-book-bookmark text-2xl text-amber-400"></i>
         <h1 class="text-xl font-bold tracking-wide">香港書店地圖</h1>
       </div>
-      <!-- 移動端與桌面端通用的分頁按鈕 -->
-      <nav class="flex space-x-3 text-xs sm:text-sm font-medium">
-        <button onclick="switchTab('map')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">🗺️ 書店地圖</button>
-        <button onclick="switchTab('directory')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">📚 文化檔案</button>
-        <button onclick="switchTab('shop')" class="hover:text-amber-300 transition bg-amber-950/40 px-2 py-1 rounded">🛒 網上商店</button>
+      <nav class="flex space-x-2 text-xs sm:text-sm font-medium">
+        <button onclick="switchTab('map')" class="hover:text-amber-300 transition bg-amber-950/40 px-3 py-1.5 rounded-lg">🗺️ 書店地圖</button>
+        <button onclick="switchTab('directory')" class="hover:text-amber-300 transition bg-amber-950/40 px-3 py-1.5 rounded-lg">📚 文化檔案</button>
+        <button onclick="switchTab('shop')" class="hover:text-amber-300 transition bg-amber-950/40 px-3 py-1.5 rounded-lg">🛒 網上商店</button>
       </nav>
       <div class="relative cursor-pointer" onclick="switchTab('shop')">
         <i class="fa-solid fa-cart-shopping text-xl hover:text-amber-300"></i>
@@ -40,15 +39,30 @@
     <section id="tab-map" class="tab-content active">
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">香港獨立書店名冊</h2>
-        <p class="text-slate-600 text-sm">點擊地區標籤篩選實體獨立書店。</p>
+        <p class="text-slate-600 text-sm">點擊地區標籤篩選實體獨立書店、海外香港書店與圖書館。</p>
       </div>
 
-      <div class="flex flex-wrap gap-2 mb-6">
-        <button onclick="filterRegion('ALL')" class="bg-amber-900 text-white px-4 py-1.5 rounded-full text-sm font-medium">全部區域</button>
-        <button onclick="filterRegion('香港島')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-sm font-medium border">香港島</button>
-        <button onclick="filterRegion('九龍')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-sm font-medium border">九龍</button>
-        <button onclick="filterRegion('新界')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-sm font-medium border">新界</button>
-        <button onclick="filterRegion('離島')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-sm font-medium border">離島</button>
+      <!-- 地區篩選按鈕 -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button onclick="filterRegion('ALL')" class="bg-amber-900 text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium">全部區域</button>
+        <button onclick="filterRegion('香港島')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border">香港島</button>
+        <button onclick="filterRegion('九龍')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border">九龍</button>
+        <button onclick="filterRegion('新界')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border">新界</button>
+        <button onclick="filterRegion('離島')" class="bg-white hover:bg-amber-100 text-slate-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border">離島</button>
+        <button onclick="filterRegion('外國香港書店/圖書館')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-amber-300">🌐 外國香港書店/圖書館</button>
+        <button onclick="filterRegion('已結業書店')" class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium">🕯️ 已結業書店</button>
+      </div>
+
+      <!-- 外國國家子篩選器 (點選外國時顯示) -->
+      <div id="country-filter-bar" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 mb-6 flex flex-wrap items-center gap-2 text-xs">
+        <span class="font-bold text-amber-900 mr-2"><i class="fa-solid fa-globe mr-1"></i>按國家篩選：</span>
+        <button onclick="filterCountry('ALL_OVERSEAS')" class="bg-amber-800 text-white px-3 py-1 rounded-md">全部國家</button>
+        <button onclick="filterCountry('英國')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇬🇧 英國</button>
+        <button onclick="filterCountry('台灣')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇹🇼 台灣</button>
+        <button onclick="filterCountry('加拿大')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇨🇦 加拿大</button>
+        <button onclick="filterCountry('澳洲')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇦🇺 澳洲</button>
+        <button onclick="filterCountry('日本')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇯🇵 日本</button>
+        <button onclick="filterCountry('美國')" class="bg-white border px-3 py-1 rounded-md hover:bg-amber-100">🇺🇸 美國</button>
       </div>
 
       <div id="bookshop-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -61,12 +75,12 @@
       <h2 class="text-2xl font-bold mb-4">作者 & 出版社目錄</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-6 rounded-xl border shadow-sm">
-          <h3 class="font-bold text-lg mb-3 border-b pb-2 text-amber-900"><i class="fa-solid fa-pen-nib mr-2"></i>獨立作者</h3>
-          <div id="author-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">暫無作者資料</p></div>
+          <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900"><i class="fa-solid fa-pen-nib mr-2"></i>獨立作者</h3>
+          <div id="author-list" class="space-y-4 text-sm text-slate-600"><p class="text-slate-400 italic">暫無作者資料</p></div>
         </div>
         <div class="bg-white p-6 rounded-xl border shadow-sm">
-          <h3 class="font-bold text-lg mb-3 border-b pb-2 text-amber-900"><i class="fa-solid fa-building-columns mr-2"></i>獨立出版社</h3>
-          <div id="publisher-list" class="space-y-2 text-sm text-slate-600"><p class="text-slate-400 italic">暫無出版社資料</p></div>
+          <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900"><i class="fa-solid fa-building-columns mr-2"></i>獨立出版社</h3>
+          <div id="publisher-list" class="space-y-4 text-sm text-slate-600"><p class="text-slate-400 italic">暫無出版社資料</p></div>
         </div>
       </div>
     </section>
@@ -110,7 +124,6 @@
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
-    // 修正 Supabase 初始化寫法
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allBookshops = [];
@@ -131,7 +144,6 @@
       const { data, error } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
       if (error) {
         console.error(error);
-        document.getElementById('bookshop-list').innerHTML = `<p class="text-red-500 col-span-full">載入失敗，請檢查資料庫連線。</p>`;
         return;
       }
       allBookshops = data || [];
@@ -141,30 +153,56 @@
     function renderBookshops(list) {
       const container = document.getElementById('bookshop-list');
       if (list.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無書店紀錄。請先於管理員後台 (admin.html) 新增書店。</p>`;
+        container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`;
         return;
       }
       container.innerHTML = list.map(shop => `
-        <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between">
-          <div>
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between">
+          ${shop.image_url ? `<div class="h-44 bg-slate-100 overflow-hidden"><img src="${shop.image_url}" class="w-full h-full object-cover"></div>` : ''}
+          <div class="p-5 flex-grow">
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-lg">${shop.name}</h3>
-              <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full">${shop.region}</span>
+              <h3 class="font-bold text-lg text-slate-800">${shop.name}</h3>
+              <span class="bg-amber-100 text-amber-900 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                ${shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region}
+              </span>
             </div>
-            <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot mr-1"></i>${shop.address || '無地址'}</p>
-            <p class="text-sm text-slate-600 mb-4">${shop.description || ''}</p>
+            
+            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-amber-800"></i>${shop.address || '無地址'}</p>
+            ${shop.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-amber-800"></i>${shop.phone}</p>` : ''}
+            <p class="text-xs text-slate-400 mb-3"><i class="fa-regular fa-clock mr-1"></i>${shop.opening_hours || '未提供營業時間'}</p>
+
+            <p class="text-sm text-slate-600 mb-4 line-clamp-3">${shop.description || ''}</p>
           </div>
-          <div class="flex justify-between items-center text-xs pt-3 border-t">
-            <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${shop.opening_hours || '未提供'}</span>
-            ${shop.google_map_url ? `<a href="${shop.google_map_url}" target="_blank" class="text-amber-800 font-semibold">地圖 ↗</a>` : ''}
+
+          <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
+            <div class="flex space-x-3 text-slate-600 text-base">
+              ${shop.instagram_url ? `<a href="${shop.instagram_url}" target="_blank" class="hover:text-pink-600"><i class="fa-brands fa-instagram"></i></a>` : ''}
+              ${shop.facebook_url ? `<a href="${shop.facebook_url}" target="_blank" class="hover:text-blue-600"><i class="fa-brands fa-facebook"></i></a>` : ''}
+            </div>
+            ${shop.google_map_url ? `<a href="${shop.google_map_url}" target="_blank" class="text-amber-900 font-bold hover:underline">Google Map ↗</a>` : ''}
           </div>
         </div>
       `).join('');
     }
 
     function filterRegion(region) {
+      const countryBar = document.getElementById('country-filter-bar');
+      if (region === '外國香港書店/圖書館') {
+        countryBar.classList.remove('hidden');
+      } else {
+        countryBar.classList.add('hidden');
+      }
+
       if (region === 'ALL') renderBookshops(allBookshops);
       else renderBookshops(allBookshops.filter(b => b.region === region));
+    }
+
+    function filterCountry(country) {
+      if (country === 'ALL_OVERSEAS') {
+        renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館'));
+      } else {
+        renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館' && b.country === country));
+      }
     }
 
     async function fetchProducts() {
@@ -176,13 +214,21 @@
       }
       container.innerHTML = data.map(item => `
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between">
-          <div class="h-40 bg-slate-100 flex items-center justify-center">
-            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-book text-3xl text-slate-300"></i>`}
+          <div class="h-44 bg-slate-100 flex items-center justify-center relative">
+            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
+            <span class="absolute top-2 left-2 bg-amber-900 text-amber-50 text-xs px-2 py-0.5 rounded shadow">${item.stock_type || '買斷'}</span>
           </div>
-          <div class="p-4">
-            <h3 class="font-bold text-base mb-1">${item.name}</h3>
-            <p class="text-amber-900 font-bold mb-3">HK$ ${item.price}</p>
-            <button onclick="addToCart('${item.name}',${item.price})" class="w-full bg-amber-900 text-white text-sm py-2 rounded-lg">加入購物車</button>
+          <div class="p-4 flex-grow flex flex-col justify-between">
+            <div>
+              <span class="text-xs text-amber-800 font-semibold mb-1 block">${item.category || '書籍'}</span>
+              <h3 class="font-bold text-base mb-1 text-slate-800">${item.name}</h3>
+              ${item.author ? `<p class="text-xs text-slate-500 mb-1">作者：${item.author}</p>` : ''}
+              ${item.isbn ? `<p class="text-xs text-slate-400 mb-2">ISBN: ${item.isbn}</p>` : ''}
+            </div>
+            <div class="mt-3">
+              <p class="text-amber-900 font-bold text-lg mb-2">HK$ ${item.price}</p>
+              <button onclick="addToCart('${item.name}',${item.price})" class="w-full bg-amber-900 text-white text-sm py-2 rounded-lg hover:bg-amber-800 transition">加入購物車</button>
+            </div>
           </div>
         </div>
       `).join('');
@@ -193,10 +239,37 @@
       const { data: publishers } = await _supabase.from('publishers').select('*');
       
       if(authors && authors.length > 0) {
-        document.getElementById('author-list').innerHTML = authors.map(a => `<p>• <strong>${a.name}</strong> - ${a.bio || ''}</p>`).join('');
+        document.getElementById('author-list').innerHTML = authors.map(a => `
+          <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
+            ${a.image_url ? `<img src="${a.image_url}" class="w-14 h-14 rounded-full object-cover">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-full text-xl font-bold">${a.name[0]}</div>`}
+            <div>
+              <h4 class="font-bold text-base text-slate-800">${a.name}</h4>
+              ${a.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${a.phone}</p>` : ''}
+              <p class="text-xs text-slate-600 mt-1">${a.bio || ''}</p>
+              <div class="flex gap-3 text-sm text-slate-600 mt-2">
+                ${a.instagram_url ? `<a href="${a.instagram_url}" target="_blank" class="hover:text-pink-600"><i class="fa-brands fa-instagram"></i></a>` : ''}
+                ${a.facebook_url ? `<a href="${a.facebook_url}" target="_blank" class="hover:text-blue-600"><i class="fa-brands fa-facebook"></i></a>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
       }
+
       if(publishers && publishers.length > 0) {
-        document.getElementById('publisher-list').innerHTML = publishers.map(p => `<p>• <strong>${p.name}</strong> - ${p.description || ''}</p>`).join('');
+        document.getElementById('publisher-list').innerHTML = publishers.map(p => `
+          <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
+            ${p.image_url ? `<img src="${p.image_url}" class="w-14 h-14 rounded-lg object-cover">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-lg text-xl font-bold">${p.name[0]}</div>`}
+            <div>
+              <h4 class="font-bold text-base text-slate-800">${p.name}</h4>
+              ${p.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${p.phone}</p>` : ''}
+              <p class="text-xs text-slate-600 mt-1">${p.description || ''}</p>
+              <div class="flex gap-3 text-sm text-slate-600 mt-2">
+                ${p.instagram_url ? `<a href="${p.instagram_url}" target="_blank" class="hover:text-pink-600"><i class="fa-brands fa-instagram"></i></a>` : ''}
+                ${p.facebook_url ? `<a href="${p.facebook_url}" target="_blank" class="hover:text-blue-600"><i class="fa-brands fa-facebook"></i></a>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
       }
     }
 
