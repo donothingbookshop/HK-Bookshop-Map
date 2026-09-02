@@ -152,34 +152,90 @@
       </div>
     </section>
 
-    <!-- 4. 網店商品管理 -->
+    <!-- 4. 網店商品管理 (已升級：加入書籍簡介、主題、ISBN、分店與數量) -->
     <section id="tab-products" class="tab-content">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-product" onsubmit="saveProduct(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-          <h3 id="product-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增網店商品</h3>
+          <h3 id="product-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增網店商品 / 書籍</h3>
           <input type="hidden" id="prod-id">
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">商品名稱 *</label><input type="text" id="prod-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">商品 / 書名 *</label>
+            <input type="text" id="prod-name" required placeholder="例如：笑與幽默" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
-            <div><label class="block text-xs font-medium text-slate-600 mb-1">價格 (HK$) *</label><input type="number" id="prod-price" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
-            <div><label class="block text-xs font-medium text-slate-600 mb-1">庫存類型</label>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">進貨類型</label>
               <select id="prod-stock" class="w-full border rounded px-3 py-1.5 text-sm">
-                <option value="買斷">買斷</option><option value="寄售">寄售</option>
+                <option value="買斷 / 一般進貨">買斷 / 一般進貨</option>
+                <option value="寄售">寄售</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">書籍主題 (分類)</label>
+              <select id="prod-cat" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="📖 文學小說">📖 文學小說</option>
+                <option value="🧠 心理勵志">🧠 心理勵志</option>
+                <option value="🏛️ 人文社科">🏛️ 人文社科</option>
+                <option value="🎨 藝術設計">🎨 藝術設計</option>
+                <option value="🌱 生活風格">🌱 生活風格</option>
+                <option value="🎁 文創周邊">🎁 文創周邊</option>
+                <option value="其他">其他</option>
               </select>
             </div>
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">分類</label><input type="text" id="prod-cat" placeholder="例: 書籍/精品" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">作者</label><input type="text" id="prod-author" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ISBN 碼</label>
+              <input type="text" id="prod-isbn" placeholder="例: 978957883761" class="w-full border rounded px-3 py-1.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">作者姓名</label>
+              <input type="text" id="prod-author" placeholder="作者姓名" class="w-full border rounded px-3 py-1.5 text-sm">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">單價 (HKD) *</label>
+              <input type="number" id="prod-price" required placeholder="例: 65" class="w-full border rounded px-3 py-1.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">書籍數量</label>
+              <input type="number" id="prod-quantity" value="1" min="0" class="w-full border rounded px-3 py-1.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">存放分店</label>
+              <select id="prod-branch" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="觀塘店">觀塘店</option>
+                <option value="西營盤店">西營盤店</option>
+                <option value="荃灣店">荃灣店</option>
+                <option value="網店倉庫">網店倉庫</option>
+                <option value="全線分店">全線分店</option>
+              </select>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">上傳商品相片 / 相片 URL</label>
             <input type="file" id="prod-file" accept="image/*" onchange="uploadImage(this, 'prod-image', 'prod-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
             <span id="prod-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
             <input type="url" id="prod-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
           </div>
-          <div class="flex gap-2">
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">書籍 / 商品簡介介紹</label>
+            <textarea id="prod-desc" rows="3" placeholder="請輸入詳細的書籍簡介或簡短介紹..." class="w-full border rounded px-3 py-1.5 text-sm"></textarea>
+          </div>
+
+          <div class="flex gap-2 pt-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
             <button type="button" onclick="resetForm('product')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
+
         <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
           <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有商品清單</h3>
           <div id="list-products" class="space-y-3">載入中...</div>
@@ -506,16 +562,29 @@
       document.getElementById('publisher-form-title').innerText = "編輯獨立出版社資料";
     }
 
-    // --- 4. 商品 CRUD ---
+    // --- 4. 商品 CRUD (包含完整欄位對應) ---
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       cacheData.products = data || [];
       const list = document.getElementById('list-products');
       if (cacheData.products.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      
       list.innerHTML = cacheData.products.map(pr => `
-        <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
-          <div><h4 class="font-bold text-sm text-slate-800">${pr.name} <span class="text-amber-900 text-xs font-bold">HK$${pr.price}</span></h4><p class="text-xs text-slate-500">${pr.stock_type || '買斷'}</p></div>
-          <div class="flex space-x-2">
+        <div class="flex justify-between items-start p-3 border rounded-lg hover:bg-slate-50 gap-2">
+          <div class="flex-1">
+            <h4 class="font-bold text-sm text-slate-800">
+              ${pr.name} 
+              <span class="text-amber-900 font-bold ml-1">HK$${pr.price}</span>
+            </h4>
+            <div class="flex flex-wrap gap-1 mt-1 text-[11px] text-slate-600">
+              <span class="bg-slate-100 border px-1.5 py-0.5 rounded">${pr.category || '未分類'}</span>
+              ${pr.branch ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded">${pr.branch}</span>` : ''}
+              ${pr.quantity !== undefined && pr.quantity !== null ? `<span class="bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded">庫存: ${pr.quantity}本</span>` : ''}
+              ${pr.isbn ? `<span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">ISBN: ${pr.isbn}</span>` : ''}
+            </div>
+            ${pr.description ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${pr.description}</p>` : ''}
+          </div>
+          <div class="flex space-x-1 shrink-0">
             <button onclick="editProduct(${pr.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
             <button onclick="deleteRecord('shop_products', ${pr.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
           </div>
@@ -531,8 +600,12 @@
         price: parseFloat(document.getElementById('prod-price').value),
         stock_type: document.getElementById('prod-stock').value,
         category: document.getElementById('prod-cat').value,
+        isbn: document.getElementById('prod-isbn').value,
         author: document.getElementById('prod-author').value,
-        image_url: document.getElementById('prod-image').value
+        quantity: parseInt(document.getElementById('prod-quantity').value) || 0,
+        branch: document.getElementById('prod-branch').value,
+        image_url: document.getElementById('prod-image').value,
+        description: document.getElementById('prod-desc').value
       };
       const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
       if (error) alert("操作失敗：" + error.message);
@@ -545,11 +618,15 @@
       document.getElementById('prod-id').value = pr.id;
       document.getElementById('prod-name').value = pr.name || '';
       document.getElementById('prod-price').value = pr.price || '';
-      document.getElementById('prod-stock').value = pr.stock_type || '買斷';
-      document.getElementById('prod-cat').value = pr.category || '';
+      document.getElementById('prod-stock').value = pr.stock_type || '買斷 / 一般進貨';
+      document.getElementById('prod-cat').value = pr.category || '📖 文學小說';
+      document.getElementById('prod-isbn').value = pr.isbn || '';
       document.getElementById('prod-author').value = pr.author || '';
+      document.getElementById('prod-quantity').value = pr.quantity !== undefined ? pr.quantity : 1;
+      document.getElementById('prod-branch').value = pr.branch || '觀塘店';
       document.getElementById('prod-image').value = pr.image_url || '';
-      document.getElementById('product-form-title').innerText = "編輯網店商品資料";
+      document.getElementById('prod-desc').value = pr.description || '';
+      document.getElementById('product-form-title').innerText = "編輯網店商品 / 書籍資料";
     }
 
     // --- 5. 農業/環保 CRUD ---
@@ -665,7 +742,7 @@
       if (statusEl) statusEl.classList.add('hidden');
 
       const titleElem = document.getElementById(`${type}-form-title`);
-      if (titleElem) titleElem.innerText = `新增${type === 'bookshop' ? '實體書店/圖書館' : type === 'author' ? '獨立作者' : type === 'publisher' ? '獨立出版社' : type === 'product' ? '網店商品' : type === 'theatre' ? '劇團' : '農業/環保單位'}`;
+      if (titleElem) titleElem.innerText = `新增${type === 'bookshop' ? '實體書店/圖書館' : type === 'author' ? '獨立作者' : type === 'publisher' ? '獨立出版社' : type === 'product' ? '網店商品 / 書籍' : type === 'theatre' ? '劇團' : '農業/環保單位'}`;
     }
   </script>
 </body>
