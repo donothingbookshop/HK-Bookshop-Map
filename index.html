@@ -110,7 +110,25 @@
 
     <!-- Tab 3: 網上商店 -->
     <section id="tab-shop" class="tab-content">
-      <div class="mb-6"><h2 class="text-2xl font-bold">網上選購</h2></div>
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+        <h2 class="text-2xl font-bold">網上選購</h2>
+        
+        <!-- 書籍主題 (分類) 篩選下拉選單 -->
+        <div class="flex items-center space-x-2">
+          <label for="category-select" class="text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">書籍主題 (分類)：</label>
+          <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer">
+            <option value="ALL">📖 全部主題</option>
+            <option value="文學小說">📖 文學小說</option>
+            <option value="心理勵志">🧠 心理勵志</option>
+            <option value="人文社科">🏛️ 人文社科</option>
+            <option value="藝術設計">🎨 藝術設計</option>
+            <option value="生活風格">🌱 生活風格</option>
+            <option value="文創周邊">🎁 文創周邊</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6" id="product-list">
           <p class="text-slate-400 italic col-span-full">載入商品中...</p>
@@ -188,7 +206,18 @@
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let allBookshops = [], allEco = [], allTheatre = [], cart = [];
+    let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], cart = [];
+
+    // 主題與對應圖示映射
+    const categoryIcons = {
+      '文學小說': '📖',
+      '心理勵志': '🧠',
+      '人文社科': '🏛️',
+      '藝術設計': '🎨',
+      '生活風格': '🌱',
+      '文創周邊': '🎁',
+      '其他': '📚'
+    };
 
     window.onload = function() {
       fetchBookshops();
@@ -327,27 +356,76 @@
 
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*');
+      allProducts = data || [];
+      renderProducts(allProducts);
+    }
+
+    function renderProducts(products) {
       const container = document.getElementById('product-list');
-      if (!data || data.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無商品。</p>`; return; }
-      container.innerHTML = data.map(item => `
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          <div class="h-44 bg-slate-50 flex items-center justify-center relative p-2">
-            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
-            <span class="absolute top-2 left-2 bg-amber-900 text-amber-50 text-xs px-2 py-0.5 rounded">${item.stock_type || '買斷'}</span>
-          </div>
-          <div class="p-4 flex-grow flex flex-col justify-between">
-            <div>
-              <span class="text-xs text-amber-800 font-semibold mb-1 block">${item.category || '書籍'}</span>
-              <h3 class="font-bold text-base mb-1 text-slate-800">${item.name}</h3>
-              ${item.author ? `<p class="text-xs text-slate-500">作者：${item.author}</p>` : ''}
+      if (!products || products.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無相關商品。</p>`; return; }
+      
+      container.innerHTML = products.map(item => {
+        const catName = item.category || '心理勵志';
+        const catIcon = categoryIcons[catName] || '📚';
+
+        // 預設 3 間分店存貨狀態 (若資料庫無特定欄位時使用預設範例)
+        const branchStocks = item.branch_stock || [
+          { store: '旺角店', status: '有存貨' },
+          { store: '銅鑼灣店', status: '缺貨' },
+          { store: '荃灣店', status: '有存貨' }
+        ];
+
+        return `
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+            <div class="h-44 bg-slate-50 flex items-center justify-center relative p-2">
+              ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
+              <span class="absolute top-2 left-2 bg-amber-900 text-amber-50 text-xs px-2 py-0.5 rounded">${item.stock_type || '買斷 / 一般進貨'}</span>
             </div>
-            <div class="mt-3">
-              <p class="text-amber-900 font-bold text-lg mb-2">HK$ ${item.price}</p>
-              <button onclick="addToCart('${item.name}',${item.price})" class="w-full bg-amber-900 text-white text-sm py-2 rounded-lg hover:bg-amber-800 transition">加入購物車</button>
+            
+            <div class="p-4 flex-grow flex flex-col justify-between">
+              <div>
+                <!-- 展示書籍主題（分類）與圖示 -->
+                <div class="flex items-center text-xs text-amber-800 font-semibold mb-1">
+                  <span class="mr-1">${catIcon}</span>
+                  <span>${catName}</span>
+                </div>
+                
+                <h3 class="font-bold text-base mb-1 text-slate-800 line-clamp-2">${item.name}</h3>
+                ${item.author ? `<p class="text-xs text-slate-500 mb-2">作者：${item.author}</p>` : ''}
+
+                <!-- 顯示 3 間分店存貨狀態區塊 -->
+                <div class="mt-3 pt-2 border-t border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-1 flex items-center">
+                    <i class="fa-solid fa-store mr-1 text-amber-800"></i>分店存貨：
+                  </p>
+                  <div class="flex flex-wrap gap-1 text-[11px]">
+                    ${branchStocks.map(b => {
+                      let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                      if (b.status === '缺貨') badgeClass = "bg-slate-100 text-slate-400 border-slate-200";
+                      else if (b.status === '少量') badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                      return `<span class="border px-1.5 py-0.5 rounded ${badgeClass}">${b.store}: ${b.status}</span>`;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <p class="text-amber-900 font-bold text-lg mb-2">HK$ ${item.price}</p>
+                <button onclick="addToCart('${item.name}',${item.price})" class="w-full bg-amber-900 text-white text-sm py-2 rounded-lg hover:bg-amber-800 transition">加入購物車</button>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
+    }
+
+    function filterProductCategory(selectedCat) {
+      if (selectedCat === 'ALL') {
+        renderProducts(allProducts);
+      } else {
+        const filtered = allProducts.filter(p => (p.category || '心理勵志') === selectedCat);
+        renderProducts(filtered);
+      }
     }
 
     async function fetchAuthorsAndPublishers() {
@@ -391,7 +469,6 @@
 
     function addToCart(name, price) { cart.push({ name, price }); updateCartUI(); }
 
-    // 新增：根據索引刪除購物車中的書籍項目
     function removeFromCart(index) {
       cart.splice(index, 1);
       updateCartUI();
