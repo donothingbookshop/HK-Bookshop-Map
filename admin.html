@@ -336,6 +336,12 @@
     let currentTab = 'bookshops';
     let cacheData = {};
 
+    // 輔助工具：清洗字串（移除 Emoji、符號及前後空白）
+    function cleanCategory(str) {
+      if (!str) return '其他';
+      return str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+    }
+
     window.onload = async function() {
       const { data: { session } } = await _supabase.auth.getSession();
       if (session) {
@@ -631,7 +637,7 @@
               <span class="text-amber-900 font-bold ml-1">HK$${pr.price}</span>
             </h4>
             <div class="flex flex-wrap gap-1 mt-1 text-[11px] text-slate-600">
-              <span class="bg-slate-100 border px-1.5 py-0.5 rounded">${pr.category || '未分類'}</span>
+              <span class="bg-slate-100 border px-1.5 py-0.5 rounded">${cleanCategory(pr.category)}</span>
               ${pr.branch ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded">${pr.branch}</span>` : ''}
               ${pr.quantity !== undefined && pr.quantity !== null ? `<span class="bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded">庫存: ${pr.quantity}本</span>` : ''}
               ${pr.isbn ? `<span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">ISBN: ${pr.isbn}</span>` : ''}
@@ -649,11 +655,16 @@
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prod-id').value;
+      
+      // 使用 cleanCategory 將選單的 Emoji 清除後儲存，確保資料一致
+      const rawCatOption = document.getElementById('prod-cat').value;
+      const cleanCatName = cleanCategory(rawCatOption);
+
       const payload = {
         name: document.getElementById('prod-name').value,
         price: parseFloat(document.getElementById('prod-price').value),
         stock_type: document.getElementById('prod-stock').value,
-        category: document.getElementById('prod-cat').value,
+        category: cleanCatName,
         isbn: document.getElementById('prod-isbn').value,
         author: document.getElementById('prod-author').value,
         quantity: parseInt(document.getElementById('prod-quantity').value) || 0,
@@ -673,7 +684,17 @@
       document.getElementById('prod-name').value = pr.name || '';
       document.getElementById('prod-price').value = pr.price || '';
       document.getElementById('prod-stock').value = pr.stock_type || '買斷 / 一般進貨';
-      document.getElementById('prod-cat').value = pr.category || '📖 文學小說';
+      
+      // 比對設置分類下拉框
+      const currentCatClean = cleanCategory(pr.category);
+      const catSelect = document.getElementById('prod-cat');
+      for (let i = 0; i < catSelect.options.length; i++) {
+        if (cleanCategory(catSelect.options[i].value) === currentCatClean) {
+          catSelect.selectedIndex = i;
+          break;
+        }
+      }
+
       document.getElementById('prod-isbn').value = pr.isbn || '';
       document.getElementById('prod-author').value = pr.author || '';
       document.getElementById('prod-quantity').value = pr.quantity !== undefined ? pr.quantity : 1;
