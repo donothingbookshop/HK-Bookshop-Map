@@ -41,8 +41,8 @@
         <button onclick="switchTab('theatre')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🎭 劇團</button>
       </nav>
 
-      <!-- 購物車快捷圖示 -->
-      <div class="relative cursor-pointer" onclick="switchTab('shop')">
+      <!-- 購物車快捷圖示 (點擊跳轉至網上商店並自動對齊購物車付款區) -->
+      <div class="relative cursor-pointer" onclick="goToCartCheckout()">
         <i class="fa-solid fa-cart-shopping text-xl hover:text-amber-300 transition"></i>
         <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
       </div>
@@ -117,7 +117,7 @@
         </div>
         
         <!-- 購物車結帳側邊欄 -->
-        <div class="bg-white p-6 rounded-xl border shadow-sm h-fit sticky top-20">
+        <div id="checkout-sidebar" class="bg-white p-6 rounded-xl border shadow-sm h-fit sticky top-20">
           <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900"><i class="fa-solid fa-basket-shopping mr-2"></i>購物車內容</h3>
           <div id="cart-items" class="text-sm space-y-3 mb-4 text-slate-600"><p class="text-slate-400 italic">購物車目前是空的</p></div>
           <div class="border-t pt-3 mb-4 flex justify-between font-bold text-lg">
@@ -201,6 +201,14 @@
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    // 按下右上角購物車，直接切換到商店並平滑滾動到結帳側邊欄
+    function goToCartCheckout() {
+      switchTab('shop');
+      setTimeout(() => {
+        document.getElementById('checkout-sidebar').scrollIntoView({ behavior: 'smooth' });
+      }, 50);
     }
 
     async function fetchBookshops() {
@@ -383,12 +391,35 @@
 
     function addToCart(name, price) { cart.push({ name, price }); updateCartUI(); }
 
+    // 新增：根據索引刪除購物車中的書籍項目
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
     function updateCartUI() {
       document.getElementById('cart-count').innerText = cart.length;
       const cartContainer = document.getElementById('cart-items');
-      if (cart.length === 0) { cartContainer.innerHTML = `<p class="text-slate-400 italic">購物車是空的</p>`; document.getElementById('cart-total').innerText = `HK$ 0`; return; }
+      if (cart.length === 0) { 
+        cartContainer.innerHTML = `<p class="text-slate-400 italic">購物車是空的</p>`; 
+        document.getElementById('cart-total').innerText = `HK$ 0`; 
+        return; 
+      }
       let total = 0;
-      cartContainer.innerHTML = cart.map((item) => { total += item.price; return `<div class="flex justify-between text-xs"><span>${item.name}</span><span class="font-bold">HK$ ${item.price}</span></div>`; }).join('');
+      cartContainer.innerHTML = cart.map((item, index) => { 
+        total += item.price; 
+        return `
+          <div class="flex justify-between items-center text-xs border-b pb-2">
+            <span class="font-medium text-slate-700 pr-2">${item.name}</span>
+            <div class="flex items-center space-x-2 shrink-0">
+              <span class="font-bold text-slate-800">HK$ ${item.price}</span>
+              <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-bold px-1" title="移除商品">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `; 
+      }).join('');
       document.getElementById('cart-total').innerText = `HK$ ${total}`;
     }
 
