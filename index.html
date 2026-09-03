@@ -5,34 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>香港獨立書店地圖 & 文化社區</title>
 
-  <!-- 載入 Tailwind CSS (樣式庫) -->
+  <!-- 載入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- 載入 Font Awesome (圖示庫) -->
+  <!-- 載入 Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- 載入 Supabase JS Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* Tab 切換樣式 */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
 
-  <!-- 1. 頂部導航欄 (Navigation Bar) -->
+  <!-- 1. 頂部導航欄 -->
   <header class="bg-amber-900 text-amber-50 sticky top-0 z-50 shadow-md">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
 
-      <!-- 品牌 Logo -->
       <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('map')">
         <i class="fa-solid fa-book-bookmark text-2xl text-amber-400"></i>
         <h1 class="text-lg font-bold tracking-wide">香港書店地圖</h1>
       </div>
 
-      <!-- 選單按鈕區 -->
       <nav class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
         <button onclick="switchTab('map')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🗺️ 書店地圖</button>
         <button onclick="switchTab('directory')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">📚 文化檔案</button>
@@ -41,7 +38,6 @@
         <button onclick="switchTab('theatre')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🎭 劇團</button>
       </nav>
 
-      <!-- 購物車快捷圖示 (點擊跳轉至網上商店並自動對齊購物車付款區) -->
       <div class="relative cursor-pointer" onclick="goToCartCheckout()">
         <i class="fa-solid fa-cart-shopping text-xl hover:text-amber-300 transition"></i>
         <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
@@ -60,7 +56,6 @@
         <p class="text-slate-600 text-sm">點擊地區標籤篩選實體獨立書店、海外香港書店與圖書館。</p>
       </div>
 
-      <!-- 地區篩選按鈕列 -->
       <div class="flex flex-wrap gap-2 mb-4">
         <button onclick="filterRegion('ALL')" class="bg-amber-900 text-white px-3 py-1.5 rounded-full text-xs font-medium transition">全部區域</button>
         <button onclick="filterRegion('香港島')" class="bg-white hover:bg-amber-100 px-3 py-1.5 rounded-full text-xs font-medium border transition">香港島</button>
@@ -71,7 +66,6 @@
         <button onclick="filterRegion('已結業書店')" class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-full text-xs font-medium transition">🕯️ 已結業書店</button>
       </div>
 
-      <!-- 海外國家二級篩選列 (預設隱藏) -->
       <div id="country-filter-bar" class="hidden bg-amber-50 p-3 rounded-xl border border-amber-200 mb-6 flex flex-wrap items-center gap-2 text-xs">
         <span class="font-bold text-amber-900 mr-2"><i class="fa-solid fa-globe mr-1"></i>按國家篩選：</span>
         <button onclick="filterCountry('ALL_OVERSEAS')" class="bg-amber-800 text-white px-2.5 py-1 rounded">全部國家</button>
@@ -113,7 +107,6 @@
       <div class="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
         <h2 class="text-2xl font-bold">網上選購</h2>
         
-        <!-- 書籍主題 (分類) 篩選下拉選單 -->
         <div class="flex items-center space-x-2">
           <label for="category-select" class="text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">書籍主題 (分類)：</label>
           <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer">
@@ -194,12 +187,10 @@
 
   </main>
 
-  <!-- 頁尾 -->
   <footer class="bg-slate-800 text-slate-400 text-xs py-6 text-center mt-auto">
     <p>© 香港獨立書店地圖 & 文化社區</p>
   </footer>
 
-  <!-- JavaScript 業務邏輯 -->
   <script>
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
@@ -208,7 +199,6 @@
 
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], cart = [];
 
-    // 主題與對應圖示映射
     const categoryIcons = {
       '文學小說': '📖',
       '心理勵志': '🧠',
@@ -219,7 +209,6 @@
       '其他': '📚'
     };
 
-    // 輔助工具：清洗字串（移除 Emoji、符號及前後空白），以進行精準分類比對
     function cleanCategory(str) {
       if (!str) return '其他';
       return str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
@@ -238,7 +227,6 @@
       document.getElementById(`tab-${tabId}`).classList.add('active');
     }
 
-    // 按下右上角購物車，直接切換到商店並平滑滾動到結帳側邊欄
     function goToCartCheckout() {
       switchTab('shop');
       setTimeout(() => {
@@ -246,6 +234,7 @@
       }, 50);
     }
 
+    // --- 書店 ---
     async function fetchBookshops() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshops = data || [];
@@ -292,6 +281,178 @@
       else renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館' && b.country === country));
     }
 
+    // --- 作者 & 出版社 ---
+    async function fetchAuthorsAndPublishers() {
+      const { data: authors } = await _supabase.from('authors').select('*');
+      const { data: publishers } = await _supabase.from('publishers').select('*');
+
+      const authorContainer = document.getElementById('author-list');
+      if (authors && authors.length > 0) {
+        authorContainer.innerHTML = authors.map(a => `
+          <div class="border-b pb-3 flex space-x-3">
+            ${a.image_url ? `<img src="${a.image_url}" class="w-12 h-12 rounded-full object-cover">` : ''}
+            <div>
+              <h4 class="font-bold text-slate-800">${a.name}</h4>
+              <p class="text-xs text-slate-500">${a.bio || ''}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const pubContainer = document.getElementById('publisher-list');
+      if (publishers && publishers.length > 0) {
+        pubContainer.innerHTML = publishers.map(p => `
+          <div class="border-b pb-3 flex space-x-3">
+            ${p.image_url ? `<img src="${p.image_url}" class="w-12 h-12 rounded object-cover">` : ''}
+            <div>
+              <h4 class="font-bold text-slate-800">${p.name}</h4>
+              <p class="text-xs text-slate-500">${p.description || ''}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // --- 網上商店 (支援多分店庫存顯示) ---
+    async function fetchProducts() {
+      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
+      allProducts = data || [];
+      renderProducts(allProducts);
+    }
+
+    function renderProducts(list) {
+      const container = document.getElementById('product-list');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無商品。</p>`; return; }
+      
+      container.innerHTML = list.map(p => {
+        const cleanCat = cleanCategory(p.category);
+        const icon = categoryIcons[cleanCat] || '📚';
+
+        // 解析多分店庫存
+        let stocks = p.branch_stocks || {};
+        if (typeof stocks === 'string') {
+          try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
+        }
+        if (Object.keys(stocks).length === 0 && p.branch) {
+          stocks[p.branch] = p.quantity || 0;
+        }
+
+        // 生成各分店標籤
+        const branchBadges = Object.entries(stocks).map(([b, q]) => `
+          <span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded text-[11px] font-medium">
+            📍 ${b}: ${q}本
+          </span>
+        `).join(' ');
+
+        const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
+
+        return `
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+            ${p.image_url ? `<div class="h-48 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${p.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
+            <div class="p-5 flex-grow">
+              <div class="flex justify-between items-start mb-1">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${icon} ${cleanCat}</span>
+                <span class="text-xs font-bold text-amber-900">${p.stock_type || '一般進貨'}</span>
+              </div>
+              <h3 class="font-bold text-base text-slate-800 mt-2 mb-1">${p.name}</h3>
+              ${p.author ? `<p class="text-xs text-slate-500 mb-1">作者：${p.author}</p>` : ''}
+              ${p.isbn ? `<p class="text-xs text-slate-400 mb-2">ISBN: ${p.isbn}</p>` : ''}
+              
+              <!-- 顯示所有存貨分店標籤 -->
+              <div class="flex flex-wrap gap-1 my-2">
+                ${branchBadges || '<span class="text-xs text-slate-400">暫無分店庫存</span>'}
+              </div>
+
+              <p class="text-xs text-slate-600 line-clamp-3 my-2">${p.description || ''}</p>
+            </div>
+            <div class="p-4 bg-slate-50 border-t flex items-center justify-between">
+              <div>
+                <span class="text-lg font-bold text-amber-900">HK$${p.price}</span>
+                <span class="text-[11px] block ${totalQty > 0 ? 'text-emerald-700 font-semibold' : 'text-red-500 font-semibold'}">
+                  ${totalQty > 0 ? `總存貨: ${totalQty}本` : '缺貨中'}
+                </span>
+              </div>
+              <button onclick="addToCart(${p.id})" ${totalQty <= 0 ? 'disabled' : ''} class="bg-amber-900 hover:bg-amber-800 disabled:bg-slate-300 text-white text-xs px-3 py-2 rounded-lg transition font-medium">
+                ${totalQty > 0 ? '加入購物車' : '已售罄'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterProductCategory(cat) {
+      if (cat === 'ALL') renderProducts(allProducts);
+      else renderProducts(allProducts.filter(p => cleanCategory(p.category) === cleanCategory(cat)));
+    }
+
+    function addToCart(id) {
+      const product = allProducts.find(p => p.id === id);
+      if (!product) return;
+      const exist = cart.find(item => item.id === id);
+      if (exist) { exist.qty += 1; } else { cart.push({ ...product, qty: 1 }); }
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const container = document.getElementById('cart-items');
+      const countEl = document.getElementById('cart-count');
+      const totalEl = document.getElementById('cart-total');
+
+      const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
+      countEl.innerText = totalItems;
+
+      if (cart.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 italic">購物車目前是空的</p>`;
+        totalEl.innerText = 'HK$ 0';
+        return;
+      }
+
+      let totalCost = 0;
+      container.innerHTML = cart.map(item => {
+        totalCost += item.price * item.qty;
+        return `
+          <div class="flex justify-between items-center text-xs border-b pb-2">
+            <div>
+              <p class="font-bold text-slate-800">${item.name}</p>
+              <p class="text-slate-500">HK$${item.price} x ${item.qty}</p>
+            </div>
+            <div class="flex items-center space-x-1">
+              <button onclick="changeQty(${item.id}, -1)" class="px-2 py-0.5 bg-slate-200 rounded text-slate-700">-</button>
+              <span>${item.qty}</span>
+              <button onclick="changeQty(${item.id}, 1)" class="px-2 py-0.5 bg-slate-200 rounded text-slate-700">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.innerText = `HK$ ${totalCost}`;
+    }
+
+    function changeQty(id, delta) {
+      const item = cart.find(x => x.id === id);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) { cart = cart.filter(x => x.id !== id); }
+      updateCartUI();
+    }
+
+    async function submitOrder() {
+      const name = document.getElementById('cust-name').value;
+      const phone = document.getElementById('cust-phone').value;
+      const payment = document.getElementById('payment-method').value;
+
+      if (!name || !phone) { alert("請填寫姓名與電話！"); return; }
+      if (cart.length === 0) { alert("購物車是空的！"); return; }
+
+      alert(`✅ 訂單已提交！\n感謝 ${name} 的支持，稍後將透過電話 ${phone} 與您確認 ${payment} 付款細節。`);
+      cart = [];
+      updateCartUI();
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-phone').value = '';
+    }
+
+    // --- 農業 & 環保 ---
     async function fetchEco() {
       const { data } = await _supabase.from('eco_farms').select('*');
       allEco = data || [];
@@ -326,6 +487,7 @@
       else renderEco(allEco.filter(e => e.category === cat));
     }
 
+    // --- 劇團 ---
     async function fetchTheatre() {
       const { data } = await _supabase.from('theatre_groups').select('*');
       allTheatre = data || [];
@@ -355,174 +517,9 @@
       `).join('');
     }
 
-    function filterTheatre(reg) {
-      if (reg === 'ALL') renderTheatre(allTheatre);
-      else renderTheatre(allTheatre.filter(t => t.region === reg));
-    }
-
-    async function fetchProducts() {
-      const { data } = await _supabase.from('shop_products').select('*');
-      allProducts = data || [];
-      renderProducts(allProducts);
-    }
-
-    function renderProducts(products) {
-      const container = document.getElementById('product-list');
-      if (!products || products.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無相關商品。</p>`; return; }
-      
-      container.innerHTML = products.map(item => {
-        const rawCat = cleanCategory(item.category);
-        const catIcon = categoryIcons[rawCat] || '📚';
-
-        // 修正：動態讀取後台真實設定的分店與庫存數量
-        const branchName = item.branch || '網店倉庫';
-        const qty = (item.quantity !== undefined && item.quantity !== null) ? item.quantity : 1;
-        
-        let stockStatusText = "有存貨";
-        let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
-
-        if (qty <= 0) {
-          stockStatusText = "缺貨";
-          badgeClass = "bg-slate-100 text-slate-400 border-slate-200";
-        } else if (qty <= 2) {
-          stockStatusText = `少量 (${qty}本)`;
-          badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
-        } else {
-          stockStatusText = `有存貨 (${qty}本)`;
-        }
-
-        return `
-          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-            <div class="h-44 bg-slate-50 flex items-center justify-center relative p-2">
-              ${item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
-              <span class="absolute top-2 left-2 bg-amber-900 text-amber-50 text-xs px-2 py-0.5 rounded">${item.stock_type || '買斷 / 一般進貨'}</span>
-            </div>
-            
-            <div class="p-4 flex-grow flex flex-col justify-between">
-              <div>
-                <!-- 展示書籍主題（分類）與圖示 -->
-                <div class="flex items-center text-xs text-amber-800 font-semibold mb-1">
-                  <span class="mr-1">${catIcon}</span>
-                  <span>${rawCat}</span>
-                </div>
-                
-                <h3 class="font-bold text-base mb-1 text-slate-800 line-clamp-2">${item.name}</h3>
-                ${item.author ? `<p class="text-xs text-slate-500 mb-2">作者：${item.author}</p>` : ''}
-
-                <!-- 顯示後台真實設定的分店與存貨狀態區塊 -->
-                <div class="mt-3 pt-2 border-t border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-1 flex items-center">
-                    <i class="fa-solid fa-store mr-1 text-amber-800"></i>存放地點：
-                  </p>
-                  <div class="flex flex-wrap gap-1 text-[11px]">
-                    <span class="border px-1.5 py-0.5 rounded ${badgeClass}">${branchName}: ${stockStatusText}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <p class="text-amber-900 font-bold text-lg mb-2">HK$ ${item.price}</p>
-                <button onclick="addToCart('${item.name}',${item.price})" class="w-full bg-amber-900 text-white text-sm py-2 rounded-lg hover:bg-amber-800 transition">加入購物車</button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function filterProductCategory(selectedCat) {
-      if (selectedCat === 'ALL') {
-        renderProducts(allProducts);
-      } else {
-        // 使用 cleanCategory 對選單文字與資料庫紀錄做雙重清洗後比對
-        const targetCat = cleanCategory(selectedCat);
-        const filtered = allProducts.filter(p => cleanCategory(p.category) === targetCat);
-        renderProducts(filtered);
-      }
-    }
-
-    async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await _supabase.from('authors').select('*');
-      const { data: publishers } = await _supabase.from('publishers').select('*');
-
-      if(authors && authors.length > 0) {
-        document.getElementById('author-list').innerHTML = authors.map(a => `
-          <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
-            ${a.image_url ? `<img src="${a.image_url}" class="w-14 h-14 rounded-full object-contain bg-white border border-slate-200">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-full text-xl font-bold">${a.name[0]}</div>`}
-            <div>
-              <h4 class="font-bold text-base text-slate-800">${a.name}</h4>
-              ${a.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${a.phone}</p>` : ''}
-              <p class="text-xs text-slate-600 mt-1">${a.bio || ''}</p>
-              <div class="flex gap-3 text-sm text-slate-600 mt-2">
-                ${a.instagram_url ? `<a href="${a.instagram_url}" target="_blank" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-                ${a.facebook_url ? `<a href="${a.facebook_url}" target="_blank" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      if(publishers && publishers.length > 0) {
-        document.getElementById('publisher-list').innerHTML = publishers.map(p => `
-          <div class="flex gap-4 p-3 border rounded-xl bg-slate-50 items-center">
-            ${p.image_url ? `<img src="${p.image_url}" class="w-14 h-14 rounded-lg object-contain bg-white border border-slate-200">` : `<div class="w-14 h-14 bg-amber-100 text-amber-900 flex items-center justify-center rounded-lg text-xl font-bold">${p.name[0]}</div>`}
-            <div>
-              <h4 class="font-bold text-base text-slate-800">${p.name}</h4>
-              ${p.phone ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone mr-1"></i>${p.phone}</p>` : ''}
-              <p class="text-xs text-slate-600 mt-1">${p.description || ''}</p>
-              <div class="flex gap-3 text-sm text-slate-600 mt-2">
-                ${p.instagram_url ? `<a href="${p.instagram_url}" target="_blank" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-                ${p.facebook_url ? `<a href="${p.facebook_url}" target="_blank" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-    }
-
-    function addToCart(name, price) { cart.push({ name, price }); updateCartUI(); }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      updateCartUI();
-    }
-
-    function updateCartUI() {
-      document.getElementById('cart-count').innerText = cart.length;
-      const cartContainer = document.getElementById('cart-items');
-      if (cart.length === 0) { 
-        cartContainer.innerHTML = `<p class="text-slate-400 italic">購物車是空的</p>`; 
-        document.getElementById('cart-total').innerText = `HK$ 0`; 
-        return; 
-      }
-      let total = 0;
-      cartContainer.innerHTML = cart.map((item, index) => { 
-        total += item.price; 
-        return `
-          <div class="flex justify-between items-center text-xs border-b pb-2">
-            <span class="font-medium text-slate-700 pr-2">${item.name}</span>
-            <div class="flex items-center space-x-2 shrink-0">
-              <span class="font-bold text-slate-800">HK$ ${item.price}</span>
-              <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-bold px-1" title="移除商品">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-        `; 
-      }).join('');
-      document.getElementById('cart-total').innerText = `HK$ ${total}`;
-    }
-
-    async function submitOrder() {
-      const name = document.getElementById('cust-name').value.trim();
-      const phone = document.getElementById('cust-phone').value.trim();
-      const method = document.getElementById('payment-method').value;
-      if (!name || !phone || cart.length === 0) return alert("請填寫資料並確保購物車有商品！");
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      const orderNo = 'ORD-' + Date.now();
-      const { error } = await _supabase.from('shop_orders').insert([{ order_no: orderNo, customer_name: name, customer_phone: phone, payment_method: method, total_amount: total, items_json: cart }]);
-      if (error) alert("下單失敗：" + error.message);
-      else { alert(`✅ 下單成功！單號：${orderNo}`); cart = []; updateCartUI(); }
+    function filterTheatre(region) {
+      if (region === 'ALL') renderTheatre(allTheatre);
+      else renderTheatre(allTheatre.filter(t => t.region === region));
     }
   </script>
 </body>
