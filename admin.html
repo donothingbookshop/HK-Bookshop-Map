@@ -363,6 +363,17 @@
     let currentTab = 'bookshops';
     let cacheData = {};
 
+    // 輔助函式：自動過濾掉空值，防範欄位不存在或空白引發資料庫寫入問題
+    function cleanPayload(obj) {
+      const cleanObj = {};
+      Object.keys(obj).forEach(key => {
+        if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+          cleanObj[key] = obj[key];
+        }
+      });
+      return cleanObj;
+    }
+
     function cleanCategory(str) {
       if (!str) return '其他';
       return str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
@@ -421,22 +432,22 @@
     function filterAdminList() {
       const q = document.getElementById('admin-search').value.toLowerCase().trim();
       if (currentTab === 'bookshops') {
-        const filtered = cacheData.bookshops.filter(b => (b.name && b.name.toLowerCase().includes(q)) || (b.address && b.address.toLowerCase().includes(q)));
+        const filtered = (cacheData.bookshops || []).filter(b => (b.name && b.name.toLowerCase().includes(q)) || (b.address && b.address.toLowerCase().includes(q)));
         renderBookshops(filtered);
       } else if (currentTab === 'authors') {
-        const filtered = cacheData.authors.filter(a => (a.name && a.name.toLowerCase().includes(q)) || (a.bio && a.bio.toLowerCase().includes(q)));
+        const filtered = (cacheData.authors || []).filter(a => (a.name && a.name.toLowerCase().includes(q)) || (a.bio && a.bio.toLowerCase().includes(q)));
         renderAuthors(filtered);
       } else if (currentTab === 'publishers') {
-        const filtered = cacheData.publishers.filter(p => (p.name && p.name.toLowerCase().includes(q)));
+        const filtered = (cacheData.publishers || []).filter(p => (p.name && p.name.toLowerCase().includes(q)));
         renderPublishers(filtered);
       } else if (currentTab === 'products') {
-        const filtered = cacheData.products.filter(p => (p.name && p.name.toLowerCase().includes(q)) || (p.isbn && p.isbn.toLowerCase().includes(q)) || (p.author && p.author.toLowerCase().includes(q)));
+        const filtered = (cacheData.products || []).filter(p => (p.name && p.name.toLowerCase().includes(q)) || (p.isbn && p.isbn.toLowerCase().includes(q)) || (p.author && p.author.toLowerCase().includes(q)));
         renderProducts(filtered);
       } else if (currentTab === 'eco') {
-        const filtered = cacheData.eco.filter(e => (e.name && e.name.toLowerCase().includes(q)) || (e.address && e.address.toLowerCase().includes(q)));
+        const filtered = (cacheData.eco || []).filter(e => (e.name && e.name.toLowerCase().includes(q)) || (e.address && e.address.toLowerCase().includes(q)));
         renderEco(filtered);
       } else if (currentTab === 'theatre') {
-        const filtered = cacheData.theatre.filter(t => (t.name && t.name.toLowerCase().includes(q)));
+        const filtered = (cacheData.theatre || []).filter(t => (t.name && t.name.toLowerCase().includes(q)));
         renderTheatre(filtered);
       }
     }
@@ -503,7 +514,7 @@
     async function saveBookshop(e) {
       e.preventDefault();
       const id = document.getElementById('bs-id').value;
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('bs-name').value,
         region: document.getElementById('bs-region').value,
         country: document.getElementById('bs-country').value,
@@ -516,9 +527,9 @@
         facebook_url: document.getElementById('bs-fb').value,
         image_url: document.getElementById('bs-image').value,
         description: document.getElementById('bs-desc').value,
-      };
+      });
       const { error } = id ? await _supabase.from('bookshops').update(payload).eq('id', id) : await _supabase.from('bookshops').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
+      if (error) alert("操作失敗：" + error.message + "\n請執行 SQL 指令補全資料庫欄位。");
       else { alert("✅ 儲存成功！"); resetForm('bookshop'); fetchBookshops(); }
     }
 
@@ -565,7 +576,7 @@
     async function saveAuthor(e) {
       e.preventDefault();
       const id = document.getElementById('au-id').value;
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('au-name').value,
         phone: document.getElementById('au-phone').value,
         website_url: document.getElementById('au-website').value,
@@ -573,9 +584,9 @@
         facebook_url: document.getElementById('au-fb').value,
         image_url: document.getElementById('au-image').value,
         bio: document.getElementById('au-bio').value
-      };
+      });
       const { error } = id ? await _supabase.from('authors').update(payload).eq('id', id) : await _supabase.from('authors').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
+      if (error) alert("操作失敗：" + error.message + "\n請執行 SQL 指令補全資料庫欄位。");
       else { alert("✅ 儲存成功！"); resetForm('author'); fetchAuthors(); }
     }
 
@@ -617,7 +628,7 @@
     async function savePublisher(e) {
       e.preventDefault();
       const id = document.getElementById('pub-id').value;
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('pub-name').value,
         phone: document.getElementById('pub-phone').value,
         website_url: document.getElementById('pub-website').value,
@@ -625,9 +636,9 @@
         facebook_url: document.getElementById('pub-fb').value,
         image_url: document.getElementById('pub-image').value,
         description: document.getElementById('pub-desc').value
-      };
+      });
       const { error } = id ? await _supabase.from('publishers').update(payload).eq('id', id) : await _supabase.from('publishers').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
+      if (error) alert("操作失敗：" + error.message + "\n請確認是否已至 Supabase 執行 SQL 新增 website_url 欄位。");
       else { alert("✅ 儲存成功！"); resetForm('publisher'); fetchPublishers(); }
     }
 
@@ -724,7 +735,7 @@
         }
       });
 
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('prod-name').value,
         price: parseFloat(document.getElementById('prod-price').value),
         stock_type: document.getElementById('prod-stock').value,
@@ -735,13 +746,13 @@
         quantity: totalQuantity,
         image_url: document.getElementById('prod-image').value,
         description: document.getElementById('prod-desc').value
-      };
+      });
 
       try {
         const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
         if (error) {
           console.error("Supabase Save Error:", error);
-          alert("儲存失敗：" + error.message + "\n請確保 SQL 已新增對應欄位 (見說明文件)。");
+          alert("儲存失敗：" + error.message + "\n請確保已在 Supabase 執行對應的 SQL 新增欄位。");
         } else { 
           alert("✅ 儲存成功！"); 
           resetForm('product'); 
@@ -826,7 +837,7 @@
     async function saveEco(e) {
       e.preventDefault();
       const id = document.getElementById('eco-id').value;
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('eco-name').value,
         category: document.getElementById('eco-cat').value,
         address: document.getElementById('eco-address').value,
@@ -836,9 +847,9 @@
         facebook_url: document.getElementById('eco-fb').value,
         image_url: document.getElementById('eco-image').value,
         description: document.getElementById('eco-desc').value
-      };
+      });
       const { error } = id ? await _supabase.from('eco_farms').update(payload).eq('id', id) : await _supabase.from('eco_farms').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
+      if (error) alert("操作失敗：" + error.message + "\n請執行 SQL 指令補全資料庫欄位。");
       else { alert("✅ 儲存成功！"); resetForm('eco'); fetchEco(); }
     }
 
@@ -882,7 +893,7 @@
     async function saveTheatre(e) {
       e.preventDefault();
       const id = document.getElementById('th-id').value;
-      const payload = {
+      const payload = cleanPayload({
         name: document.getElementById('th-name').value,
         region: document.getElementById('th-region').value,
         address: document.getElementById('th-address').value,
@@ -892,9 +903,9 @@
         facebook_url: document.getElementById('th-fb').value,
         image_url: document.getElementById('th-image').value,
         description: document.getElementById('th-desc').value
-      };
+      });
       const { error } = id ? await _supabase.from('theatre_groups').update(payload).eq('id', id) : await _supabase.from('theatre_groups').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
+      if (error) alert("操作失敗：" + error.message + "\n請執行 SQL 指令補全資料庫欄位。");
       else { alert("✅ 儲存成功！"); resetForm('theatre'); fetchTheatre(); }
     }
 
