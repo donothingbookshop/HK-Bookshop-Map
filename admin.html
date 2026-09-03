@@ -288,6 +288,7 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="eco-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="eco-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="eco-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="eco-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="eco-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
@@ -325,6 +326,7 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="th-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="th-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="th-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="th-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="th-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
@@ -566,6 +568,7 @@
       const payload = {
         name: document.getElementById('au-name').value,
         phone: document.getElementById('au-phone').value,
+        website_url: document.getElementById('au-website').value,
         instagram_url: document.getElementById('au-ig').value,
         facebook_url: document.getElementById('au-fb').value,
         image_url: document.getElementById('au-image').value,
@@ -617,6 +620,7 @@
       const payload = {
         name: document.getElementById('pub-name').value,
         phone: document.getElementById('pub-phone').value,
+        website_url: document.getElementById('pub-website').value,
         instagram_url: document.getElementById('pub-ig').value,
         facebook_url: document.getElementById('pub-fb').value,
         image_url: document.getElementById('pub-image').value,
@@ -814,6 +818,7 @@
         category: document.getElementById('eco-cat').value,
         address: document.getElementById('eco-address').value,
         phone: document.getElementById('eco-phone').value,
+        website_url: document.getElementById('eco-website').value,
         instagram_url: document.getElementById('eco-ig').value,
         facebook_url: document.getElementById('eco-fb').value,
         image_url: document.getElementById('eco-image').value,
@@ -832,6 +837,7 @@
       document.getElementById('eco-cat').value = e.category || '平台/大自然/教育';
       document.getElementById('eco-address').value = e.address || '';
       document.getElementById('eco-phone').value = e.phone || '';
+      document.getElementById('eco-website').value = e.website_url || '';
       document.getElementById('eco-ig').value = e.instagram_url || '';
       document.getElementById('eco-fb').value = e.facebook_url || '';
       document.getElementById('eco-image').value = e.image_url || '';
@@ -868,6 +874,7 @@
         region: document.getElementById('th-region').value,
         address: document.getElementById('th-address').value,
         phone: document.getElementById('th-phone').value,
+        website_url: document.getElementById('th-website').value,
         instagram_url: document.getElementById('th-ig').value,
         facebook_url: document.getElementById('th-fb').value,
         image_url: document.getElementById('th-image').value,
@@ -886,6 +893,7 @@
       document.getElementById('th-region').value = t.region || '香港島';
       document.getElementById('th-address').value = t.address || '';
       document.getElementById('th-phone').value = t.phone || '';
+      document.getElementById('th-website').value = t.website_url || '';
       document.getElementById('th-ig').value = t.instagram_url || '';
       document.getElementById('th-fb').value = t.facebook_url || '';
       document.getElementById('th-image').value = t.image_url || '';
