@@ -25,7 +25,7 @@
     </div>
   </header>
 
-  <!-- 登入區塊 (如果未登入會顯示) -->
+  <!-- 登入區塊 -->
   <div id="login-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full">
       <h2 class="text-xl font-bold mb-4 text-center text-amber-950"><i class="fa-solid fa-lock mr-2"></i>管理員登入</h2>
@@ -202,24 +202,47 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">單價 (HKD) *</label>
-              <input type="number" id="prod-price" required placeholder="例: 65" class="w-full border rounded px-3 py-1.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">書籍數量</label>
-              <input type="number" id="prod-quantity" value="1" min="0" class="w-full border rounded px-3 py-1.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">存放分店</label>
-              <select id="prod-branch" class="w-full border rounded px-3 py-1.5 text-sm">
-                <option value="觀塘店">觀塘店</option>
-                <option value="西營盤店">西營盤店</option>
-                <option value="荃灣店">荃灣店</option>
-                <option value="網店倉庫">網店倉庫</option>
-                <option value="全線分店">全線分店</option>
-              </select>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">單價 (HKD) *</label>
+            <input type="number" id="prod-price" required placeholder="例: 65" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+
+          <!-- 分店存貨多選區域 -->
+          <div class="border rounded-lg p-3 bg-slate-50 space-y-2">
+            <label class="block text-xs font-bold text-slate-700">存放分店與庫存數量 (可複選多間)</label>
+            
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" class="branch-checkbox" value="觀塘店" onchange="toggleBranchInput(this)">
+                  <span>觀塘店</span>
+                </label>
+                <input type="number" id="qty-觀塘店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" class="branch-checkbox" value="西營盤店" onchange="toggleBranchInput(this)">
+                  <span>西營盤店</span>
+                </label>
+                <input type="number" id="qty-西營盤店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" class="branch-checkbox" value="荃灣店" onchange="toggleBranchInput(this)">
+                  <span>荃灣店</span>
+                </label>
+                <input type="number" id="qty-荃灣店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" class="branch-checkbox" value="網店倉庫" onchange="toggleBranchInput(this)">
+                  <span>網店倉庫</span>
+                </label>
+                <input type="number" id="qty-網店倉庫" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
+              </div>
             </div>
           </div>
 
@@ -328,7 +351,6 @@
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
 
-    // 初始化 Supabase 並開啟持久化 Session 防止頻繁自動登出
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
@@ -336,7 +358,6 @@
     let currentTab = 'bookshops';
     let cacheData = {};
 
-    // 輔助工具：清洗字串（移除 Emoji、符號及前後空白）
     function cleanCategory(str) {
       if (!str) return '其他';
       return str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
@@ -363,7 +384,6 @@
       location.reload();
     }
 
-    // 安全切換 Tab，相容直接傳入按鈕元素與無按鈕傳入的情況
     function switchTab(tab, btnTarget) {
       currentTab = tab;
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -379,7 +399,6 @@
         btnTarget.classList.add('bg-amber-900', 'text-white');
       }
       
-      // 清空搜尋框並重新載入
       const searchInput = document.getElementById('admin-search');
       if (searchInput) searchInput.value = '';
       loadTabContent(tab);
@@ -394,7 +413,6 @@
       else if (tab === 'theatre') fetchTheatre();
     }
 
-    // 後台即時關鍵字搜尋過濾功能
     function filterAdminList() {
       const q = document.getElementById('admin-search').value.toLowerCase().trim();
       if (currentTab === 'bookshops') {
@@ -418,7 +436,6 @@
       }
     }
 
-    // --- 上傳圖片到 Supabase Storage ---
     async function uploadImage(fileInput, targetInputId, statusId) {
       const file = fileInput.files[0];
       if (!file) return;
@@ -447,7 +464,6 @@
       }
     }
 
-    // --- 通用 CRUD 工具 ---
     async function deleteRecord(table, id) {
       if (!confirm("確定要刪除此筆紀錄？此動作無法復原！")) return;
       const { error } = await _supabase.from(table).delete().eq('id', id);
@@ -618,7 +634,20 @@
       document.getElementById('publisher-form-title').innerText = "編輯獨立出版社資料";
     }
 
-    // --- 4. 商品 CRUD ---
+    // --- 4. 商品 CRUD (分店多選邏輯) ---
+    function toggleBranchInput(checkbox) {
+      const qtyInput = document.getElementById(`qty-${checkbox.value}`);
+      if (checkbox.checked) {
+        qtyInput.disabled = false;
+        qtyInput.classList.remove('bg-gray-100');
+        if (parseInt(qtyInput.value) <= 0) qtyInput.value = 1;
+      } else {
+        qtyInput.disabled = true;
+        qtyInput.classList.add('bg-gray-100');
+        qtyInput.value = 0;
+      }
+    }
+
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       cacheData.products = data || [];
@@ -629,36 +658,62 @@
       const list = document.getElementById('list-products');
       if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
       
-      list.innerHTML = data.map(pr => `
-        <div class="flex justify-between items-start p-3 border rounded-lg hover:bg-slate-50 gap-2">
-          <div class="flex-1">
-            <h4 class="font-bold text-sm text-slate-800">
-              ${pr.name} 
-              <span class="text-amber-900 font-bold ml-1">HK$${pr.price}</span>
-            </h4>
-            <div class="flex flex-wrap gap-1 mt-1 text-[11px] text-slate-600">
-              <span class="bg-slate-100 border px-1.5 py-0.5 rounded">${cleanCategory(pr.category)}</span>
-              ${pr.branch ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded">${pr.branch}</span>` : ''}
-              ${pr.quantity !== undefined && pr.quantity !== null ? `<span class="bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded">庫存: ${pr.quantity}本</span>` : ''}
-              ${pr.isbn ? `<span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">ISBN: ${pr.isbn}</span>` : ''}
+      list.innerHTML = data.map(pr => {
+        let stocks = pr.branch_stocks || {};
+        // 相容舊資料
+        if (typeof stocks === 'string') {
+          try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
+        }
+        if (Object.keys(stocks).length === 0 && pr.branch) {
+          stocks[pr.branch] = pr.quantity || 0;
+        }
+
+        const stockBadges = Object.entries(stocks).map(([b, q]) => 
+          `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded">${b}: ${q}本</span>`
+        ).join(' ');
+
+        const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
+
+        return `
+          <div class="flex justify-between items-start p-3 border rounded-lg hover:bg-slate-50 gap-2">
+            <div class="flex-1">
+              <h4 class="font-bold text-sm text-slate-800">
+                ${pr.name} 
+                <span class="text-amber-900 font-bold ml-1">HK$${pr.price}</span>
+              </h4>
+              <div class="flex flex-wrap gap-1 mt-1 text-[11px] text-slate-600">
+                <span class="bg-slate-100 border px-1.5 py-0.5 rounded">${cleanCategory(pr.category)}</span>
+                ${stockBadges}
+                <span class="bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded">總庫存: ${totalQty}本</span>
+                ${pr.isbn ? `<span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">ISBN: ${pr.isbn}</span>` : ''}
+              </div>
+              ${pr.description ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${pr.description}</p>` : ''}
             </div>
-            ${pr.description ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${pr.description}</p>` : ''}
+            <div class="flex space-x-1 shrink-0">
+              <button onclick="editProduct(${pr.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
+              <button onclick="deleteRecord('shop_products', ${pr.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
+            </div>
           </div>
-          <div class="flex space-x-1 shrink-0">
-            <button onclick="editProduct(${pr.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
-            <button onclick="deleteRecord('shop_products', ${pr.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prod-id').value;
-      
-      // 使用 cleanCategory 將選單的 Emoji 清除後儲存，確保資料一致
       const rawCatOption = document.getElementById('prod-cat').value;
       const cleanCatName = cleanCategory(rawCatOption);
+
+      // 收集分店庫存
+      const branchStocks = {};
+      let totalQuantity = 0;
+      document.querySelectorAll('.branch-checkbox').forEach(cb => {
+        if (cb.checked) {
+          const qty = parseInt(document.getElementById(`qty-${cb.value}`).value) || 0;
+          branchStocks[cb.value] = qty;
+          totalQuantity += qty;
+        }
+      });
 
       const payload = {
         name: document.getElementById('prod-name').value,
@@ -667,11 +722,12 @@
         category: cleanCatName,
         isbn: document.getElementById('prod-isbn').value,
         author: document.getElementById('prod-author').value,
-        quantity: parseInt(document.getElementById('prod-quantity').value) || 0,
-        branch: document.getElementById('prod-branch').value,
+        branch_stocks: branchStocks, // 儲存多分店 JSON 物件
+        quantity: totalQuantity,
         image_url: document.getElementById('prod-image').value,
         description: document.getElementById('prod-desc').value
       };
+
       const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
       if (error) alert("操作失敗：" + error.message);
       else { alert("✅ 儲存成功！"); resetForm('product'); fetchProducts(); }
@@ -680,12 +736,14 @@
     function editProduct(id) {
       const pr = cacheData.products.find(x => x.id === id);
       if (!pr) return;
+
+      resetForm('product');
+
       document.getElementById('prod-id').value = pr.id;
       document.getElementById('prod-name').value = pr.name || '';
       document.getElementById('prod-price').value = pr.price || '';
       document.getElementById('prod-stock').value = pr.stock_type || '買斷 / 一般進貨';
       
-      // 比對設置分類下拉框
       const currentCatClean = cleanCategory(pr.category);
       const catSelect = document.getElementById('prod-cat');
       for (let i = 0; i < catSelect.options.length; i++) {
@@ -697,10 +755,29 @@
 
       document.getElementById('prod-isbn').value = pr.isbn || '';
       document.getElementById('prod-author').value = pr.author || '';
-      document.getElementById('prod-quantity').value = pr.quantity !== undefined ? pr.quantity : 1;
-      document.getElementById('prod-branch').value = pr.branch || '觀塘店';
       document.getElementById('prod-image').value = pr.image_url || '';
       document.getElementById('prod-desc').value = pr.description || '';
+
+      // 還原分店庫存資訊
+      let stocks = pr.branch_stocks || {};
+      if (typeof stocks === 'string') {
+        try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
+      }
+      if (Object.keys(stocks).length === 0 && pr.branch) {
+        stocks[pr.branch] = pr.quantity || 0;
+      }
+
+      Object.entries(stocks).forEach(([branch, qty]) => {
+        const cb = document.querySelector(`.branch-checkbox[value="${branch}"]`);
+        if (cb) {
+          cb.checked = true;
+          const qtyInput = document.getElementById(`qty-${branch}`);
+          qtyInput.disabled = false;
+          qtyInput.classList.remove('bg-gray-100');
+          qtyInput.value = qty;
+        }
+      });
+
       document.getElementById('product-form-title').innerText = "編輯網店商品 / 書籍資料";
     }
 
@@ -812,10 +889,16 @@
       document.getElementById('theatre-form-title').innerText = "編輯劇團資料";
     }
 
-    // 重置表單狀態
     function resetForm(type) {
       const formEl = document.getElementById(`form-${type}`);
       if (formEl) formEl.reset();
+
+      if (type === 'product') {
+        document.querySelectorAll('.branch-checkbox').forEach(cb => {
+          cb.checked = false;
+          toggleBranchInput(cb);
+        });
+      }
 
       const prefix = type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco';
       
