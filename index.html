@@ -17,12 +17,25 @@
   <style>
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+    
+    /* 滾動條美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen font-sans">
 
   <!-- 1. 頂部導航欄 -->
-  <header class="bg-amber-900 text-amber-50 sticky top-0 z-50 shadow-md">
+  <header class="bg-amber-900 text-amber-50 sticky top-0 z-40 shadow-md">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
 
       <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('map')">
@@ -31,16 +44,17 @@
       </div>
 
       <nav class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
-        <button onclick="switchTab('map')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🗺️ 書店地圖</button>
-        <button onclick="switchTab('directory')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">📚 文化檔案</button>
-        <button onclick="switchTab('shop')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🛒 網上商店</button>
-        <button onclick="switchTab('eco')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🌱 農業/環保</button>
-        <button onclick="switchTab('theatre')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition">🎭 劇團</button>
+        <button onclick="switchTab('map')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> 書店地圖</button>
+        <button onclick="switchTab('directory')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-book-open"></i> 文化檔案</button>
+        <button onclick="switchTab('shop')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-store"></i> 網上商店</button>
+        <button onclick="switchTab('eco')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-leaf"></i> 農業/環保</button>
+        <button onclick="switchTab('theatre')" class="hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
       </nav>
 
-      <div class="relative cursor-pointer" onclick="goToCartCheckout()">
-        <i class="fa-solid fa-cart-shopping text-xl hover:text-amber-300 transition"></i>
-        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
+      <div class="relative cursor-pointer bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-full transition flex items-center gap-2" onclick="goToCartCheckout()">
+        <i class="fa-solid fa-cart-shopping text-base text-amber-300"></i>
+        <span class="text-xs font-semibold">購物車</span>
+        <span id="cart-count" class="bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
       </div>
 
     </div>
@@ -104,46 +118,85 @@
 
     <!-- Tab 3: 網上商店 -->
     <section id="tab-shop" class="tab-content">
-      <div class="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-        <h2 class="text-2xl font-bold">網上選購</h2>
+      <!-- 商店頂部工具列 -->
+      <div class="mb-6 bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">網上選購</h2>
+          <p class="text-xs text-slate-500 mt-1">支持本地獨立書店，點擊書籍圖片或「詳情」即可查閱完整書評與簡介。</p>
+        </div>
         
-        <div class="flex items-center space-x-2">
-          <label for="category-select" class="text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">書籍主題 (分類)：</label>
-          <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer">
-            <option value="ALL">📖 全部主題</option>
-            <option value="文學小說">📖 文學小說</option>
-            <option value="心理勵志">🧠 心理勵志</option>
-            <option value="人文社科">🏛️ 人文社科</option>
-            <option value="藝術設計">🎨 藝術設計</option>
-            <option value="生活風格">🌱 生活風格</option>
-            <option value="文創周邊">🎁 文創周邊</option>
-            <option value="其他">其他</option>
-          </select>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- 搜尋框 -->
+          <div class="relative flex-1 sm:flex-none">
+            <input type="text" id="shop-search" oninput="handleSearch(this.value)" placeholder="搜尋書名/作者/ISBN..." class="w-full sm:w-48 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-800">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+          </div>
+
+          <!-- 分類選擇 -->
+          <div class="flex items-center space-x-2">
+            <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer font-medium text-slate-700">
+              <option value="ALL">📖 全部主題</option>
+              <option value="文學小說">📖 文學小說</option>
+              <option value="心理勵志">🧠 心理勵志</option>
+              <option value="人文社科">🏛️ 人文社科</option>
+              <option value="藝術設計">🎨 藝術設計</option>
+              <option value="生活風格">🌱 生活風格</option>
+              <option value="文創周邊">🎁 文創周邊</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
         </div>
       </div>
 
+      <!-- 商品區與購物車側邊欄 雙欄配置 -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- 左側：商品列表 -->
         <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6" id="product-list">
           <p class="text-slate-400 italic col-span-full">載入商品中...</p>
         </div>
         
-        <!-- 購物車結帳側邊欄 -->
-        <div id="checkout-sidebar" class="bg-white p-6 rounded-xl border shadow-sm h-fit sticky top-20">
-          <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900"><i class="fa-solid fa-basket-shopping mr-2"></i>購物車內容</h3>
-          <div id="cart-items" class="text-sm space-y-3 mb-4 text-slate-600"><p class="text-slate-400 italic">購物車目前是空的</p></div>
-          <div class="border-t pt-3 mb-4 flex justify-between font-bold text-lg">
-            <span>總金額：</span><span id="cart-total" class="text-amber-900">HK$ 0</span>
+        <!-- 右側：購物車結帳側邊欄 -->
+        <div id="checkout-sidebar" class="bg-white p-6 rounded-xl border border-slate-200 shadow-md h-fit sticky top-20">
+          <div class="flex justify-between items-center mb-4 border-b pb-3">
+            <h3 class="font-bold text-lg text-amber-900 flex items-center gap-2">
+              <i class="fa-solid fa-basket-shopping"></i>購物車內容
+            </h3>
+            <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-semibold" id="sidebar-cart-count">0 件商品</span>
           </div>
-          <div class="space-y-3">
-            <input type="text" id="cust-name" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-800" placeholder="顧客姓名 *">
-            <input type="text" id="cust-phone" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-800" placeholder="聯絡電話 *">
-            <select id="payment-method" class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-800">
-              <option value="FPS">轉數快 (FPS)</option>
-              <option value="PayMe">PayMe</option>
-            </select>
-            <button onclick="submitOrder()" class="w-full bg-emerald-700 text-white font-medium py-2.5 rounded-lg hover:bg-emerald-600 transition text-sm">提交訂單</button>
+
+          <!-- 購物車商品清單 -->
+          <div id="cart-items" class="text-sm space-y-3 mb-4 text-slate-600 max-h-60 overflow-y-auto pr-1">
+            <p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>
+          </div>
+
+          <div class="border-t pt-3 mb-4 flex justify-between items-center font-bold text-lg">
+            <span class="text-slate-700 text-sm">總金額：</span>
+            <span id="cart-total" class="text-amber-900 text-xl">HK$ 0</span>
+          </div>
+
+          <!-- 結帳表單 -->
+          <div class="space-y-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+            <h4 class="text-xs font-bold text-slate-700 mb-1">訂購人資料</h4>
+            <div>
+              <input type="text" id="cust-name" class="w-full border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-800" placeholder="顧客姓名 *">
+            </div>
+            <div>
+              <input type="text" id="cust-phone" class="w-full border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-800" placeholder="聯絡電話 *">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">付款方式</label>
+              <select id="payment-method" class="w-full border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-800 bg-white">
+                <option value="FPS">轉數快 (FPS)</option>
+                <option value="PayMe">PayMe</option>
+              </select>
+            </div>
+            <button onclick="submitOrder()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg transition text-xs shadow flex items-center justify-center gap-1.5 mt-2">
+              <i class="fa-solid fa-paper-plane"></i> 提交訂單
+            </button>
           </div>
         </div>
+
       </div>
     </section>
 
@@ -187,6 +240,63 @@
 
   </main>
 
+  <!-- 5. 書籍詳細資料Modal (書籍簡介彈出視窗) -->
+  <div id="book-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative animate-fade-in">
+      <!-- 關閉按鈕 -->
+      <button onclick="closeBookModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="p-6 md:p-8 flex flex-col md:flex-row gap-6">
+        <!-- 書籍圖片 -->
+        <div class="w-full md:w-1/2 flex-shrink-0 bg-slate-50 rounded-xl p-4 flex items-center justify-center border border-slate-100">
+          <img id="modal-img" src="" alt="書籍封面" class="max-h-72 object-contain rounded drop-shadow">
+        </div>
+
+        <!-- 書籍詳細內容 -->
+        <div class="w-full md:w-1/2 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span id="modal-category" class="bg-amber-100 text-amber-900 text-xs px-2.5 py-0.5 rounded-full font-semibold"></span>
+              <span id="modal-stock-type" class="bg-slate-100 text-slate-700 text-xs px-2.5 py-0.5 rounded-full font-medium"></span>
+            </div>
+            
+            <h3 id="modal-title" class="text-xl font-bold text-slate-800 mb-2 leading-snug"></h3>
+            
+            <div class="space-y-1 mb-4 text-xs text-slate-500 border-b pb-3">
+              <p id="modal-author"><i class="fa-solid fa-user-pen mr-1.5 text-amber-800"></i>作者：<span></span></p>
+              <p id="modal-isbn"><i class="fa-solid fa-barcode mr-1.5 text-amber-800"></i>ISBN：<span></span></p>
+            </div>
+
+            <!-- 分店存貨資訊 -->
+            <div class="mb-4">
+              <span class="text-xs font-bold text-slate-700 block mb-1.5"><i class="fa-solid fa-store mr-1 text-amber-800"></i>分店現貨狀況：</span>
+              <div id="modal-branches" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- 完整書籍簡介區 -->
+            <div class="mb-6">
+              <span class="text-xs font-bold text-slate-700 block mb-1"><i class="fa-solid fa-align-left mr-1 text-amber-800"></i>書籍簡介：</span>
+              <p id="modal-description" class="text-xs text-slate-600 leading-relaxed max-h-48 overflow-y-auto pr-1 whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
+            </div>
+          </div>
+
+          <!-- 價格與購物車按鈕 -->
+          <div class="pt-4 border-t flex items-center justify-between mt-auto">
+            <div>
+              <span id="modal-price" class="text-2xl font-bold text-amber-900"></span>
+              <span id="modal-total-qty" class="block text-[11px] font-semibold"></span>
+            </div>
+            <button id="modal-add-btn" class="bg-amber-900 hover:bg-amber-800 text-white font-bold px-5 py-2.5 rounded-xl transition text-xs shadow flex items-center gap-2">
+              <i class="fa-solid fa-cart-plus"></i> 加入購物車
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="bg-slate-800 text-slate-400 text-xs py-6 text-center mt-auto">
     <p>© 香港獨立書店地圖 & 文化社區</p>
   </footer>
@@ -198,6 +308,7 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], cart = [];
+    let currentSearchQuery = '', currentCategoryFilter = 'ALL';
 
     const categoryIcons = {
       '文學小說': '📖',
@@ -313,16 +424,47 @@
       }
     }
 
-    // --- 網上商店 (支援多分店庫存顯示) ---
+    // --- 網上商店 (支援簡介 Modal 彈出與搜尋) ---
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       allProducts = data || [];
-      renderProducts(allProducts);
+      applyProductFilters();
+    }
+
+    function handleSearch(query) {
+      currentSearchQuery = query.trim().toLowerCase();
+      applyProductFilters();
+    }
+
+    function filterProductCategory(cat) {
+      currentCategoryFilter = cat;
+      applyProductFilters();
+    }
+
+    function applyProductFilters() {
+      let filtered = allProducts;
+
+      if (currentCategoryFilter !== 'ALL') {
+        filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
+      }
+
+      if (currentSearchQuery) {
+        filtered = filtered.filter(p => 
+          (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
+          (p.author && p.author.toLowerCase().includes(currentSearchQuery)) ||
+          (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
+        );
+      }
+
+      renderProducts(filtered);
     }
 
     function renderProducts(list) {
       const container = document.getElementById('product-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無商品。</p>`; return; }
+      if (list.length === 0) { 
+        container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 italic bg-white rounded-xl border border-dashed"><i class="fa-solid fa-book-open text-3xl mb-2 text-slate-300"></i><p>未有找到相關書籍商品。</p></div>`; 
+        return; 
+      }
       
       container.innerHTML = list.map(p => {
         const cleanCat = cleanCategory(p.category);
@@ -347,33 +489,54 @@
         const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
 
         return `
-          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-            ${p.image_url ? `<div class="h-48 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${p.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
-            <div class="p-5 flex-grow">
-              <div class="flex justify-between items-start mb-1">
-                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${icon} ${cleanCat}</span>
-                <span class="text-xs font-bold text-amber-900">${p.stock_type || '一般進貨'}</span>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 transition duration-200">
+            <!-- 封面圖片點擊可開 Modal -->
+            <div class="h-48 bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer relative group" onclick="openBookModal(${p.id})">
+              ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-contain p-2 group-hover:scale-105 transition duration-300">` : `<div class="text-slate-300 flex flex-col items-center"><i class="fa-solid fa-book text-4xl"></i><span class="text-xs mt-1">無封面</span></div>`}
+              <div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                <span class="bg-white/90 text-slate-800 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm"><i class="fa-solid fa-eye mr-1"></i>查看簡介</span>
               </div>
-              <h3 class="font-bold text-base text-slate-800 mt-2 mb-1">${p.name}</h3>
-              ${p.author ? `<p class="text-xs text-slate-500 mb-1">作者：${p.author}</p>` : ''}
-              ${p.isbn ? `<p class="text-xs text-slate-400 mb-2">ISBN: ${p.isbn}</p>` : ''}
+            </div>
+
+            <div class="p-4 flex-grow flex flex-col">
+              <div class="flex justify-between items-start mb-1">
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${icon} ${cleanCat}</span>
+                <span class="text-[11px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">${p.stock_type || '一般進貨'}</span>
+              </div>
+
+              <!-- 標題點擊可開 Modal -->
+              <h3 class="font-bold text-base text-slate-800 mt-2 mb-1 hover:text-amber-800 cursor-pointer transition line-clamp-1" onclick="openBookModal(${p.id})" title="${p.name}">
+                ${p.name}
+              </h3>
+
+              ${p.author ? `<p class="text-xs text-slate-500 mb-1 line-clamp-1"><i class="fa-solid fa-pen-nib text-slate-400 mr-1"></i>${p.author}</p>` : ''}
+              ${p.isbn ? `<p class="text-[11px] text-slate-400 mb-2 font-mono">ISBN: ${p.isbn}</p>` : ''}
               
-              <!-- 顯示所有存貨分店標籤 -->
+              <!-- 顯示分店存貨 -->
               <div class="flex flex-wrap gap-1 my-2">
                 ${branchBadges || '<span class="text-xs text-slate-400">暫無分店庫存</span>'}
               </div>
 
-              <p class="text-xs text-slate-600 line-clamp-3 my-2">${p.description || ''}</p>
+              <!-- 簡介預覽區 -->
+              <p class="text-xs text-slate-600 line-clamp-2 my-2 leading-relaxed bg-slate-50/60 p-2 rounded">
+                ${p.description || '暫無簡介資訊。'}
+              </p>
+
+              <!-- 完整簡介觸發按鈕 -->
+              <button onclick="openBookModal(${p.id})" class="text-xs text-amber-900 font-bold hover:underline self-start my-1 flex items-center gap-1">
+                <i class="fa-solid fa-circle-info"></i> 閱讀完整書籍簡介 ↗
+              </button>
             </div>
-            <div class="p-4 bg-slate-50 border-t flex items-center justify-between">
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between mt-auto">
               <div>
                 <span class="text-lg font-bold text-amber-900">HK$${p.price}</span>
-                <span class="text-[11px] block ${totalQty > 0 ? 'text-emerald-700 font-semibold' : 'text-red-500 font-semibold'}">
-                  ${totalQty > 0 ? `總存貨: ${totalQty}本` : '缺貨中'}
+                <span class="text-[10px] block ${totalQty > 0 ? 'text-emerald-700 font-semibold' : 'text-red-500 font-semibold'}">
+                  ${totalQty > 0 ? `總存貨: ${totalQty}本` : '已售罄'}
                 </span>
               </div>
-              <button onclick="addToCart(${p.id})" ${totalQty <= 0 ? 'disabled' : ''} class="bg-amber-900 hover:bg-amber-800 disabled:bg-slate-300 text-white text-xs px-3 py-2 rounded-lg transition font-medium">
-                ${totalQty > 0 ? '加入購物車' : '已售罄'}
+              <button onclick="addToCart(${p.id})" ${totalQty <= 0 ? 'disabled' : ''} class="bg-amber-900 hover:bg-amber-800 disabled:bg-slate-300 text-white text-xs px-3.5 py-2 rounded-lg transition font-medium shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-cart-plus"></i> ${totalQty > 0 ? '加入購物車' : '已售罄'}
               </button>
             </div>
           </div>
@@ -381,11 +544,67 @@
       }).join('');
     }
 
-    function filterProductCategory(cat) {
-      if (cat === 'ALL') renderProducts(allProducts);
-      else renderProducts(allProducts.filter(p => cleanCategory(p.category) === cleanCategory(cat)));
+    // --- Modal 彈出書籍詳細資料邏輯 ---
+    function openBookModal(id) {
+      const p = allProducts.find(item => item.id === id);
+      if (!p) return;
+
+      const cleanCat = cleanCategory(p.category);
+      const icon = categoryIcons[cleanCat] || '📚';
+
+      document.getElementById('modal-img').src = p.image_url || '';
+      document.getElementById('modal-category').innerText = `${icon} ${cleanCat}`;
+      document.getElementById('modal-stock-type').innerText = p.stock_type || '一般進貨';
+      document.getElementById('modal-title').innerText = p.name || '未命名書籍';
+      
+      const authorEl = document.getElementById('modal-author').querySelector('span');
+      authorEl.innerText = p.author || '未提供';
+
+      const isbnEl = document.getElementById('modal-isbn').querySelector('span');
+      isbnEl.innerText = p.isbn || '未提供';
+
+      document.getElementById('modal-description').innerText = p.description || '暫無詳細書籍簡介。';
+      document.getElementById('modal-price').innerText = `HK$${p.price}`;
+
+      // 解析分店庫存
+      let stocks = p.branch_stocks || {};
+      if (typeof stocks === 'string') {
+        try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
+      }
+      if (Object.keys(stocks).length === 0 && p.branch) {
+        stocks[p.branch] = p.quantity || 0;
+      }
+
+      const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
+      
+      const branchContainer = document.getElementById('modal-branches');
+      branchContainer.innerHTML = Object.entries(stocks).map(([b, q]) => `
+        <span class="bg-blue-50 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-md text-xs font-medium">
+          📍 ${b}: ${q} 本
+        </span>
+      `).join('') || '<span class="text-xs text-slate-400">無存貨紀錄</span>';
+
+      const totalQtyEl = document.getElementById('modal-total-qty');
+      totalQtyEl.innerText = totalQty > 0 ? `總存貨: ${totalQty} 本` : '缺貨中';
+      totalQtyEl.className = `block text-[11px] font-semibold ${totalQty > 0 ? 'text-emerald-700' : 'text-red-500'}`;
+
+      const addBtn = document.getElementById('modal-add-btn');
+      addBtn.disabled = totalQty <= 0;
+      addBtn.onclick = function() {
+        addToCart(p.id);
+        closeBookModal();
+      };
+
+      document.getElementById('book-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // 防止底層滾動
     }
 
+    function closeBookModal() {
+      document.getElementById('book-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    // --- 購物車邏輯 ---
     function addToCart(id) {
       const product = allProducts.find(p => p.id === id);
       if (!product) return;
@@ -397,13 +616,15 @@
     function updateCartUI() {
       const container = document.getElementById('cart-items');
       const countEl = document.getElementById('cart-count');
+      const sidebarCountEl = document.getElementById('sidebar-cart-count');
       const totalEl = document.getElementById('cart-total');
 
       const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
       countEl.innerText = totalItems;
+      if (sidebarCountEl) sidebarCountEl.innerText = `${totalItems} 件商品`;
 
       if (cart.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 italic">購物車目前是空的</p>`;
+        container.innerHTML = `<p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>`;
         totalEl.innerText = 'HK$ 0';
         return;
       }
@@ -412,15 +633,15 @@
       container.innerHTML = cart.map(item => {
         totalCost += item.price * item.qty;
         return `
-          <div class="flex justify-between items-center text-xs border-b pb-2">
-            <div>
-              <p class="font-bold text-slate-800">${item.name}</p>
-              <p class="text-slate-500">HK$${item.price} x ${item.qty}</p>
+          <div class="flex justify-between items-center text-xs border-b border-slate-100 pb-2">
+            <div class="pr-2">
+              <p class="font-bold text-slate-800 line-clamp-1">${item.name}</p>
+              <p class="text-slate-500">HK$${item.price} × ${item.qty}</p>
             </div>
-            <div class="flex items-center space-x-1">
-              <button onclick="changeQty(${item.id}, -1)" class="px-2 py-0.5 bg-slate-200 rounded text-slate-700">-</button>
-              <span>${item.qty}</span>
-              <button onclick="changeQty(${item.id}, 1)" class="px-2 py-0.5 bg-slate-200 rounded text-slate-700">+</button>
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <button onclick="changeQty(${item.id}, -1)" class="w-6 h-6 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold text-xs transition">-</button>
+              <span class="font-semibold text-slate-800 text-xs px-1">${item.qty}</span>
+              <button onclick="changeQty(${item.id}, 1)" class="w-6 h-6 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold text-xs transition">+</button>
             </div>
           </div>
         `;
