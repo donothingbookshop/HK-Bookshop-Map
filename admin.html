@@ -41,14 +41,19 @@
   <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
     
     <!-- 分頁選單 -->
-    <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3">
-      <button onclick="switchTab('bookshops')" class="tab-btn active bg-amber-900 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition">🏪 實體書店</button>
-      <button onclick="switchTab('authors')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">✍️ 獨立作者</button>
-      <button onclick="switchTab('publishers')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🏛️ 獨立出版社</button>
-      <button onclick="switchTab('products')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🛒 網店商品</button>
-      <button onclick="switchTab('eco')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🌱 農業/環保</button>
-      <button onclick="switchTab('theatre')" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🎭 劇團</button>
-      <button onclick="handleLogout()" class="ml-auto bg-red-100 text-red-700 hover:bg-red-200 px-3.5 py-2 rounded-lg text-xs font-medium transition">登出</button>
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3 items-center">
+      <button onclick="switchTab('bookshops', this)" class="tab-btn active bg-amber-900 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition">🏪 實體書店</button>
+      <button onclick="switchTab('authors', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">✍️ 獨立作者</button>
+      <button onclick="switchTab('publishers', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🏛️ 獨立出版社</button>
+      <button onclick="switchTab('products', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🛒 網店商品</button>
+      <button onclick="switchTab('eco', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🌱 農業/環保</button>
+      <button onclick="switchTab('theatre', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🎭 劇團</button>
+      
+      <!-- 後台列表搜尋框 -->
+      <div class="ml-auto flex items-center space-x-2">
+        <input type="text" id="admin-search" oninput="filterAdminList()" placeholder="🔍 搜尋當前分頁資料..." class="border rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-800 outline-none w-48">
+        <button onclick="handleLogout()" class="bg-red-100 text-red-700 hover:bg-red-200 px-3.5 py-2 rounded-lg text-xs font-medium transition">登出</button>
+      </div>
     </div>
 
     <!-- 1. 實體書店管理 -->
@@ -152,7 +157,7 @@
       </div>
     </section>
 
-    <!-- 4. 網店商品管理 (已升級：加入書籍簡介、主題、ISBN、分店與數量) -->
+    <!-- 4. 網店商品管理 -->
     <section id="tab-products" class="tab-content">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-product" onsubmit="saveProduct(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
@@ -352,16 +357,25 @@
       location.reload();
     }
 
-    function switchTab(tab) {
+    // 安全切換 Tab，相容直接傳入按鈕元素與無按鈕傳入的情況
+    function switchTab(tab, btnTarget) {
       currentTab = tab;
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-amber-900', 'text-white');
         btn.classList.add('bg-white');
       });
+      
       document.getElementById(`tab-${tab}`).classList.add('active');
-      event.currentTarget.classList.remove('bg-white');
-      event.currentTarget.classList.add('bg-amber-900', 'text-white');
+      
+      if (btnTarget) {
+        btnTarget.classList.remove('bg-white');
+        btnTarget.classList.add('bg-amber-900', 'text-white');
+      }
+      
+      // 清空搜尋框並重新載入
+      const searchInput = document.getElementById('admin-search');
+      if (searchInput) searchInput.value = '';
       loadTabContent(tab);
     }
 
@@ -372,6 +386,30 @@
       else if (tab === 'products') fetchProducts();
       else if (tab === 'eco') fetchEco();
       else if (tab === 'theatre') fetchTheatre();
+    }
+
+    // 後台即時關鍵字搜尋過濾功能
+    function filterAdminList() {
+      const q = document.getElementById('admin-search').value.toLowerCase().trim();
+      if (currentTab === 'bookshops') {
+        const filtered = cacheData.bookshops.filter(b => (b.name && b.name.toLowerCase().includes(q)) || (b.address && b.address.toLowerCase().includes(q)));
+        renderBookshops(filtered);
+      } else if (currentTab === 'authors') {
+        const filtered = cacheData.authors.filter(a => (a.name && a.name.toLowerCase().includes(q)) || (a.bio && a.bio.toLowerCase().includes(q)));
+        renderAuthors(filtered);
+      } else if (currentTab === 'publishers') {
+        const filtered = cacheData.publishers.filter(p => (p.name && p.name.toLowerCase().includes(q)));
+        renderPublishers(filtered);
+      } else if (currentTab === 'products') {
+        const filtered = cacheData.products.filter(p => (p.name && p.name.toLowerCase().includes(q)) || (p.isbn && p.isbn.toLowerCase().includes(q)) || (p.author && p.author.toLowerCase().includes(q)));
+        renderProducts(filtered);
+      } else if (currentTab === 'eco') {
+        const filtered = cacheData.eco.filter(e => (e.name && e.name.toLowerCase().includes(q)) || (e.address && e.address.toLowerCase().includes(q)));
+        renderEco(filtered);
+      } else if (currentTab === 'theatre') {
+        const filtered = cacheData.theatre.filter(t => (t.name && t.name.toLowerCase().includes(q)));
+        renderTheatre(filtered);
+      }
     }
 
     // --- 上傳圖片到 Supabase Storage ---
@@ -415,9 +453,13 @@
     async function fetchBookshops() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
       cacheData.bookshops = data || [];
+      renderBookshops(cacheData.bookshops);
+    }
+
+    function renderBookshops(data) {
       const list = document.getElementById('list-bookshops');
-      if (cacheData.bookshops.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
-      list.innerHTML = cacheData.bookshops.map(b => `
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = data.map(b => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
           <div>
             <h4 class="font-bold text-sm text-slate-800">${b.name} <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded ml-2">${b.region}</span></h4>
@@ -474,9 +516,13 @@
     async function fetchAuthors() {
       const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
       cacheData.authors = data || [];
+      renderAuthors(cacheData.authors);
+    }
+
+    function renderAuthors(data) {
       const list = document.getElementById('list-authors');
-      if (cacheData.authors.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
-      list.innerHTML = cacheData.authors.map(a => `
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = data.map(a => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
           <div><h4 class="font-bold text-sm text-slate-800">${a.name}</h4><p class="text-xs text-slate-500">${a.phone || ''}</p></div>
           <div class="flex space-x-2">
@@ -520,9 +566,13 @@
     async function fetchPublishers() {
       const { data } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
       cacheData.publishers = data || [];
+      renderPublishers(cacheData.publishers);
+    }
+
+    function renderPublishers(data) {
       const list = document.getElementById('list-publishers');
-      if (cacheData.publishers.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
-      list.innerHTML = cacheData.publishers.map(p => `
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = data.map(p => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
           <div><h4 class="font-bold text-sm text-slate-800">${p.name}</h4><p class="text-xs text-slate-500">${p.phone || ''}</p></div>
           <div class="flex space-x-2">
@@ -562,14 +612,18 @@
       document.getElementById('publisher-form-title').innerText = "編輯獨立出版社資料";
     }
 
-    // --- 4. 商品 CRUD (包含完整欄位對應) ---
+    // --- 4. 商品 CRUD ---
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       cacheData.products = data || [];
+      renderProducts(cacheData.products);
+    }
+
+    function renderProducts(data) {
       const list = document.getElementById('list-products');
-      if (cacheData.products.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
       
-      list.innerHTML = cacheData.products.map(pr => `
+      list.innerHTML = data.map(pr => `
         <div class="flex justify-between items-start p-3 border rounded-lg hover:bg-slate-50 gap-2">
           <div class="flex-1">
             <h4 class="font-bold text-sm text-slate-800">
@@ -633,9 +687,13 @@
     async function fetchEco() {
       const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
       cacheData.eco = data || [];
+      renderEco(cacheData.eco);
+    }
+
+    function renderEco(data) {
       const list = document.getElementById('list-eco');
-      if (cacheData.eco.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
-      list.innerHTML = cacheData.eco.map(e => `
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = data.map(e => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
           <div><h4 class="font-bold text-sm text-slate-800">${e.name} <span class="text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded ml-2">${e.category}</span></h4><p class="text-xs text-slate-500">${e.address || ''}</p></div>
           <div class="flex space-x-2">
@@ -683,9 +741,13 @@
     async function fetchTheatre() {
       const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
       cacheData.theatre = data || [];
+      renderTheatre(cacheData.theatre);
+    }
+
+    function renderTheatre(data) {
       const list = document.getElementById('list-theatre');
-      if (cacheData.theatre.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
-      list.innerHTML = cacheData.theatre.map(t => `
+      if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      list.innerHTML = data.map(t => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
           <div><h4 class="font-bold text-sm text-slate-800">${t.name} <span class="text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded ml-2">${t.region}</span></h4><p class="text-xs text-slate-500">${t.address || ''}</p></div>
           <div class="flex space-x-2">
@@ -731,18 +793,32 @@
 
     // 重置表單狀態
     function resetForm(type) {
-      document.getElementById(`form-${type}`).reset();
-      const idInput = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-id`);
+      const formEl = document.getElementById(`form-${type}`);
+      if (formEl) formEl.reset();
+
+      const prefix = type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco';
+      
+      const idInput = document.getElementById(`${prefix}-id`);
       if (idInput) idInput.value = '';
       
-      const fileInput = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-file`);
+      const fileInput = document.getElementById(`${prefix}-file`);
       if (fileInput) fileInput.value = '';
 
-      const statusEl = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'author' ? 'au' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type === 'theatre' ? 'th' : 'eco'}-upload-status`);
+      const statusEl = document.getElementById(`${prefix}-upload-status`);
       if (statusEl) statusEl.classList.add('hidden');
 
       const titleElem = document.getElementById(`${type}-form-title`);
-      if (titleElem) titleElem.innerText = `新增${type === 'bookshop' ? '實體書店/圖書館' : type === 'author' ? '獨立作者' : type === 'publisher' ? '獨立出版社' : type === 'product' ? '網店商品 / 書籍' : type === 'theatre' ? '劇團' : '農業/環保單位'}`;
+      if (titleElem) {
+        const titleMap = {
+          bookshop: '實體書店/圖書館',
+          author: '獨立作者',
+          publisher: '獨立出版社',
+          product: '網店商品 / 書籍',
+          theatre: '劇團',
+          eco: '農業/環保單位'
+        };
+        titleElem.innerText = `新增${titleMap[type] || ''}`;
+      }
     }
   </script>
 </body>
