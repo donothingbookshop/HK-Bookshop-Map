@@ -737,9 +737,20 @@
         description: document.getElementById('prod-desc').value
       };
 
-      const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
-      if (error) alert("操作失敗：" + error.message);
-      else { alert("✅ 儲存成功！"); resetForm('product'); fetchProducts(); }
+      try {
+        const { error } = id ? await _supabase.from('shop_products').update(payload).eq('id', id) : await _supabase.from('shop_products').insert([payload]);
+        if (error) {
+          console.error("Supabase Save Error:", error);
+          alert("儲存失敗：" + error.message + "\n請確保 SQL 已新增對應欄位 (見說明文件)。");
+        } else { 
+          alert("✅ 儲存成功！"); 
+          resetForm('product'); 
+          fetchProducts(); 
+        }
+      } catch (err) {
+        console.error("Catch Exception:", err);
+        alert("儲存出現異常：" + err.message);
+      }
     }
 
     function editProduct(id) {
@@ -780,9 +791,11 @@
         if (cb) {
           cb.checked = true;
           const qtyInput = document.getElementById(`qty-${branch}`);
-          qtyInput.disabled = false;
-          qtyInput.classList.remove('bg-gray-100');
-          qtyInput.value = qty;
+          if (qtyInput) {
+            qtyInput.disabled = false;
+            qtyInput.classList.remove('bg-gray-100');
+            qtyInput.value = qty;
+          }
         }
       });
 
@@ -923,7 +936,7 @@
       const statusEl = document.getElementById(`${prefix}-upload-status`);
       if (statusEl) statusEl.classList.add('hidden');
 
-      const titleElem = document.getElementById(`${type}-form-title`);
+      const titleElem = document.getElementById(`${type}-form-title`) || document.getElementById(`${prefix}-form-title`);
       if (titleElem) {
         const titleMap = {
           bookshop: '實體書店/圖書館',
