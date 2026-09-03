@@ -75,6 +75,7 @@
           <div><label class="block text-xs font-medium text-slate-600 mb-1">詳細地址</label><input type="text" id="bs-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="bs-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">營業時間</label><input type="text" id="bs-hours" placeholder="例: 12:00 - 20:00" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="bs-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Google Map 連結</label><input type="url" id="bs-map" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="bs-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
@@ -107,6 +108,7 @@
           <input type="hidden" id="au-id">
           <div><label class="block text-xs font-medium text-slate-600 mb-1">作者姓名 *</label><input type="text" id="au-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="au-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="au-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="au-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="au-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div>
@@ -136,6 +138,7 @@
           <input type="hidden" id="pub-id">
           <div><label class="block text-xs font-medium text-slate-600 mb-1">出版社名稱 *</label><input type="text" id="pub-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="pub-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="pub-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="pub-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="pub-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div>
@@ -505,6 +508,7 @@
         address: document.getElementById('bs-address').value,
         phone: document.getElementById('bs-phone').value,
         opening_hours: document.getElementById('bs-hours').value,
+        website_url: document.getElementById('bs-website').value,
         google_map_url: document.getElementById('bs-map').value,
         instagram_url: document.getElementById('bs-ig').value,
         facebook_url: document.getElementById('bs-fb').value,
@@ -526,6 +530,7 @@
       document.getElementById('bs-address').value = b.address || '';
       document.getElementById('bs-phone').value = b.phone || '';
       document.getElementById('bs-hours').value = b.opening_hours || '';
+      document.getElementById('bs-website').value = b.website_url || '';
       document.getElementById('bs-map').value = b.google_map_url || '';
       document.getElementById('bs-ig').value = b.instagram_url || '';
       document.getElementById('bs-fb').value = b.facebook_url || '';
@@ -561,6 +566,7 @@
       const payload = {
         name: document.getElementById('au-name').value,
         phone: document.getElementById('au-phone').value,
+        website_url: document.getElementById('au-website').value,
         instagram_url: document.getElementById('au-ig').value,
         facebook_url: document.getElementById('au-fb').value,
         image_url: document.getElementById('au-image').value,
@@ -577,6 +583,7 @@
       document.getElementById('au-id').value = a.id;
       document.getElementById('au-name').value = a.name || '';
       document.getElementById('au-phone').value = a.phone || '';
+      document.getElementById('au-website').value = a.website_url || '';
       document.getElementById('au-ig').value = a.instagram_url || '';
       document.getElementById('au-fb').value = a.facebook_url || '';
       document.getElementById('au-image').value = a.image_url || '';
@@ -611,6 +618,7 @@
       const payload = {
         name: document.getElementById('pub-name').value,
         phone: document.getElementById('pub-phone').value,
+        website_url: document.getElementById('pub-website').value,
         instagram_url: document.getElementById('pub-ig').value,
         facebook_url: document.getElementById('pub-fb').value,
         image_url: document.getElementById('pub-image').value,
@@ -627,6 +635,7 @@
       document.getElementById('pub-id').value = p.id;
       document.getElementById('pub-name').value = p.name || '';
       document.getElementById('pub-phone').value = p.phone || '';
+      document.getElementById('pub-website').value = p.website_url || '';
       document.getElementById('pub-ig').value = p.instagram_url || '';
       document.getElementById('pub-fb').value = p.facebook_url || '';
       document.getElementById('pub-image').value = p.image_url || '';
@@ -660,7 +669,6 @@
       
       list.innerHTML = data.map(pr => {
         let stocks = pr.branch_stocks || {};
-        // 相容舊資料
         if (typeof stocks === 'string') {
           try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
         }
@@ -704,7 +712,6 @@
       const rawCatOption = document.getElementById('prod-cat').value;
       const cleanCatName = cleanCategory(rawCatOption);
 
-      // 收集分店庫存
       const branchStocks = {};
       let totalQuantity = 0;
       document.querySelectorAll('.branch-checkbox').forEach(cb => {
@@ -722,7 +729,7 @@
         category: cleanCatName,
         isbn: document.getElementById('prod-isbn').value,
         author: document.getElementById('prod-author').value,
-        branch_stocks: branchStocks, // 儲存多分店 JSON 物件
+        branch_stocks: branchStocks,
         quantity: totalQuantity,
         image_url: document.getElementById('prod-image').value,
         description: document.getElementById('prod-desc').value
@@ -758,7 +765,6 @@
       document.getElementById('prod-image').value = pr.image_url || '';
       document.getElementById('prod-desc').value = pr.description || '';
 
-      // 還原分店庫存資訊
       let stocks = pr.branch_stocks || {};
       if (typeof stocks === 'string') {
         try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
