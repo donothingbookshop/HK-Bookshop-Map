@@ -109,7 +109,6 @@
           <p class="text-slate-600 text-sm mt-1">點擊文化人或出版社卡片即可查看完整詳細資料與相關連結。</p>
         </div>
 
-        <!-- 子選單：選擇顯示獨立作者、出版社會或全部 -->
         <div class="flex gap-2 bg-slate-200/70 p-1 rounded-lg w-fit">
           <button onclick="switchDirectorySubTab('all', this)" class="dir-sub-btn bg-white text-slate-800 shadow-sm px-3 py-1.5 rounded-md text-xs font-medium transition">全部顯示</button>
           <button onclick="switchDirectorySubTab('authors', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">✍️ 獨立作者</button>
@@ -118,7 +117,6 @@
       </div>
 
       <div id="directory-content-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- 作者欄位 -->
         <div id="dir-section-authors" class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900 flex items-center justify-between">
             <span><i class="fa-solid fa-pen-nib mr-2"></i>獨立作者</span>
@@ -127,7 +125,6 @@
           <div id="author-list" class="space-y-3 text-sm text-slate-600"><p class="text-slate-400 italic">暫無作者資料</p></div>
         </div>
 
-        <!-- 出版社欄位 -->
         <div id="dir-section-publishers" class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900 flex items-center justify-between">
             <span><i class="fa-solid fa-building-columns mr-2"></i>獨立出版社</span>
@@ -140,7 +137,6 @@
 
     <!-- Tab 3: 網上商店 -->
     <section id="tab-shop" class="tab-content">
-      <!-- 商店頂部工具列 -->
       <div class="mb-6 bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 class="text-2xl font-bold text-slate-800">網上選購</h2>
@@ -148,13 +144,11 @@
         </div>
         
         <div class="flex flex-wrap items-center gap-3">
-          <!-- 搜尋框 -->
           <div class="relative flex-1 sm:flex-none">
             <input type="text" id="shop-search" oninput="handleSearch(this.value)" placeholder="搜尋書名/作者/ISBN..." class="w-full sm:w-48 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-800">
             <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
           </div>
 
-          <!-- 分類選擇 -->
           <div class="flex items-center space-x-2">
             <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer font-medium text-slate-700">
               <option value="ALL">📖 全部主題</option>
@@ -170,15 +164,11 @@
         </div>
       </div>
 
-      <!-- 商品區與購物車側邊欄 雙欄配置 -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- 左側：商品列表 -->
         <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6" id="product-list">
           <p class="text-slate-400 italic col-span-full">載入商品中...</p>
         </div>
         
-        <!-- 右側：購物車結帳側邊欄 -->
         <div id="checkout-sidebar" class="bg-white p-6 rounded-xl border border-slate-200 shadow-md h-fit sticky top-20">
           <div class="flex justify-between items-center mb-4 border-b pb-3">
             <h3 class="font-bold text-lg text-amber-900 flex items-center gap-2">
@@ -187,7 +177,6 @@
             <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-semibold" id="sidebar-cart-count">0 件商品</span>
           </div>
 
-          <!-- 購物車商品清單 -->
           <div id="cart-items" class="text-sm space-y-3 mb-4 text-slate-600 max-h-60 overflow-y-auto pr-1">
             <p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>
           </div>
@@ -197,7 +186,6 @@
             <span id="cart-total" class="text-amber-900 text-xl">HK$ 0</span>
           </div>
 
-          <!-- 結帳表單 -->
           <div class="space-y-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
             <h4 class="text-xs font-bold text-slate-700 mb-1">訂購人資料</h4>
             <div>
@@ -322,7 +310,6 @@
 
       <div class="flex items-center space-x-4 mb-4 border-b pb-4">
         <div id="dir-modal-avatar" class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border">
-          <!-- 圖片放置區 -->
         </div>
         <div>
           <span id="dir-modal-tag" class="text-[11px] px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-900 mb-1 inline-block"></span>
@@ -337,7 +324,6 @@
       </div>
 
       <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="dir-modal-links">
-        <!-- 動態帶入連結 -->
       </div>
     </div>
   </div>
@@ -442,126 +428,127 @@
     async function fetchAuthorsAndPublishers() {
       const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
       const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
-
+      
       allAuthors = authors || [];
       allPublishers = publishers || [];
 
-      renderDirectoryAuthors();
-      renderDirectoryPublishers();
+      renderAuthors(allAuthors);
+      renderPublishers(allPublishers);
+    }
+
+    function renderAuthors(data) {
+      const el = document.getElementById('author-list');
+      if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無作者資料</p>`; return; }
+      el.innerHTML = data.map(a => `
+        <div onclick="openDirectoryModal('author', ${a.id})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+            ${a.image_url ? `<img src="${a.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-slate-400"></i>`}
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-800">${a.name}</h4>
+            <p class="text-xs text-slate-500 line-clamp-1">${a.bio || '點擊查看詳細簡介'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPublishers(data) {
+      const el = document.getElementById('publisher-list');
+      if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無出版社資料</p>`; return; }
+      el.innerHTML = data.map(p => `
+        <div onclick="openDirectoryModal('publisher', ${p.id})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+            ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-building text-slate-400"></i>`}
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-800">${p.name}</h4>
+            <p class="text-xs text-slate-500 line-clamp-1">${p.description || '點擊查看詳細簡介'}</p>
+          </div>
+        </div>
+      `).join('');
     }
 
     function switchDirectorySubTab(type, btn) {
-      document.querySelectorAll('.dir-sub-btn').forEach(b => {
-        b.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
-        b.classList.add('text-slate-600');
-      });
+      document.querySelectorAll('.dir-sub-btn').forEach(b => b.classList.remove('bg-white', 'text-slate-800', 'shadow-sm'));
       btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
-      btn.classList.remove('text-slate-600');
 
       const authorSec = document.getElementById('dir-section-authors');
       const pubSec = document.getElementById('dir-section-publishers');
-      const grid = document.getElementById('directory-content-grid');
 
-      if (type === 'all') {
-        authorSec.classList.remove('hidden');
-        pubSec.classList.remove('hidden');
-        grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
-      } else if (type === 'authors') {
-        authorSec.classList.remove('hidden');
-        pubSec.classList.add('hidden');
-        grid.className = "grid grid-cols-1 gap-6";
-      } else if (type === 'publishers') {
-        authorSec.classList.add('hidden');
-        pubSec.classList.remove('hidden');
-        grid.className = "grid grid-cols-1 gap-6";
-      }
-    }
-
-    function renderDirectoryAuthors() {
-      const authorContainer = document.getElementById('author-list');
-      if (allAuthors.length === 0) { authorContainer.innerHTML = `<p class="text-slate-400 italic">暫無作者資料</p>`; return; }
-      
-      authorContainer.innerHTML = allAuthors.map(a => `
-        <div onclick="openDirectoryModal('author', ${a.id})" class="p-3 border rounded-xl hover:bg-amber-50/50 hover:border-amber-200 transition cursor-pointer flex items-center justify-between group">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border">
-              ${a.image_url ? `<img src="${a.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-slate-400"></i>`}
-            </div>
-            <div>
-              <h4 class="font-bold text-slate-800 text-sm group-hover:text-amber-900 transition">${a.name}</h4>
-              <p class="text-xs text-slate-500 line-clamp-1">${a.bio || '點擊查看詳細簡介'}</p>
-            </div>
-          </div>
-          <span class="text-xs text-amber-800 font-medium group-hover:translate-x-1 transition flex items-center gap-1">詳情 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
-        </div>
-      `).join('');
-    }
-
-    function renderDirectoryPublishers() {
-      const pubContainer = document.getElementById('publisher-list');
-      if (allPublishers.length === 0) { pubContainer.innerHTML = `<p class="text-slate-400 italic">暫無出版社資料</p>`; return; }
-
-      pubContainer.innerHTML = allPublishers.map(p => `
-        <div onclick="openDirectoryModal('publisher', ${p.id})" class="p-3 border rounded-xl hover:bg-amber-50/50 hover:border-amber-200 transition cursor-pointer flex items-center justify-between group">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border">
-              ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-building text-slate-400"></i>`}
-            </div>
-            <div>
-              <h4 class="font-bold text-slate-800 text-sm group-hover:text-amber-900 transition">${p.name}</h4>
-              <p class="text-xs text-slate-500 line-clamp-1">${p.description || '點擊查看詳細簡介'}</p>
-            </div>
-          </div>
-          <span class="text-xs text-amber-800 font-medium group-hover:translate-x-1 transition flex items-center gap-1">詳情 <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
-        </div>
-      `).join('');
+      if (type === 'all') { authorSec.classList.remove('hidden'); pubSec.classList.remove('hidden'); }
+      else if (type === 'authors') { authorSec.classList.remove('hidden'); pubSec.classList.add('hidden'); }
+      else if (type === 'publishers') { authorSec.classList.add('hidden'); pubSec.classList.remove('hidden'); }
     }
 
     function openDirectoryModal(type, id) {
-      const item = type === 'author' ? allAuthors.find(a => a.id === id) : allPublishers.find(p => p.id === id);
+      const item = (type === 'author' ? allAuthors : allPublishers).find(x => x.id === id);
       if (!item) return;
 
       document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 獨立作者' : '🏛️ 獨立出版社';
-      document.getElementById('dir-modal-title').innerText = item.name || '';
-      document.getElementById('dir-modal-phone').innerText = item.phone ? `📞 電話：${item.phone}` : '';
-      document.getElementById('dir-modal-desc').innerText = (type === 'author' ? item.bio : item.description) || '暫無描述資料。';
+      document.getElementById('dir-modal-title').innerText = item.name;
+      document.getElementById('dir-modal-phone').innerText = item.phone ? `電話：${item.phone}` : '';
+      document.getElementById('dir-modal-desc').innerText = (type === 'author' ? item.bio : item.description) || '暫無簡介';
 
-      const avatarBox = document.getElementById('dir-modal-avatar');
-      if (item.image_url) {
-        avatarBox.innerHTML = `<img src="${item.image_url}" class="w-full h-full object-cover">`;
-      } else {
-        avatarBox.innerHTML = type === 'author' ? `<i class="fa-solid fa-user text-2xl text-slate-400"></i>` : `<i class="fa-solid fa-building text-2xl text-slate-400"></i>`;
-      }
+      const avatar = document.getElementById('dir-modal-avatar');
+      avatar.innerHTML = item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-${type==='author'?'user':'building'} text-2xl text-slate-400"></i>`;
 
-      const linksBox = document.getElementById('dir-modal-links');
-      let linksHTML = '';
-      if (item.website_url) {
-        linksHTML += `<a href="${item.website_url}" target="_blank" class="bg-amber-100 text-amber-900 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-200 font-bold transition"><i class="fa-solid fa-globe mr-1.5"></i>官方網站 ↗</a>`;
-      }
-      if (item.instagram_url) {
-        linksHTML += `<a href="${item.instagram_url}" target="_blank" class="bg-pink-50 text-pink-700 border border-pink-200 px-3 py-1.5 rounded-lg hover:bg-pink-100 font-bold transition"><i class="fa-brands fa-instagram mr-1.5"></i>Instagram ↗</a>`;
-      }
-      if (item.facebook_url) {
-        linksHTML += `<a href="${item.facebook_url}" target="_blank" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 font-bold transition"><i class="fa-brands fa-facebook mr-1.5"></i>Facebook ↗</a>`;
-      }
+      const links = document.getElementById('dir-modal-links');
+      links.innerHTML = `
+        ${item.website_url ? `<a href="${item.website_url}" target="_blank" class="text-amber-800 hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站</a>` : ''}
+        ${item.instagram_url ? `<a href="${item.instagram_url}" target="_blank" class="text-pink-600 hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram</a>` : ''}
+        ${item.facebook_url ? `<a href="${item.facebook_url}" target="_blank" class="text-blue-600 hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook</a>` : ''}
+      `;
 
-      linksBox.innerHTML = linksHTML || `<span class="text-slate-400 italic">暫無相關連結</span>`;
       document.getElementById('directory-modal').classList.remove('hidden');
     }
 
-    function closeDirectoryModal() {
-      document.getElementById('directory-modal').classList.add('hidden');
-    }
+    function closeDirectoryModal() { document.getElementById('directory-modal').classList.add('hidden'); }
 
-    // --- 網上商店 ---
+    // --- 網店商品 ---
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       allProducts = data || [];
-      applyProductFilters();
+      renderProducts(allProducts);
     }
 
-    function handleSearch(query) {
-      currentSearchQuery = query.trim().toLowerCase();
+    function renderProducts(list) {
+      const container = document.getElementById('product-list');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">尚無商品上架。</p>`; return; }
+
+      container.innerHTML = list.map(p => {
+        let stocks = p.branch_stocks || {};
+        if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
+        const totalQty = p.quantity || Object.values(stocks).reduce((a,b)=>a+Number(b),0);
+
+        return `
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+            <div class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer" onclick="openBookModal(${p.id})">
+              ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
+            </div>
+            <div class="p-4 flex-grow flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
+                <h3 class="font-bold text-base text-slate-800 mt-1 cursor-pointer hover:text-amber-800" onclick="openBookModal(${p.id})">${p.name}</h3>
+                <p class="text-xs text-slate-500 mt-0.5">作者：${p.author || '未提供'}</p>
+              </div>
+              <div class="mt-3 border-t pt-3 flex justify-between items-center">
+                <div>
+                  <span class="text-lg font-bold text-amber-900">HK$ ${p.price}</span>
+                  <span class="block text-[10px] text-slate-400">現貨: ${totalQty} 本</span>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="openBookModal(${p.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs">詳情</button>
+                  <button onclick="addToCart(${p.id})" class="bg-amber-900 hover:bg-amber-800 text-white px-3 py-1.5 rounded text-xs flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSearch(q) {
+      currentSearchQuery = q.toLowerCase();
       applyProductFilters();
     }
 
@@ -572,11 +559,9 @@
 
     function applyProductFilters() {
       let filtered = allProducts;
-
       if (currentCategoryFilter !== 'ALL') {
         filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
       }
-
       if (currentSearchQuery) {
         filtered = filtered.filter(p => 
           (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
@@ -584,74 +569,7 @@
           (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
         );
       }
-
       renderProducts(filtered);
-    }
-
-    function renderProducts(list) {
-      const container = document.getElementById('product-list');
-      if (list.length === 0) { 
-        container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 italic bg-white rounded-xl border border-dashed"><i class="fa-solid fa-book-open text-3xl mb-2 text-slate-300"></i><p>未有找到相關書籍商品。</p></div>`; 
-        return; 
-      }
-      
-      container.innerHTML = list.map(p => {
-        const cleanCat = cleanCategory(p.category);
-        const icon = categoryIcons[cleanCat] || '📚';
-
-        let stocks = p.branch_stocks || {};
-        if (typeof stocks === 'string') {
-          try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
-        }
-        if (Object.keys(stocks).length === 0 && p.branch) {
-          stocks[p.branch] = p.quantity || 0;
-        }
-
-        const branchBadges = Object.entries(stocks).map(([b, q]) => `
-          <span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded text-[11px] font-medium">
-            📍 ${b}: ${q}本
-          </span>
-        `).join(' ');
-
-        const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
-
-        return `
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 transition duration-200">
-            <div class="h-48 bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer relative group" onclick="openBookModal(${p.id})">
-              ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-contain p-2 group-hover:scale-105 transition duration-300">` : `<div class="text-slate-300 flex flex-col items-center"><i class="fa-solid fa-book text-4xl"></i><span class="text-xs mt-1">無封面</span></div>`}
-              <div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                <span class="bg-white/90 text-slate-800 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm"><i class="fa-solid fa-eye mr-1"></i>查看簡介</span>
-              </div>
-            </div>
-
-            <div class="p-4 flex-grow flex flex-col">
-              <div class="flex justify-between items-start mb-1">
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${icon} ${cleanCat}</span>
-                <span class="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">${p.stock_type || '一般進貨'}</span>
-              </div>
-              <h3 class="font-bold text-base text-slate-800 mb-1 cursor-pointer hover:text-amber-900 transition line-clamp-1" onclick="openBookModal(${p.id})">${p.name}</h3>
-              <p class="text-xs text-slate-500 mb-2">${p.author ? `作者: ${p.author}` : ''}</p>
-              
-              <div class="flex flex-wrap gap-1 mb-3">
-                ${branchBadges}
-              </div>
-
-              <div class="mt-auto pt-3 border-t flex justify-between items-center">
-                <div>
-                  <span class="text-lg font-bold text-amber-900">HK$ ${p.price}</span>
-                  <span class="text-[10px] text-slate-400 block">總現貨: ${totalQty} 本</span>
-                </div>
-                <div class="flex space-x-1.5">
-                  <button onclick="openBookModal(${p.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition">詳情</button>
-                  <button onclick="addToCart(${p.id})" class="bg-amber-900 hover:bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
-                    <i class="fa-solid fa-cart-plus"></i> 加入
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
     }
 
     function openBookModal(id) {
@@ -659,106 +577,90 @@
       if (!p) return;
 
       document.getElementById('modal-img').src = p.image_url || '';
-      document.getElementById('modal-category').innerText = `${categoryIcons[cleanCategory(p.category)] || '📚'} ${cleanCategory(p.category)}`;
-      document.getElementById('modal-stock-type').innerText = p.stock_type || '一般進貨';
+      document.getElementById('modal-category').innerText = cleanCategory(p.category);
+      document.getElementById('modal-stock-type').innerText = p.stock_type || '買斷';
       document.getElementById('modal-title').innerText = p.name;
-      document.getElementById('modal-author').querySelector('span').innerText = p.author || '未提供';
-      document.getElementById('modal-isbn').querySelector('span').innerText = p.isbn || '未提供';
-      document.getElementById('modal-description').innerText = p.description || '暫無詳細簡介。';
+      document.querySelector('#modal-author span').innerText = p.author || '未提供';
+      document.querySelector('#modal-isbn span').innerText = p.isbn || '未提供';
+      document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
       document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
 
       let stocks = p.branch_stocks || {};
-      if (typeof stocks === 'string') {
-        try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; }
-      }
-      if (Object.keys(stocks).length === 0 && p.branch) {
-        stocks[p.branch] = p.quantity || 0;
-      }
-
-      const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
-      document.getElementById('modal-total-qty').innerText = `總存貨量: ${totalQty} 本`;
-
+      if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
+      
       const branchContainer = document.getElementById('modal-branches');
       branchContainer.innerHTML = Object.entries(stocks).map(([b, q]) => `
-        <span class="bg-blue-50 text-blue-900 border border-blue-200 text-xs px-2.5 py-1 rounded-md font-medium">
-          📍 ${b}：<strong class="text-blue-700">${q}</strong> 本
-        </span>
-      `).join('');
+        <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">${b}: ${q}本</span>
+      `).join(' ') || '<span class="text-xs text-slate-400">存貨詳情未填寫</span>';
 
-      const addBtn = document.getElementById('modal-add-btn');
-      addBtn.onclick = function() {
-        addToCart(p.id);
-        closeBookModal();
-      };
+      const btn = document.getElementById('modal-add-btn');
+      btn.onclick = () => { addToCart(p.id); closeBookModal(); };
 
       document.getElementById('book-modal').classList.remove('hidden');
     }
 
-    function closeBookModal() {
-      document.getElementById('book-modal').classList.add('hidden');
-    }
+    function closeBookModal() { document.getElementById('book-modal').classList.add('hidden'); }
 
+    // --- 購物車處理 ---
     function addToCart(id) {
       const p = allProducts.find(x => x.id === id);
       if (!p) return;
 
-      const existing = cart.find(item => item.id === id);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
-      }
+      const item = cart.find(x => x.id === id);
+      if (item) item.qty += 1;
+      else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+
       updateCartUI();
     }
 
     function updateCartUI() {
-      const totalCount = cart.reduce((sum, item) => sum + item.qty, 0);
-      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const countEl = document.getElementById('cart-count');
+      const sideCount = document.getElementById('sidebar-cart-count');
+      const itemsContainer = document.getElementById('cart-items');
+      const totalEl = document.getElementById('cart-total');
 
-      document.getElementById('cart-count').innerText = totalCount;
-      document.getElementById('sidebar-cart-count').innerText = `${totalCount} 件商品`;
-      document.getElementById('cart-total').innerText = `HK$ ${totalPrice}`;
+      const totalItems = cart.reduce((a, b) => a + b.qty, 0);
+      const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
 
-      const cartItemsContainer = document.getElementById('cart-items');
+      countEl.innerText = totalItems;
+      sideCount.innerText = `${totalItems} 件商品`;
+      totalEl.innerText = `HK$ ${totalPrice}`;
+
       if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `<p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>`;
+        itemsContainer.innerHTML = `<p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>`;
         return;
       }
 
-      cartItemsContainer.innerHTML = cart.map(item => `
+      itemsContainer.innerHTML = cart.map((item, i) => `
         <div class="flex justify-between items-center border-b pb-2">
-          <div class="flex-1 pr-2">
-            <p class="font-bold text-slate-800 text-xs line-clamp-1">${item.name}</p>
-            <p class="text-[11px] text-amber-900 font-semibold">HK$ ${item.price} x ${item.qty}</p>
+          <div>
+            <p class="font-bold text-xs text-slate-800">${item.name}</p>
+            <p class="text-[11px] text-slate-500">HK$ ${item.price} x ${item.qty}</p>
           </div>
           <div class="flex items-center space-x-1">
-            <button onclick="changeQty(${item.id}, -1)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-bold flex items-center justify-center text-xs">-</button>
-            <span class="text-xs font-bold px-1">${item.qty}</span>
-            <button onclick="changeQty(${item.id}, 1)" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-bold flex items-center justify-center text-xs">+</button>
+            <button onclick="changeQty(${i}, -1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">-</button>
+            <span class="text-xs px-1">${item.qty}</span>
+            <button onclick="changeQty(${i}, 1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">+</button>
           </div>
         </div>
       `).join('');
     }
 
-    function changeQty(id, delta) {
-      const item = cart.find(x => x.id === id);
-      if (!item) return;
-      item.qty += delta;
-      if (item.qty <= 0) {
-        cart = cart.filter(x => x.id !== id);
-      }
+    function changeQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty <= 0) cart.splice(index, 1);
       updateCartUI();
     }
 
-    async function submitOrder() {
-      if (cart.length === 0) { alert("購物車目前是空的！"); return; }
+    function submitOrder() {
+      if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
       const phone = document.getElementById('cust-phone').value.trim();
-      const method = document.getElementById('payment-method').value;
+      const pay = document.getElementById('payment-method').value;
 
-      if (!name || !phone) { alert("請填寫訂購人姓名及電話！"); return; }
+      if (!name || !phone) return alert("請填寫訂購人姓名與電話！");
 
-      alert(`✅ 訂單已成功提交！\n感謝 ${name} 的支持，我們會透過電話 (${phone}) 聯絡您確認 ${method} 付款細節。`);
+      alert(`✅ 感謝您的訂購！\n訂單已成功提交。\n付款方式：${pay}\n專人將盡快經由電話 (${phone}) 與您確認細節。`);
       cart = [];
       document.getElementById('cust-name').value = '';
       document.getElementById('cust-phone').value = '';
@@ -767,29 +669,27 @@
 
     // --- 農業 & 環保 ---
     async function fetchEco() {
-      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: true });
+      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
       allEco = data || [];
       renderEco(allEco);
     }
 
     function renderEco(list) {
-      const container = document.getElementById('eco-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
-      container.innerHTML = list.map(item => `
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${item.image_url ? `<div class="h-44 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
-          <div class="p-5 flex-grow">
+      const el = document.getElementById('eco-list');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
+      el.innerHTML = list.map(e => `
+        <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition">
+          <div>
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-lg text-slate-800">${item.name}</h3>
-              <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-semibold">${item.category}</span>
+              <h3 class="font-bold text-base text-slate-800">${e.name}</h3>
+              <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${e.category}</span>
             </div>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>${item.address || '無地址'}</p>
-            ${item.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-emerald-700"></i>${item.phone}</p>` : ''}
-            <p class="text-sm text-slate-600 mb-4 line-clamp-3">${item.description || ''}</p>
+            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>${e.address || '無地址'}</p>
+            ${e.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-emerald-700"></i>${e.phone}</p>` : ''}
+            <p class="text-xs text-slate-600 line-clamp-3">${e.description || ''}</p>
           </div>
-          <div class="px-5 py-3 bg-slate-50 border-t flex space-x-3 text-slate-600 text-base">
-            ${item.instagram_url ? `<a href="${item.instagram_url}" target="_blank" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-            ${item.facebook_url ? `<a href="${item.facebook_url}" target="_blank" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
+          <div class="pt-4 border-t mt-3 flex justify-between text-xs">
+            ${e.website_url ? `<a href="${e.website_url}" target="_blank" class="text-emerald-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
           </div>
         </div>
       `).join('');
@@ -802,37 +702,35 @@
 
     // --- 劇團 ---
     async function fetchTheatre() {
-      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: true });
+      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
       allTheatre = data || [];
       renderTheatre(allTheatre);
     }
 
     function renderTheatre(list) {
-      const container = document.getElementById('theatre-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
-      container.innerHTML = list.map(item => `
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${item.image_url ? `<div class="h-44 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${item.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
-          <div class="p-5 flex-grow">
+      const el = document.getElementById('theatre-list');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
+      el.innerHTML = list.map(t => `
+        <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition">
+          <div>
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-lg text-slate-800">${item.name}</h3>
-              <span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-semibold">${item.region}</span>
+              <h3 class="font-bold text-base text-slate-800">${t.name}</h3>
+              <span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>
             </div>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>${item.address || '無地址'}</p>
-            ${item.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-purple-700"></i>${item.phone}</p>` : ''}
-            <p class="text-sm text-slate-600 mb-4 line-clamp-3">${item.description || ''}</p>
+            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>${t.address || '無地址'}</p>
+            ${t.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-purple-700"></i>${t.phone}</p>` : ''}
+            <p class="text-xs text-slate-600 line-clamp-3">${t.description || ''}</p>
           </div>
-          <div class="px-5 py-3 bg-slate-50 border-t flex space-x-3 text-slate-600 text-base">
-            ${item.instagram_url ? `<a href="${item.instagram_url}" target="_blank" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-            ${item.facebook_url ? `<a href="${item.facebook_url}" target="_blank" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
+          <div class="pt-4 border-t mt-3 flex justify-between text-xs">
+            ${t.website_url ? `<a href="${t.website_url}" target="_blank" class="text-purple-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
           </div>
         </div>
       `).join('');
     }
 
-    function filterTheatre(region) {
-      if (region === 'ALL') renderTheatre(allTheatre);
-      else renderTheatre(allTheatre.filter(t => t.region === region));
+    function filterTheatre(reg) {
+      if (reg === 'ALL') renderTheatre(allTheatre);
+      else renderTheatre(allTheatre.filter(t => t.region === reg));
     }
   </script>
 </body>
