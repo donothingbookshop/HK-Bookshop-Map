@@ -40,7 +40,7 @@
 
       <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('map')">
         <i class="fa-solid fa-book-bookmark text-2xl text-amber-400"></i>
-        <h1 class="text-lg font-bold tracking-wide">香港書店地圖</h1>
+        <h1 class="text-lg font-bold tracking-wide">無所事事小書店</h1>
       </div>
 
       <nav class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
@@ -155,7 +155,6 @@
           <div class="flex items-center space-x-2">
             <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer font-medium text-slate-700">
               <option value="ALL">📖 全部主題</option>
-              <option value="無所事事小書店">🏪 【無所事事小書店】專區</option>
               <option value="文學小說">📖 文學小說</option>
               <option value="心理勵志">🧠 心理勵志</option>
               <option value="人文社科">🏛️ 人文社科</option>
@@ -333,7 +332,7 @@
   </div>
 
   <footer class="bg-slate-800 text-slate-400 text-xs py-6 text-center mt-auto">
-    <p>© 香港獨立書店地圖 & 文化社區</p>
+    <p>© 無所事事小書店 & 文化社區</p>
   </footer>
 
   <script>
@@ -346,7 +345,6 @@
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
 
     const categoryIcons = {
-      '無所事事小書店': '🏪',
       '文學小說': '📖',
       '心理勵志': '🧠',
       '人文社科': '🏛️',
