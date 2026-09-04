@@ -139,8 +139,11 @@
     <section id="tab-shop" class="tab-content">
       <div class="mb-6 bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-800">網上選購</h2>
-          <p class="text-xs text-slate-500 mt-1">支持本地獨立書店，點擊書籍圖片或「詳情」即可查閱完整書評與簡介。</p>
+          <div class="flex items-center gap-2">
+            <h2 class="text-2xl font-bold text-slate-800">網上選購</h2>
+            <span class="bg-amber-100 text-amber-900 text-xs px-2.5 py-1 rounded-full font-bold border border-amber-300"><i class="fa-solid fa-store mr-1"></i>無所事事小書店</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">支持本地獨立書店「無所事事小書店」，點擊書籍圖片或「詳情」即可查閱完整書評與簡介。</p>
         </div>
         
         <div class="flex flex-wrap items-center gap-3">
@@ -152,6 +155,7 @@
           <div class="flex items-center space-x-2">
             <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer font-medium text-slate-700">
               <option value="ALL">📖 全部主題</option>
+              <option value="無所事事小書店">🏪 【無所事事小書店】專區</option>
               <option value="文學小說">📖 文學小說</option>
               <option value="心理勵志">🧠 心理勵志</option>
               <option value="人文社科">🏛️ 人文社科</option>
@@ -342,6 +346,7 @@
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
 
     const categoryIcons = {
+      '無所事事小書店': '🏪',
       '文學小說': '📖',
       '心理勵志': '🧠',
       '人文社科': '🏛️',
@@ -399,7 +404,7 @@
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-amber-800"></i>${shop.address || '無地址'}</p>
             ${shop.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-amber-800"></i>${shop.phone}</p>` : ''}
             <p class="text-xs text-slate-400 mb-3"><i class="fa-regular fa-clock mr-1"></i>${shop.opening_hours || '未提供營業時間'}</p>
-            <p class="text-sm text-slate-600 mb-4 line-clamp-3">${shop.description || ''}</p>
+            <p class="text-sm text-slate-600 mb-4 whitespace-pre-line">${shop.description || ''}</p>
           </div>
           <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
             <div class="flex space-x-3 text-slate-600 text-base">
@@ -686,7 +691,7 @@
             </div>
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>${e.address || '無地址'}</p>
             ${e.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-emerald-700"></i>${e.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 line-clamp-3">${e.description || ''}</p>
+            <p class="text-xs text-slate-600 whitespace-pre-line">${e.description || ''}</p>
           </div>
           <div class="pt-4 border-t mt-3 flex justify-between text-xs">
             ${e.website_url ? `<a href="${e.website_url}" target="_blank" class="text-emerald-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
@@ -715,11 +720,11 @@
           <div>
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-base text-slate-800">${t.name}</h3>
-              <span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>
+              ${t.region ? `<span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
             </div>
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>${t.address || '無地址'}</p>
             ${t.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-purple-700"></i>${t.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 line-clamp-3">${t.description || ''}</p>
+            <p class="text-xs text-slate-600 whitespace-pre-line">${t.description || ''}</p>
           </div>
           <div class="pt-4 border-t mt-3 flex justify-between text-xs">
             ${t.website_url ? `<a href="${t.website_url}" target="_blank" class="text-purple-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
