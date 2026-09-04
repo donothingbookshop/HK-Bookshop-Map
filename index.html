@@ -217,7 +217,7 @@
     <section id="tab-eco" class="tab-content">
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">香港農業 & 環保綠色地圖</h2>
-        <p class="text-slate-600 text-sm">探索本地大自然教育平台、農地與綠色回收站。</p>
+        <p class="text-slate-600 text-sm">探索本地大自然教育平台、農地與綠色回收站，點擊卡片可查看詳細資料。</p>
       </div>
       
       <div class="flex flex-wrap gap-2 mb-6">
@@ -236,7 +236,7 @@
     <section id="tab-theatre" class="tab-content">
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">香港本地劇團名冊</h2>
-        <p class="text-slate-600 text-sm">支持本地獨立劇團與表演藝術團體。</p>
+        <p class="text-slate-600 text-sm">支持本地獨立劇團與表演藝術團體，點擊卡片可查看詳細資料。</p>
       </div>
 
       <div class="flex flex-wrap gap-2 mb-6">
@@ -327,6 +327,70 @@
       </div>
 
       <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="dir-modal-links">
+      </div>
+    </div>
+  </div>
+
+  <!-- 環保/農業詳細資料 Modal -->
+  <div id="eco-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
+      <button onclick="closeEcoModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center space-x-3 mb-4 border-b pb-4">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
+          <i class="fa-solid fa-leaf text-xl"></i>
+        </div>
+        <div>
+          <span id="eco-modal-tag" class="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-900 mb-1 inline-block"></span>
+          <h3 id="eco-modal-title" class="text-xl font-bold text-slate-800"></h3>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+        <p id="eco-modal-address"><i class="fa-solid fa-location-dot mr-1.5 text-emerald-700"></i>地址：<span></span></p>
+        <p id="eco-modal-phone"><i class="fa-solid fa-phone mr-1.5 text-emerald-700"></i>電話：<span></span></p>
+      </div>
+
+      <div class="mb-4">
+        <h4 class="text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-circle-info mr-1 text-emerald-800"></i>機構詳細介紹：</h4>
+        <p id="eco-modal-desc" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
+      </div>
+
+      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="eco-modal-links">
+      </div>
+    </div>
+  </div>
+
+  <!-- 劇團詳細資料 Modal -->
+  <div id="theatre-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
+      <button onclick="closeTheatreModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="flex items-center space-x-3 mb-4 border-b pb-4">
+        <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-800 flex items-center justify-center shrink-0 border border-purple-200">
+          <i class="fa-solid fa-masks-theater text-xl"></i>
+        </div>
+        <div>
+          <span id="theatre-modal-tag" class="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-purple-100 text-purple-900 mb-1 inline-block"></span>
+          <h3 id="theatre-modal-title" class="text-xl font-bold text-slate-800"></h3>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs text-slate-600 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+        <p id="theatre-modal-address"><i class="fa-solid fa-location-dot mr-1.5 text-purple-700"></i>地址：<span></span></p>
+        <p id="theatre-modal-phone"><i class="fa-solid fa-phone mr-1.5 text-purple-700"></i>電話：<span></span></p>
+      </div>
+
+      <div class="mb-4">
+        <h4 class="text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-circle-info mr-1 text-purple-800"></i>劇團詳細介紹：</h4>
+        <p id="theatre-modal-desc" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
+      </div>
+
+      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="theatre-modal-links">
       </div>
     </div>
   </div>
@@ -681,18 +745,19 @@
       const el = document.getElementById('eco-list');
       if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
       el.innerHTML = list.map(e => `
-        <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition">
+        <div onclick="openEcoModal(${e.id})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
           <div>
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-base text-slate-800">${e.name}</h3>
-              <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${e.category}</span>
+              <h3 class="font-bold text-base text-slate-800 group-hover:text-emerald-800 transition">${e.name}</h3>
+              <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${e.category || '農業/環保'}</span>
             </div>
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>${e.address || '無地址'}</p>
             ${e.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-emerald-700"></i>${e.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 whitespace-pre-line">${e.description || ''}</p>
+            <p class="text-xs text-slate-600 line-clamp-2 mt-2">${e.description || '點擊查看詳細資料...'}</p>
           </div>
-          <div class="pt-4 border-t mt-3 flex justify-between text-xs">
-            ${e.website_url ? `<a href="${e.website_url}" target="_blank" class="text-emerald-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
+          <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
+            <span class="text-emerald-800 font-bold group-hover:underline">查看詳情 ↗</span>
+            ${e.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
           </div>
         </div>
       `).join('');
@@ -701,6 +766,30 @@
     function filterEco(cat) {
       if (cat === 'ALL') renderEco(allEco);
       else renderEco(allEco.filter(e => e.category === cat));
+    }
+
+    function openEcoModal(id) {
+      const e = allEco.find(x => x.id === id);
+      if (!e) return;
+
+      document.getElementById('eco-modal-tag').innerText = e.category || '農業/環保';
+      document.getElementById('eco-modal-title').innerText = e.name;
+      document.querySelector('#eco-modal-address span').innerText = e.address || '暫未提供地址';
+      document.querySelector('#eco-modal-phone span').innerText = e.phone || '暫未提供電話';
+      document.getElementById('eco-modal-desc').innerText = e.description || '暫無詳細介紹資料';
+
+      const links = document.getElementById('eco-modal-links');
+      links.innerHTML = `
+        ${e.website_url ? `<a href="${e.website_url}" target="_blank" class="text-emerald-800 font-bold hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站 ↗</a>` : ''}
+        ${e.facebook_url ? `<a href="${e.facebook_url}" target="_blank" class="text-blue-600 font-bold hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook ↗</a>` : ''}
+        ${e.instagram_url ? `<a href="${e.instagram_url}" target="_blank" class="text-pink-600 font-bold hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram ↗</a>` : ''}
+      `;
+
+      document.getElementById('eco-modal').classList.remove('hidden');
+    }
+
+    function closeEcoModal() {
+      document.getElementById('eco-modal').classList.add('hidden');
     }
 
     // --- 劇團 ---
@@ -714,18 +803,19 @@
       const el = document.getElementById('theatre-list');
       if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
       el.innerHTML = list.map(t => `
-        <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition">
+        <div onclick="openTheatreModal(${t.id})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
           <div>
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-base text-slate-800">${t.name}</h3>
+              <h3 class="font-bold text-base text-slate-800 group-hover:text-purple-800 transition">${t.name}</h3>
               ${t.region ? `<span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
             </div>
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>${t.address || '無地址'}</p>
             ${t.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-purple-700"></i>${t.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 whitespace-pre-line">${t.description || ''}</p>
+            <p class="text-xs text-slate-600 line-clamp-2 mt-2">${t.description || '點擊查看詳細資料...'}</p>
           </div>
-          <div class="pt-4 border-t mt-3 flex justify-between text-xs">
-            ${t.website_url ? `<a href="${t.website_url}" target="_blank" class="text-purple-800 font-bold hover:underline">官方網站 ↗</a>` : '<span></span>'}
+          <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
+            <span class="text-purple-800 font-bold group-hover:underline">查看詳情 ↗</span>
+            ${t.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
           </div>
         </div>
       `).join('');
@@ -734,6 +824,30 @@
     function filterTheatre(reg) {
       if (reg === 'ALL') renderTheatre(allTheatre);
       else renderTheatre(allTheatre.filter(t => t.region === reg));
+    }
+
+    function openTheatreModal(id) {
+      const t = allTheatre.find(x => x.id === id);
+      if (!t) return;
+
+      document.getElementById('theatre-modal-tag').innerText = t.region || '劇團';
+      document.getElementById('theatre-modal-title').innerText = t.name;
+      document.querySelector('#theatre-modal-address span').innerText = t.address || '暫未提供地址';
+      document.querySelector('#theatre-modal-phone span').innerText = t.phone || '暫未提供電話';
+      document.getElementById('theatre-modal-desc').innerText = t.description || '暫無詳細介紹資料';
+
+      const links = document.getElementById('theatre-modal-links');
+      links.innerHTML = `
+        ${t.website_url ? `<a href="${t.website_url}" target="_blank" class="text-purple-800 font-bold hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站 ↗</a>` : ''}
+        ${t.facebook_url ? `<a href="${t.facebook_url}" target="_blank" class="text-blue-600 font-bold hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook ↗</a>` : ''}
+        ${t.instagram_url ? `<a href="${t.instagram_url}" target="_blank" class="text-pink-600 font-bold hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram ↗</a>` : ''}
+      `;
+
+      document.getElementById('theatre-modal').classList.remove('hidden');
+    }
+
+    function closeTheatreModal() {
+      document.getElementById('theatre-modal').classList.add('hidden');
     }
   </script>
 </body>
