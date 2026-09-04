@@ -183,7 +183,6 @@
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">書籍主題 (分類)</label>
               <select id="prod-cat" class="w-full border rounded px-3 py-1.5 text-sm">
-                <option value="無所事事小書店">🏪 無所事事小書店</option>
                 <option value="📖 文學小說">📖 文學小說</option>
                 <option value="🧠 心理勵志">🧠 心理勵志</option>
                 <option value="🏛️ 人文社科">🏛️ 人文社科</option>
@@ -783,7 +782,10 @@
       if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
       list.innerHTML = data.map(e => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
-          <div><h4 class="font-bold text-sm text-slate-800">${e.name} <span class="text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded ml-1">${e.category}</span></h4><p class="text-xs text-slate-500">${e.address || '無地址'}</p></div>
+          <div>
+            <h4 class="font-bold text-sm text-slate-800">${e.name} <span class="text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded ml-2">${e.category}</span></h4>
+            <p class="text-xs text-slate-500">${e.address || '無地址'}</p>
+          </div>
           <div class="flex space-x-2">
             <button onclick="editEco(${e.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
             <button onclick="deleteRecord('eco_farms', ${e.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
@@ -824,7 +826,7 @@
       document.getElementById('eco-fb').value = e.facebook_url || '';
       document.getElementById('eco-image').value = e.image_url || '';
       document.getElementById('eco-desc').value = e.description || '';
-      document.getElementById('eco-form-title').innerText = "編輯農業/環保資料";
+      document.getElementById('eco-form-title').innerText = "編輯農業/環保單位資料";
     }
 
     // --- 6. 劇團 CRUD ---
@@ -839,7 +841,10 @@
       if (!data || data.length === 0) { list.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
       list.innerHTML = data.map(t => `
         <div class="flex justify-between items-center p-3 border rounded-lg hover:bg-slate-50">
-          <div><h4 class="font-bold text-sm text-slate-800">${t.name} ${t.region ? `<span class="text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded ml-1">${t.region}</span>` : ''}</h4><p class="text-xs text-slate-500">${t.address || '無地址'}</p></div>
+          <div>
+            <h4 class="font-bold text-sm text-slate-800">${t.name} ${t.region ? `<span class="text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded ml-2">${t.region}</span>` : ''}</h4>
+            <p class="text-xs text-slate-500">${t.address || '無地址'}</p>
+          </div>
           <div class="flex space-x-2">
             <button onclick="editTheatre(${t.id})" class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded hover:bg-amber-200">編輯</button>
             <button onclick="deleteRecord('theatre_groups', ${t.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
@@ -883,37 +888,45 @@
       document.getElementById('theatre-form-title').innerText = "編輯劇團資料";
     }
 
-    // --- 表單重置 ---
+    // 通用重置表單
     function resetForm(type) {
       if (type === 'bookshop') {
         document.getElementById('form-bookshop').reset();
         document.getElementById('bs-id').value = '';
         document.getElementById('bookshop-form-title').innerText = "新增實體書店/圖書館";
+        document.getElementById('bs-upload-status').classList.add('hidden');
       } else if (type === 'author') {
         document.getElementById('form-author').reset();
         document.getElementById('au-id').value = '';
         document.getElementById('author-form-title').innerText = "新增獨立作者";
+        document.getElementById('au-upload-status').classList.add('hidden');
       } else if (type === 'publisher') {
         document.getElementById('form-publisher').reset();
         document.getElementById('pub-id').value = '';
         document.getElementById('publisher-form-title').innerText = "新增獨立出版社";
+        document.getElementById('pub-upload-status').classList.add('hidden');
       } else if (type === 'product') {
         document.getElementById('form-product').reset();
         document.getElementById('prod-id').value = '';
+        document.getElementById('product-form-title').innerText = "新增網店商品 / 書籍";
+        document.getElementById('prod-upload-status').classList.add('hidden');
         document.querySelectorAll('.branch-checkbox').forEach(cb => {
           cb.checked = false;
           const input = document.getElementById(`qty-${cb.value}`);
-          if (input) { input.disabled = true; input.classList.add('bg-gray-100'); input.value = '0'; }
+          input.disabled = true;
+          input.classList.add('bg-gray-100');
+          input.value = '0';
         });
-        document.getElementById('product-form-title').innerText = "新增網店商品 / 書籍";
       } else if (type === 'eco') {
         document.getElementById('form-eco').reset();
         document.getElementById('eco-id').value = '';
         document.getElementById('eco-form-title').innerText = "新增農業/環保單位";
+        document.getElementById('eco-upload-status').classList.add('hidden');
       } else if (type === 'theatre') {
         document.getElementById('form-theatre').reset();
         document.getElementById('th-id').value = '';
         document.getElementById('theatre-form-title').innerText = "新增劇團";
+        document.getElementById('th-upload-status').classList.add('hidden');
       }
     }
   </script>
