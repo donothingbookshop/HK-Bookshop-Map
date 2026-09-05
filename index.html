@@ -752,18 +752,19 @@
 
       const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
 
-      // 儲存訂單到 Supabase
+      // 儲存訂單到 Supabase (加上 created_at 防錯)
       const { data, error } = await _supabase.from('shop_orders').insert([{
         customer_name: name,
         customer_phone: phone,
         payment_method: payMethod,
         items: cart,
         total_amount: totalPrice,
-        status: '待確認'
+        status: '待確認',
+        created_at: new Date().toISOString()
       }]).select();
 
       if (error) {
-        alert("提交訂單時發生錯誤，請稍後再試。");
+        alert("提交訂單時發生錯誤：" + error.message);
         console.error(error);
         return;
       }
