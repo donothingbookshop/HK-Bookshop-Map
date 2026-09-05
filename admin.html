@@ -157,26 +157,26 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-author" onsubmit="saveAuthor(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
           <h3 id="author-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增獨立作者</h3>
-          <input type="hidden" id="au-id">
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">作者姓名 *</label><input type="text" id="au-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="au-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="au-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="au-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="au-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <input type="hidden" id="author-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">姓名 *</label><input type="text" id="author-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">聯絡電話</label><input type="text" id="author-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站</label><input type="url" id="author-website" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="author-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="author-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">上傳頭像 / 相片 URL</label>
-            <input type="file" id="au-file" accept="image/*" onchange="uploadImage(this, 'au-image', 'au-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
-            <span id="au-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
-            <input type="url" id="au-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+            <label class="block text-xs font-medium text-slate-600 mb-1">照片 / 相片上傳</label>
+            <input type="file" id="author-file" accept="image/*" onchange="uploadImage(this, 'author-image', 'author-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
+            <span id="author-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
+            <input type="url" id="author-image" placeholder="或貼上照片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">個人簡介</label><textarea id="au-bio" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">個人簡介 / 履歷</label><textarea id="author-bio" rows="4" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
-            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存作者</button>
             <button type="button" onclick="resetForm('author')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
         <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
-          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有作者清單</h3>
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有作者名冊</h3>
           <div id="list-authors" class="space-y-3">載入中...</div>
         </div>
       </div>
@@ -189,24 +189,24 @@
           <h3 id="publisher-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增獨立出版社</h3>
           <input type="hidden" id="pub-id">
           <div><label class="block text-xs font-medium text-slate-600 mb-1">出版社名稱 *</label><input type="text" id="pub-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="pub-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="pub-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">聯絡電話</label><input type="text" id="pub-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站</label><input type="url" id="pub-website" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="pub-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="pub-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">上傳標誌 / 相片 URL</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">標誌 / 照片上傳</label>
             <input type="file" id="pub-file" accept="image/*" onchange="uploadImage(this, 'pub-image', 'pub-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
             <span id="pub-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
-            <input type="url" id="pub-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
+            <input type="url" id="pub-image" placeholder="或貼上照片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介</label><textarea id="pub-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">出版社簡介</label><textarea id="pub-desc" rows="4" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
-            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存出版社</button>
             <button type="button" onclick="resetForm('publisher')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
         <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
-          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有出版社清單</h3>
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有出版社名冊</h3>
           <div id="list-publishers" class="space-y-3">載入中...</div>
         </div>
       </div>
@@ -216,107 +216,56 @@
     <section id="tab-products" class="tab-content">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-product" onsubmit="saveProduct(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-          <h3 id="product-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增網店商品 / 書籍</h3>
+          <h3 id="product-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增網店商品/書籍</h3>
           <input type="hidden" id="prod-id">
-          
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">商品 / 書名 *</label>
-            <input type="text" id="prod-name" required placeholder="例如：笑與幽默" class="w-full border rounded px-3 py-1.5 text-sm">
-          </div>
-
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">書名 / 商品名稱 *</label><input type="text" id="prod-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">進貨類型</label>
-              <select id="prod-stock" class="w-full border rounded px-3 py-1.5 text-sm">
-                <option value="買斷 / 一般進貨">買斷 / 一般進貨</option>
-                <option value="寄售">寄售</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">書籍主題 (分類)</label>
-              <select id="prod-cat" class="w-full border rounded px-3 py-1.5 text-sm">
-                <option value="📖 文學小說">📖 文學小說</option>
-                <option value="🧠 心理勵志">🧠 心理勵志</option>
-                <option value="🏛️ 人文社科">🏛️ 人文社科</option>
-                <option value="🎨 藝術設計">🎨 藝術設計</option>
-                <option value="🌱 生活風格">🌱 生活風格</option>
-                <option value="🎁 文創周邊">🎁 文創周邊</option>
+              <label class="block text-xs font-medium text-slate-600 mb-1">主題分類 *</label>
+              <select id="prod-category" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="文學小說">📖 文學小說</option>
+                <option value="心理勵志">🧠 心理勵志</option>
+                <option value="人文社科">🏛️ 人文社科</option>
+                <option value="藝術設計">🎨 藝術設計</option>
+                <option value="生活風格">🌱 生活風格</option>
+                <option value="文創周邊">🎁 文創周邊</option>
                 <option value="其他">其他</option>
               </select>
             </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">存貨形式</label>
+              <select id="prod-stock-type" class="w-full border rounded px-3 py-1.5 text-sm">
+                <option value="買斷">買斷</option>
+                <option value="寄售">寄售</option>
+              </select>
+            </div>
           </div>
-
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">ISBN 碼</label>
-              <input type="text" id="prod-isbn" placeholder="例: 978957883761" class="w-full border rounded px-3 py-1.5 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">作者姓名</label>
-              <input type="text" id="prod-author" placeholder="作者姓名" class="w-full border rounded px-3 py-1.5 text-sm">
-            </div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">作者</label><input type="text" id="prod-author" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">ISBN 條碼</label><input type="text" id="prod-isbn" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">售價 (HK$) *</label><input type="number" id="prod-price" required step="0.1" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">總庫存數量 *</label><input type="number" id="prod-qty" required value="1" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          </div>
+          
+          <div class="bg-amber-50/50 p-3 rounded-lg border border-amber-200">
+            <label class="block text-xs font-bold text-amber-950 mb-1"><i class="fa-solid fa-store mr-1"></i>各分店現貨分佈 (JSON 格式)</label>
+            <input type="text" id="prod-branches" placeholder='{"旺角店": 3, "銅鑼灣店": 2}' class="w-full border rounded px-3 py-1.5 text-xs font-mono">
+            <p class="text-[10px] text-slate-500 mt-1">例如：{"旺角分店": 2, "深水埗分店": 5}</p>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">單價 (HKD) *</label>
-            <input type="number" id="prod-price" required placeholder="例: 65" class="w-full border rounded px-3 py-1.5 text-sm">
-          </div>
-
-          <div class="border rounded-lg p-3 bg-slate-50 space-y-2">
-            <label class="block text-xs font-bold text-slate-700">存放分店與庫存數量</label>
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center justify-between">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" class="branch-checkbox" value="無所事事小書店" onchange="toggleBranchInput(this)">
-                  <span>無所事事小書店</span>
-                </label>
-                <input type="number" id="qty-無所事事小書店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
-              </div>
-              <div class="flex items-center justify-between">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" class="branch-checkbox" value="觀塘店" onchange="toggleBranchInput(this)">
-                  <span>觀塘店</span>
-                </label>
-                <input type="number" id="qty-觀塘店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
-              </div>
-              <div class="flex items-center justify-between">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" class="branch-checkbox" value="西營盤店" onchange="toggleBranchInput(this)">
-                  <span>西營盤店</span>
-                </label>
-                <input type="number" id="qty-西營盤店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
-              </div>
-              <div class="flex items-center justify-between">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" class="branch-checkbox" value="荃灣店" onchange="toggleBranchInput(this)">
-                  <span>荃灣店</span>
-                </label>
-                <input type="number" id="qty-荃灣店" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
-              </div>
-              <div class="flex items-center justify-between">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" class="branch-checkbox" value="網店倉庫" onchange="toggleBranchInput(this)">
-                  <span>網店倉庫</span>
-                </label>
-                <input type="number" id="qty-網店倉庫" placeholder="數量" min="0" value="0" disabled class="w-20 border rounded px-2 py-1 text-xs text-right bg-gray-100">
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">上傳商品相片 / 相片 URL</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">上傳封面圖片 / URL</label>
             <input type="file" id="prod-file" accept="image/*" onchange="uploadImage(this, 'prod-image', 'prod-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
             <span id="prod-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
             <input type="url" id="prod-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">書籍 / 商品簡介介紹</label>
-            <textarea id="prod-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea>
-          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">書籍簡介 / 簡評</label><textarea id="prod-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
 
-          <div class="flex gap-2 pt-2">
-            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存商品</button>
             <button type="button" onclick="resetForm('product')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
@@ -332,35 +281,32 @@
     <section id="tab-eco" class="tab-content">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-eco" onsubmit="saveEco(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-          <h3 id="eco-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增農業/環保單位</h3>
+          <h3 id="eco-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增農業/環保機構</h3>
           <input type="hidden" id="eco-id">
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">單位名稱 *</label><input type="text" id="eco-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">分類</label>
-            <select id="eco-cat" class="w-full border rounded px-3 py-1.5 text-sm">
-              <option value="平台/大自然/教育">平台/大自然/教育</option><option value="農地">農地</option><option value="回收/環保">回收/環保</option>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">名稱 *</label><input type="text" id="eco-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">分類 *</label>
+            <select id="eco-category" class="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="平台/大自然/教育">🌿 平台/大自然/教育</option>
+              <option value="農地">👨‍🌾 農地</option>
+              <option value="回收/環保">♻️ 回收/環保</option>
             </select>
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="eco-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="eco-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="eco-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站</label><input type="url" id="eco-website" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="eco-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
             <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="eco-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">上傳圖片 / 圖片 URL</label>
-            <input type="file" id="eco-file" accept="image/*" onchange="uploadImage(this, 'eco-image', 'eco-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
-            <span id="eco-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
-            <input type="url" id="eco-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
-          </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="eco-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">簡介描述</label><textarea id="eco-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
             <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
             <button type="button" onclick="resetForm('eco')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
         <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
-          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有農業/環保單位清單</h3>
+          <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">現有農業/環保機構清單</h3>
           <div id="list-eco" class="space-y-3">載入中...</div>
         </div>
       </div>
@@ -371,32 +317,26 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <form id="form-theatre" onsubmit="saveTheatre(event)" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
           <h3 id="theatre-form-title" class="font-bold text-lg text-amber-950 border-b pb-2">新增劇團</h3>
-          <input type="hidden" id="th-id">
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">劇團名稱 *</label><input type="text" id="th-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">地區</label>
-            <select id="th-region" class="w-full border rounded px-3 py-1.5 text-sm">
-              <option value="">-- 不揀選地區 --</option>
+          <input type="hidden" id="theatre-id">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">劇團名稱 *</label><input type="text" id="theatre-name" required class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">主要區域</label>
+            <select id="theatre-region" class="w-full border rounded px-3 py-1.5 text-sm">
               <option value="香港島">香港島</option>
               <option value="九龍">九龍</option>
               <option value="新界">新界</option>
             </select>
           </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">地址</label><input type="text" id="th-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="th-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站 URL</label><input type="url" id="th-website" placeholder="https://..." class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">地址 / 排練場</label><input type="text" id="theatre-address" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">電話</label><input type="text" id="theatre-phone" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">官方網站</label><input type="url" id="theatre-website" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           <div class="grid grid-cols-2 gap-2">
-            <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="th-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
-            <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="th-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Instagram URL</label><input type="url" id="theatre-ig" class="w-full border rounded px-3 py-1.5 text-sm"></div>
+            <div><label class="block text-xs font-medium text-slate-600 mb-1">Facebook URL</label><input type="url" id="theatre-fb" class="w-full border rounded px-3 py-1.5 text-sm"></div>
           </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">上傳圖片 / 圖片 URL</label>
-            <input type="file" id="th-file" accept="image/*" onchange="uploadImage(this, 'th-image', 'th-upload-status')" class="w-full border rounded px-3 py-1.5 text-xs text-slate-500 mb-1">
-            <span id="th-upload-status" class="text-xs text-amber-800 hidden mb-1 block">上傳中...</span>
-            <input type="url" id="th-image" placeholder="或貼上圖片 URL" class="w-full border rounded px-3 py-1.5 text-sm">
-          </div>
-          <div><label class="block text-xs font-medium text-slate-600 mb-1">描述</label><textarea id="th-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">劇團簡介</label><textarea id="theatre-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           <div class="flex gap-2">
-            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存資料</button>
+            <button type="submit" class="flex-1 bg-emerald-700 text-white py-2 rounded font-medium text-sm hover:bg-emerald-600 transition">儲存劇團</button>
             <button type="button" onclick="resetForm('theatre')" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-sm hover:bg-slate-300">重置</button>
           </div>
         </form>
@@ -409,98 +349,71 @@
 
   </main>
 
-  <!-- 收據預覽與 PDF 輸出對話框 -->
+  <!-- 檢視/編輯收據對話框 (Modal) -->
   <div id="receipt-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative border border-slate-200">
       <button onclick="closeReceiptModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
-      <!-- 可印製/輸出為 PDF 的區域 -->
-      <div id="receipt-pdf-area" class="p-6 bg-white border rounded-xl shadow-inner font-sans">
-        <div class="text-center border-b pb-4 mb-4">
-          <h2 class="text-xl font-bold text-amber-950 tracking-wider">無所事事小書店</h2>
-          <p class="text-[11px] text-slate-500">正式購物收據 / Official Receipt</p>
-        </div>
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-solid fa-receipt text-amber-800"></i>訂單收據與細節</h3>
+        <button onclick="downloadReceiptPDF()" class="bg-amber-900 hover:bg-amber-800 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-file-pdf"></i> 下載 PDF 收據
+        </button>
+      </div>
 
-        <div class="flex justify-between text-xs text-slate-600 mb-4">
+      <!-- PDF 擷取列印區域 -->
+      <div id="receipt-pdf-content" class="p-6 bg-white border rounded-xl space-y-4 text-slate-800">
+        <div class="flex justify-between items-start border-b pb-4">
           <div>
-            <p><span class="font-bold">收據編號：</span><span id="rc-id"></span></p>
-            <p><span class="font-bold">顧客姓名：</span><span id="rc-cust"></span></p>
-            <p><span class="font-bold">聯絡電話：</span><span id="rc-phone"></span></p>
+            <h2 class="text-xl font-bold text-amber-950">無所事事小書店</h2>
+            <p class="text-xs text-slate-500">香港獨立書店 & 文化社區平台</p>
           </div>
           <div class="text-right">
-            <p><span class="font-bold">開立日期：</span><span id="rc-date"></span></p>
-            <p><span class="font-bold">付款方式：</span><span id="rc-payment"></span></p>
+            <span class="text-xs bg-slate-100 border px-2.5 py-1 rounded font-mono font-bold" id="rcpt-id">#ORDER-000</span>
+            <p class="text-[11px] text-slate-400 mt-1" id="rcpt-date">日期：2026-05-20</p>
           </div>
         </div>
 
-        <table class="w-full text-left text-xs mb-4 border-collapse">
-          <thead>
-            <tr class="border-b bg-slate-50">
-              <th class="py-2 px-1">項目名稱</th>
-              <th class="py-2 px-1 text-center">數量</th>
-              <th class="py-2 px-1 text-right">單價</th>
-              <th class="py-2 px-1 text-right">小計</th>
-            </tr>
-          </thead>
-          <tbody id="rc-items-body" class="border-b divide-y">
-            <!-- 動態填入 -->
-          </tbody>
-        </table>
-
-        <div class="flex justify-between items-center font-bold text-sm text-slate-800 border-t pt-2">
-          <span>總計金額 (HKD)：</span>
-          <span id="rc-total" class="text-lg text-amber-900">HK$ 0</span>
-        </div>
-
-        <div class="mt-8 text-center text-[10px] text-slate-400 border-t pt-3">
-          <p>感謝您支持本地獨立書店與文化推廣！</p>
-        </div>
-      </div>
-
-      <div class="mt-4 flex gap-3">
-        <button onclick="downloadReceiptPDF()" class="flex-1 bg-amber-900 hover:bg-amber-800 text-white py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-file-pdf"></i> 下載輸出為 PDF
-        </button>
-        <button onclick="closeReceiptModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold transition">
-          關閉
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 手動開立自訂收據對話框 -->
-  <div id="custom-receipt-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-      <button onclick="closeCustomReceiptModal()" class="absolute top-4 right-4 bg-slate-100 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2"><i class="fa-solid fa-pen-to-square mr-2"></i>手動填寫收據內容</h3>
-
-      <div class="space-y-3 text-xs">
-        <div><label class="block font-medium mb-1">顧客姓名</label><input type="text" id="cr-cust" class="w-full border rounded px-3 py-1.5"></div>
-        <div><label class="block font-medium mb-1">顧客電話</label><input type="text" id="cr-phone" class="w-full border rounded px-3 py-1.5"></div>
-        <div><label class="block font-medium mb-1">付款方式</label><input type="text" id="cr-payment" value="現金 / 轉數快" class="w-full border rounded px-3 py-1.5"></div>
-        
-        <div class="border-t pt-2">
-          <label class="block font-bold mb-1">購買項目清單：</label>
-          <div id="cr-items-list" class="space-y-2">
-            <div class="flex gap-2 cr-item-row">
-              <input type="text" placeholder="品名/書名" class="flex-1 border rounded px-2 py-1 item-name">
-              <input type="number" placeholder="數量" value="1" class="w-16 border rounded px-2 py-1 item-qty text-center">
-              <input type="number" placeholder="價格" class="w-20 border rounded px-2 py-1 item-price text-right">
-            </div>
+        <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg border">
+          <div>
+            <p class="font-bold text-slate-700">顧客資料：</p>
+            <p id="rcpt-cust-name" class="mt-0.5">姓名：-</p>
+            <p id="rcpt-cust-phone">電話：-</p>
           </div>
-          <button onclick="addCustomReceiptRow()" class="mt-2 text-amber-800 font-bold hover:underline">+ 增加一個項目</button>
+          <div>
+            <p class="font-bold text-slate-700">付款狀態：</p>
+            <p id="rcpt-pay-method" class="mt-0.5">方式：-</p>
+            <p id="rcpt-status">狀態：待處理</p>
+          </div>
+        </div>
+
+        <div>
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b bg-slate-100 text-slate-600">
+                <th class="py-2 px-2">商品名稱</th>
+                <th class="py-2 px-2 text-center">單價</th>
+                <th class="py-2 px-2 text-center">數量</th>
+                <th class="py-2 px-2 text-right">小計</th>
+              </tr>
+            </thead>
+            <tbody id="rcpt-items-table" class="divide-y border-b">
+              <!-- 動態渲染 -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <p class="text-xs text-slate-400 italic">感謝您對香港獨立書店與出版文化的支持！</p>
+          <div class="text-right">
+            <span class="text-xs font-bold text-slate-600">總金額：</span>
+            <span id="rcpt-total" class="text-xl font-bold text-amber-900">HK$ 0</span>
+          </div>
         </div>
       </div>
 
-      <div class="mt-6 flex gap-2">
-        <button onclick="generateCustomReceipt()" class="flex-1 bg-emerald-700 hover:bg-emerald-600 text-white py-2 rounded font-bold text-xs">生成收據預覽</button>
-        <button onclick="closeCustomReceiptModal()" class="bg-slate-200 text-slate-700 px-3 py-2 rounded text-xs">取消</button>
-      </div>
     </div>
   </div>
 
@@ -511,29 +424,25 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let activeTab = 'orders';
-    let allOrders = [], allBookshops = [], allAuthors = [], allPublishers = [], allProducts = [], allEco = [], allTheatre = [];
+    let currentAdminData = { orders: [], bookshops: [], authors: [], publishers: [], products: [], eco: [], theatre: [] };
 
-    window.onload = function() {
-      checkSession();
-    };
-
-    async function checkSession() {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (session) {
+    window.onload = async function() {
+      const session = _supabase.auth.getSession();
+      const { data: { user } } = await _supabase.auth.getUser();
+      if (user) {
         document.getElementById('login-overlay').classList.add('hidden');
-        loadAllData();
+        loadAllAdminData();
       }
-    }
+    };
 
     async function handleLogin() {
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
-
-      const { error } = await _supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
       if (error) alert("登入失敗：" + error.message);
       else {
         document.getElementById('login-overlay').classList.add('hidden');
-        loadAllData();
+        loadAllAdminData();
       }
     }
 
@@ -542,88 +451,102 @@
       document.getElementById('login-overlay').classList.remove('hidden');
     }
 
-    function loadAllData() {
-      fetchOrders();
-      fetchPaymentSettings();
-      fetchBookshops();
-      fetchAuthors();
-      fetchPublishers();
-      fetchProducts();
-      fetchEco();
-      fetchTheatre();
-    }
-
     function switchTab(tabId, btn) {
       activeTab = tabId;
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tabId}`).classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-amber-900', 'text-white'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('bg-white'));
 
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('bg-amber-900', 'text-white');
-        b.classList.add('bg-white', 'text-slate-800');
-      });
-      if (btn) {
-        btn.classList.remove('bg-white', 'text-slate-800');
-        btn.classList.add('bg-amber-900', 'text-white');
-      }
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      btn.classList.remove('bg-white');
+      btn.classList.add('bg-amber-900', 'text-white');
     }
 
-    // --- 0. 訂單與收據管理 ---
+    async function loadAllAdminData() {
+      fetchOrders();
+      fetchPaymentSettingsAdmin();
+      fetchBookshopsAdmin();
+      fetchAuthorsAdmin();
+      fetchPublishersAdmin();
+      fetchProductsAdmin();
+      fetchEcoAdmin();
+      fetchTheatreAdmin();
+    }
+
+    // --- 上傳圖片 Universal Helper ---
+    async function uploadImage(fileInput, targetUrlInputId, statusId) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById(statusId);
+      statusEl.classList.remove('hidden');
+
+      const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
+
+      if (error) {
+        alert("圖片上傳失敗，請確認 Supabase Storage 已建立 'images' public bucket。");
+        console.error(error);
+        statusEl.classList.add('hidden');
+        return;
+      }
+
+      const { data: publicData } = _supabase.storage.from('images').getPublicUrl(fileName);
+      document.getElementById(targetUrlInputId).value = publicData.publicUrl;
+      statusEl.classList.add('hidden');
+      alert("圖片上傳成功！");
+    }
+
+    // --- 0. 訂單與收據 ---
     async function fetchOrders() {
       const { data } = await _supabase.from('shop_orders').select('*').order('id', { ascending: false });
-      allOrders = data || [];
-      renderOrders(allOrders);
+      currentAdminData.orders = data || [];
+      renderOrders(currentAdminData.orders);
     }
 
     function renderOrders(list) {
-      const el = document.getElementById('list-orders');
-      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">目前沒有顧客訂單紀錄。</p>`; return; }
-
-      el.innerHTML = list.map(o => {
-        let items = o.items || [];
-        if (typeof items === 'string') { try { items = JSON.parse(items); } catch(e) { items = []; } }
-
-        return `
-          <div class="border rounded-xl p-4 bg-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-amber-50/50 transition">
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-bold text-slate-800">訂單 #${o.id}</span>
-                <span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded font-bold">${o.payment_method || '未指定'}</span>
-                <span class="text-xs text-slate-400">${new Date(o.created_at).toLocaleString()}</span>
-              </div>
-              <p class="text-xs text-slate-600"><span class="font-semibold">顧客：</span>${o.customer_name} (${o.customer_phone})</p>
-              <p class="text-xs text-slate-500 mt-1"><span class="font-semibold">內容：</span>${items.map(i => `${i.name} x${i.qty}`).join(', ')}</p>
+      const container = document.getElementById('list-orders');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無訂單。</p>`; return; }
+      
+      container.innerHTML = list.map(o => `
+        <div class="bg-slate-50 border p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-slate-800">#ORDER-${o.id}</span>
+              <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">${o.status || '待處理'}</span>
+              <span class="text-xs text-slate-400">${new Date(o.created_at || Date.now()).toLocaleString()}</span>
             </div>
-
-            <div class="flex items-center gap-3">
-              <span class="text-base font-bold text-amber-900">HK$ ${o.total_amount}</span>
-              <button onclick='openReceiptModalFromOrder(${JSON.stringify(o).replace(/'/g, "&apos;")})' class="bg-amber-900 hover:bg-amber-800 text-white text-xs px-3 py-1.5 rounded-lg transition font-bold flex items-center gap-1">
-                <i class="fa-solid fa-receipt"></i> 開立/列印收據
-              </button>
-            </div>
+            <p class="text-xs text-slate-600">顧客：<span class="font-bold">${o.customer_name}</span> (${o.customer_phone}) | 付款：${o.payment_method}</p>
+            <p class="text-xs text-slate-500 mt-1">金額：<span class="font-bold text-amber-900">HK$ ${o.total_amount}</span></p>
           </div>
-        `;
-      }).join('');
+          <div class="flex gap-2 text-xs">
+            <button onclick="viewReceipt(${o.id})" class="bg-amber-900 text-white px-3 py-1.5 rounded hover:bg-amber-800 transition"><i class="fa-solid fa-receipt mr-1"></i>檢視收據</button>
+            <button onclick="updateOrderStatus(${o.id}, '已完成')" class="bg-emerald-700 text-white px-3 py-1.5 rounded hover:bg-emerald-600 transition">標記為已完成</button>
+            <button onclick="deleteOrder(${o.id})" class="bg-red-100 text-red-700 px-3 py-1.5 rounded hover:bg-red-200 transition">刪除</button>
+          </div>
+        </div>
+      `).join('');
     }
 
-    function openReceiptModalFromOrder(o) {
-      document.getElementById('rc-id').innerText = `#${o.id}`;
-      document.getElementById('rc-cust').innerText = o.customer_name;
-      document.getElementById('rc-phone').innerText = o.customer_phone;
-      document.getElementById('rc-date').innerText = new Date(o.created_at).toLocaleDateString();
-      document.getElementById('rc-payment').innerText = o.payment_method;
-      document.getElementById('rc-total').innerText = `HK$ ${o.total_amount}`;
+    function viewReceipt(id) {
+      const o = currentAdminData.orders.find(x => x.id === id);
+      if (!o) return;
 
-      let items = o.items || [];
-      if (typeof items === 'string') { try { items = JSON.parse(items); } catch(e) { items = []; } }
+      document.getElementById('rcpt-id').innerText = `#ORDER-${o.id}`;
+      document.getElementById('rcpt-date').innerText = `日期：${new Date(o.created_at || Date.now()).toLocaleDateString()}`;
+      document.getElementById('rcpt-cust-name').innerText = `姓名：${o.customer_name}`;
+      document.getElementById('rcpt-cust-phone').innerText = `電話：${o.customer_phone}`;
+      document.getElementById('rcpt-pay-method').innerText = `方式：${o.payment_method}`;
+      document.getElementById('rcpt-status').innerText = `狀態：${o.status || '待處理'}`;
+      document.getElementById('rcpt-total').innerText = `HK$ ${o.total_amount}`;
 
-      const tbody = document.getElementById('rc-items-body');
-      tbody.innerHTML = items.map(i => `
+      const items = Array.isArray(o.items) ? o.items : [];
+      document.getElementById('rcpt-items-table').innerHTML = items.map(i => `
         <tr>
-          <td class="py-2 px-1">${i.name}</td>
-          <td class="py-2 px-1 text-center">${i.qty}</td>
-          <td class="py-2 px-1 text-right">HK$ ${i.price}</td>
-          <td class="py-2 px-1 text-right">HK$ ${i.price * i.qty}</td>
+          <td class="py-2 px-2 font-bold">${i.name}</td>
+          <td class="py-2 px-2 text-center">HK$ ${i.price}</td>
+          <td class="py-2 px-2 text-center">${i.qty}</td>
+          <td class="py-2 px-2 text-right font-bold">HK$ ${i.price * i.qty}</td>
         </tr>
       `).join('');
 
@@ -633,77 +556,30 @@
     function closeReceiptModal() { document.getElementById('receipt-modal').classList.add('hidden'); }
 
     function downloadReceiptPDF() {
-      const element = document.getElementById('receipt-pdf-area');
-      const rcId = document.getElementById('rc-id').innerText;
+      const element = document.getElementById('receipt-pdf-content');
       const opt = {
-        margin:       10,
-        filename:     `Receipt_${rcId}.pdf`,
+        margin:       0.5,
+        filename:     `Receipt_${document.getElementById('rcpt-id').innerText}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
       html2pdf().set(opt).from(element).save();
     }
 
-    // 手動自訂收據 Modal
-    function openCustomReceiptModal() { document.getElementById('custom-receipt-modal').classList.remove('hidden'); }
-    function closeCustomReceiptModal() { document.getElementById('custom-receipt-modal').classList.add('hidden'); }
-
-    function addCustomReceiptRow() {
-      const div = document.createElement('div');
-      div.className = 'flex gap-2 cr-item-row mt-2';
-      div.innerHTML = `
-        <input type="text" placeholder="品名/書名" class="flex-1 border rounded px-2 py-1 item-name">
-        <input type="number" placeholder="數量" value="1" class="w-16 border rounded px-2 py-1 item-qty text-center">
-        <input type="number" placeholder="價格" class="w-20 border rounded px-2 py-1 item-price text-right">
-      `;
-      document.getElementById('cr-items-list').appendChild(div);
+    async function updateOrderStatus(id, status) {
+      await _supabase.from('shop_orders').update({ status }).eq('id', id);
+      fetchOrders();
     }
 
-    function generateCustomReceipt() {
-      const cust = document.getElementById('cr-cust').value || '貴客';
-      const phone = document.getElementById('cr-phone').value || '-';
-      const payment = document.getElementById('cr-payment').value || '現金';
-
-      const rows = document.querySelectorAll('.cr-item-row');
-      let items = [];
-      let total = 0;
-
-      rows.forEach(r => {
-        const name = r.querySelector('.item-name').value;
-        const qty = Number(r.querySelector('.item-qty').value) || 1;
-        const price = Number(r.querySelector('.item-price').value) || 0;
-        if (name) {
-          items.push({ name, qty, price });
-          total += qty * price;
-        }
-      });
-
-      if (items.length === 0) return alert("請至少輸入一個購買項目！");
-
-      document.getElementById('rc-id').innerText = `#MANUAL-${Date.now().toString().slice(-4)}`;
-      document.getElementById('rc-cust').innerText = cust;
-      document.getElementById('rc-phone').innerText = phone;
-      document.getElementById('rc-date').innerText = new Date().toLocaleDateString();
-      document.getElementById('rc-payment').innerText = payment;
-      document.getElementById('rc-total').innerText = `HK$ ${total}`;
-
-      const tbody = document.getElementById('rc-items-body');
-      tbody.innerHTML = items.map(i => `
-        <tr>
-          <td class="py-2 px-1">${i.name}</td>
-          <td class="py-2 px-1 text-center">${i.qty}</td>
-          <td class="py-2 px-1 text-right">HK$ ${i.price}</td>
-          <td class="py-2 px-1 text-right">HK$ ${i.price * i.qty}</td>
-        </tr>
-      `).join('');
-
-      closeCustomReceiptModal();
-      document.getElementById('receipt-modal').classList.remove('hidden');
+    async function deleteOrder(id) {
+      if (!confirm("確定要刪除此訂單？")) return;
+      await _supabase.from('shop_orders').delete().eq('id', id);
+      fetchOrders();
     }
 
-    // --- 收款資料設定 ---
-    async function fetchPaymentSettings() {
+    // --- 收款設定 ---
+    async function fetchPaymentSettingsAdmin() {
       const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
       if (data) {
         document.getElementById('pay-fps-num').value = data.fps_number || '';
@@ -730,49 +606,29 @@
         bank_holder: document.getElementById('pay-bank-holder').value,
         instructions: document.getElementById('pay-instructions').value
       };
-
       const { error } = await _supabase.from('payment_settings').upsert(payload);
       if (error) alert("儲存失敗：" + error.message);
-      else alert("✅ 收款資料設定已成功儲存！前台將即時更新。");
+      else alert("預設收款資料更新成功！");
     }
 
-    // --- 圖片上傳工具 ---
-    async function uploadImage(fileInput, targetInputId, statusId) {
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const statusEl = document.getElementById(statusId);
-      statusEl.classList.remove('hidden');
-
-      const fileName = `${Date.now()}_${file.name}`;
-      const { data, error } = await _supabase.storage.from('bookstore-images').upload(fileName, file);
-
-      statusEl.classList.add('hidden');
-      if (error) alert("圖片上傳失敗：" + error.message);
-      else {
-        const { data: publicData } = _supabase.storage.from('bookstore-images').getPublicUrl(fileName);
-        document.getElementById(targetInputId).value = publicData.publicUrl;
-      }
-    }
-
-    // --- 1. 書店 CRUD ---
-    async function fetchBookshops() {
+    // --- 1. 實體書店 ---
+    async function fetchBookshopsAdmin() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
-      allBookshops = data || [];
-      renderAdminBookshops(allBookshops);
+      currentAdminData.bookshops = data || [];
+      renderBookshopsAdmin(currentAdminData.bookshops);
     }
 
-    function renderAdminBookshops(list) {
-      const el = document.getElementById('list-bookshops');
-      el.innerHTML = list.map(b => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
+    function renderBookshopsAdmin(list) {
+      const container = document.getElementById('list-bookshops');
+      container.innerHTML = list.map(b => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
           <div>
-            <h4 class="font-bold text-slate-800">${b.name} <span class="text-xs text-amber-800 font-normal">(${b.region})</span></h4>
-            <p class="text-xs text-slate-500">${b.address || '無地址'}</p>
+            <h4 class="font-bold text-slate-800 text-sm">${b.name} <span class="text-xs font-normal text-slate-500">(${b.region})</span></h4>
+            <p class="text-slate-500">${b.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick="editBookshop(${b.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('bookshops', ${b.id}, fetchBookshops)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editBookshop(${b.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deleteBookshop(${b.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
@@ -793,18 +649,18 @@
         instagram_url: document.getElementById('bs-ig').value,
         facebook_url: document.getElementById('bs-fb').value,
         image_url: document.getElementById('bs-image').value,
-        description: document.getElementById('bs-desc').value
+        description: document.getElementById('bs-desc').value,
       };
 
       if (id) await _supabase.from('bookshops').update(payload).eq('id', id);
       else await _supabase.from('bookshops').insert([payload]);
 
       resetForm('bookshop');
-      fetchBookshops();
+      fetchBookshopsAdmin();
     }
 
     function editBookshop(id) {
-      const b = allBookshops.find(x => x.id === id);
+      const b = currentAdminData.bookshops.find(x => x.id === id);
       if (!b) return;
       document.getElementById('bs-id').value = b.id;
       document.getElementById('bs-name').value = b.name || '';
@@ -819,24 +675,35 @@
       document.getElementById('bs-fb').value = b.facebook_url || '';
       document.getElementById('bs-image').value = b.image_url || '';
       document.getElementById('bs-desc').value = b.description || '';
-      document.getElementById('bookshop-form-title').innerText = "編輯實體書店資料";
     }
 
-    // --- 2. 作者 CRUD ---
-    async function fetchAuthors() {
+    async function deleteBookshop(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('bookshops').delete().eq('id', id);
+      fetchBookshopsAdmin();
+    }
+
+    // --- 2. 獨立作者 ---
+    async function fetchAuthorsAdmin() {
       const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      allAuthors = data || [];
-      renderAdminAuthors(allAuthors);
+      currentAdminData.authors = data || [];
+      renderAuthorsAdmin(currentAdminData.authors);
     }
 
-    function renderAdminAuthors(list) {
-      const el = document.getElementById('list-authors');
-      el.innerHTML = list.map(a => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
-          <div><h4 class="font-bold text-slate-800">${a.name}</h4><p class="text-xs text-slate-500">${a.phone || ''}</p></div>
+    function renderAuthorsAdmin(list) {
+      const container = document.getElementById('list-authors');
+      container.innerHTML = list.map(a => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
+          <div class="flex items-center space-x-3">
+            ${a.image_url ? `<img src="${a.image_url}" class="w-8 h-8 rounded-full object-cover">` : ''}
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">${a.name}</h4>
+              <p class="text-slate-500">${a.phone || '無電話'}</p>
+            </div>
+          </div>
           <div class="flex gap-2">
-            <button onclick="editAuthor(${a.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('authors', ${a.id}, fetchAuthors)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editAuthor(${a.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deleteAuthor(${a.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
@@ -844,53 +711,64 @@
 
     async function saveAuthor(e) {
       e.preventDefault();
-      const id = document.getElementById('au-id').value;
+      const id = document.getElementById('author-id').value;
       const payload = {
-        name: document.getElementById('au-name').value,
-        phone: document.getElementById('au-phone').value,
-        website_url: document.getElementById('au-website').value,
-        instagram_url: document.getElementById('au-ig').value,
-        facebook_url: document.getElementById('au-fb').value,
-        image_url: document.getElementById('au-image').value,
-        bio: document.getElementById('au-bio').value
+        name: document.getElementById('author-name').value,
+        phone: document.getElementById('author-phone').value,
+        website_url: document.getElementById('author-website').value,
+        instagram_url: document.getElementById('author-ig').value,
+        facebook_url: document.getElementById('author-fb').value,
+        image_url: document.getElementById('author-image').value,
+        bio: document.getElementById('author-bio').value
       };
 
       if (id) await _supabase.from('authors').update(payload).eq('id', id);
       else await _supabase.from('authors').insert([payload]);
 
       resetForm('author');
-      fetchAuthors();
+      fetchAuthorsAdmin();
     }
 
     function editAuthor(id) {
-      const a = allAuthors.find(x => x.id === id);
+      const a = currentAdminData.authors.find(x => x.id === id);
       if (!a) return;
-      document.getElementById('au-id').value = a.id;
-      document.getElementById('au-name').value = a.name || '';
-      document.getElementById('au-phone').value = a.phone || '';
-      document.getElementById('au-website').value = a.website_url || '';
-      document.getElementById('au-ig').value = a.instagram_url || '';
-      document.getElementById('au-fb').value = a.facebook_url || '';
-      document.getElementById('au-image').value = a.image_url || '';
-      document.getElementById('au-bio').value = a.bio || '';
-      document.getElementById('author-form-title').innerText = "編輯獨立作者";
+      document.getElementById('author-id').value = a.id;
+      document.getElementById('author-name').value = a.name || '';
+      document.getElementById('author-phone').value = a.phone || '';
+      document.getElementById('author-website').value = a.website_url || '';
+      document.getElementById('author-ig').value = a.instagram_url || '';
+      document.getElementById('author-fb').value = a.facebook_url || '';
+      document.getElementById('author-image').value = a.image_url || '';
+      document.getElementById('author-bio').value = a.bio || '';
     }
 
-    // --- 3. 出版社 CRUD ---
-    async function fetchPublishers() {
+    async function deleteAuthor(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('authors').delete().eq('id', id);
+      fetchAuthorsAdmin();
+    }
+
+    // --- 3. 獨立出版社 ---
+    async function fetchPublishersAdmin() {
       const { data } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
-      allPublishers = data || [];
-      renderAdminPublishers(allPublishers);
+      currentAdminData.publishers = data || [];
+      renderPublishersAdmin(currentAdminData.publishers);
     }
 
-    function renderAdminPublishers(list) {
-      const el = document.getElementById('list-publishers');
-      el.innerHTML = list.map(p => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
-          <div><h4 class="font-bold text-slate-800">${p.name}</h4><p class="text-xs text-slate-500">${p.phone || ''}</p></div>
+    function renderPublishersAdmin(list) {
+      const container = document.getElementById('list-publishers');
+      container.innerHTML = list.map(p => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
+          <div class="flex items-center space-x-3">
+            ${p.image_url ? `<img src="${p.image_url}" class="w-8 h-8 rounded object-cover">` : ''}
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">${p.name}</h4>
+              <p class="text-slate-500">${p.phone || '無電話'}</p>
+            </div>
+          </div>
           <div class="flex gap-2">
-            <button onclick="editPublisher(${p.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('publishers', ${p.id}, fetchPublishers)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editPublisher(${p.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deletePublisher(${p.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
@@ -913,11 +791,11 @@
       else await _supabase.from('publishers').insert([payload]);
 
       resetForm('publisher');
-      fetchPublishers();
+      fetchPublishersAdmin();
     }
 
     function editPublisher(id) {
-      const p = allPublishers.find(x => x.id === id);
+      const p = currentAdminData.publishers.find(x => x.id === id);
       if (!p) return;
       document.getElementById('pub-id').value = p.id;
       document.getElementById('pub-name').value = p.name || '';
@@ -927,69 +805,56 @@
       document.getElementById('pub-fb').value = p.facebook_url || '';
       document.getElementById('pub-image').value = p.image_url || '';
       document.getElementById('pub-desc').value = p.description || '';
-      document.getElementById('publisher-form-title').innerText = "編輯獨立出版社";
     }
 
-    // --- 4. 網店商品 CRUD ---
-    async function fetchProducts() {
+    async function deletePublisher(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('publishers').delete().eq('id', id);
+      fetchPublishersAdmin();
+    }
+
+    // --- 4. 網店商品 ---
+    async function fetchProductsAdmin() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
-      allProducts = data || [];
-      renderAdminProducts(allProducts);
+      currentAdminData.products = data || [];
+      renderProductsAdmin(currentAdminData.products);
     }
 
-    function renderAdminProducts(list) {
-      const el = document.getElementById('list-products');
-      el.innerHTML = list.map(p => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
+    function renderProductsAdmin(list) {
+      const container = document.getElementById('list-products');
+      container.innerHTML = list.map(p => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
           <div>
-            <h4 class="font-bold text-slate-800">${p.name} <span class="text-xs text-amber-900 font-bold">HK$ ${p.price}</span></h4>
-            <p class="text-xs text-slate-500">作者: ${p.author || '未填寫'} | 分類: ${p.category || '其他'}</p>
+            <h4 class="font-bold text-slate-800 text-sm">${p.name} <span class="text-xs font-normal text-amber-900">HK$ ${p.price}</span></h4>
+            <p class="text-slate-500">分類：${p.category} | 存貨：${p.quantity} 本 (${p.stock_type || '買斷'})</p>
           </div>
           <div class="flex gap-2">
-            <button onclick="editProduct(${p.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('shop_products', ${p.id}, fetchProducts)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editProduct(${p.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deleteProduct(${p.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
     }
 
-    function toggleBranchInput(cb) {
-      const input = document.getElementById(`qty-${cb.value}`);
-      if (input) {
-        input.disabled = !cb.checked;
-        if (cb.checked) {
-          input.classList.remove('bg-gray-100');
-          if (input.value === '0') input.value = '1';
-        } else {
-          input.classList.add('bg-gray-100');
-          input.value = '0';
-        }
-      }
-    }
-
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prod-id').value;
-
-      const branchStocks = {};
-      let totalQty = 0;
-      document.querySelectorAll('.branch-checkbox').forEach(cb => {
-        if (cb.checked) {
-          const q = Number(document.getElementById(`qty-${cb.value}`).value) || 0;
-          branchStocks[cb.value] = q;
-          totalQty += q;
-        }
-      });
+      
+      let branchJson = {};
+      try {
+        const val = document.getElementById('prod-branches').value;
+        if (val) branchJson = JSON.parse(val);
+      } catch(e) { alert("分店現貨 JSON 格式有误，請確認。"); return; }
 
       const payload = {
         name: document.getElementById('prod-name').value,
-        stock_type: document.getElementById('prod-stock').value,
-        category: document.getElementById('prod-cat').value,
-        isbn: document.getElementById('prod-isbn').value,
+        category: document.getElementById('prod-category').value,
+        stock_type: document.getElementById('prod-stock-type').value,
         author: document.getElementById('prod-author').value,
-        price: Number(document.getElementById('prod-price').value),
-        branch_stocks: branchStocks,
-        quantity: totalQty,
+        isbn: document.getElementById('prod-isbn').value,
+        price: parseFloat(document.getElementById('prod-price').value),
+        quantity: parseInt(document.getElementById('prod-qty').value),
+        branch_stocks: branchJson,
         image_url: document.getElementById('prod-image').value,
         description: document.getElementById('prod-desc').value
       };
@@ -998,58 +863,49 @@
       else await _supabase.from('shop_products').insert([payload]);
 
       resetForm('product');
-      fetchProducts();
+      fetchProductsAdmin();
     }
 
     function editProduct(id) {
-      const p = allProducts.find(x => x.id === id);
+      const p = currentAdminData.products.find(x => x.id === id);
       if (!p) return;
       document.getElementById('prod-id').value = p.id;
       document.getElementById('prod-name').value = p.name || '';
-      document.getElementById('prod-stock').value = p.stock_type || '買斷 / 一般進貨';
-      document.getElementById('prod-cat').value = p.category || '其他';
-      document.getElementById('prod-isbn').value = p.isbn || '';
+      document.getElementById('prod-category').value = p.category || '文學小說';
+      document.getElementById('prod-stock-type').value = p.stock_type || '買斷';
       document.getElementById('prod-author').value = p.author || '';
-      document.getElementById('prod-price').value = p.price || '';
+      document.getElementById('prod-isbn').value = p.isbn || '';
+      document.getElementById('prod-price').value = p.price || 0;
+      document.getElementById('prod-qty').value = p.quantity || 1;
+      document.getElementById('prod-branches').value = JSON.stringify(p.branch_stocks || {});
       document.getElementById('prod-image').value = p.image_url || '';
       document.getElementById('prod-desc').value = p.description || '';
-
-      let stocks = p.branch_stocks || {};
-      if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-
-      document.querySelectorAll('.branch-checkbox').forEach(cb => {
-        const input = document.getElementById(`qty-${cb.value}`);
-        if (stocks[cb.value] !== undefined) {
-          cb.checked = true;
-          input.disabled = false;
-          input.classList.remove('bg-gray-100');
-          input.value = stocks[cb.value];
-        } else {
-          cb.checked = false;
-          input.disabled = true;
-          input.classList.add('bg-gray-100');
-          input.value = '0';
-        }
-      });
-
-      document.getElementById('product-form-title').innerText = "編輯網店商品";
     }
 
-    // --- 5. 農業 CRUD ---
-    async function fetchEco() {
+    async function deleteProduct(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('shop_products').delete().eq('id', id);
+      fetchProductsAdmin();
+    }
+
+    // --- 5. 農業 & 環保 ---
+    async function fetchEcoAdmin() {
       const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
-      allEco = data || [];
-      renderAdminEco(allEco);
+      currentAdminData.eco = data || [];
+      renderEcoAdmin(currentAdminData.eco);
     }
 
-    function renderAdminEco(list) {
-      const el = document.getElementById('list-eco');
-      el.innerHTML = list.map(e => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
-          <div><h4 class="font-bold text-slate-800">${e.name} <span class="text-xs text-emerald-800 font-normal">(${e.category})</span></h4><p class="text-xs text-slate-500">${e.address || ''}</p></div>
+    function renderEcoAdmin(list) {
+      const container = document.getElementById('list-eco');
+      container.innerHTML = list.map(e => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">${e.name} <span class="text-xs font-normal text-emerald-800">(${e.category})</span></h4>
+            <p class="text-slate-500">${e.address || '無地址'}</p>
+          </div>
           <div class="flex gap-2">
-            <button onclick="editEco(${e.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('eco_farms', ${e.id}, fetchEco)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editEco(${e.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deleteEco(${e.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1060,13 +916,12 @@
       const id = document.getElementById('eco-id').value;
       const payload = {
         name: document.getElementById('eco-name').value,
-        category: document.getElementById('eco-cat').value,
+        category: document.getElementById('eco-category').value,
         address: document.getElementById('eco-address').value,
         phone: document.getElementById('eco-phone').value,
         website_url: document.getElementById('eco-website').value,
         instagram_url: document.getElementById('eco-ig').value,
         facebook_url: document.getElementById('eco-fb').value,
-        image_url: document.getElementById('eco-image').value,
         description: document.getElementById('eco-desc').value
       };
 
@@ -1074,40 +929,47 @@
       else await _supabase.from('eco_farms').insert([payload]);
 
       resetForm('eco');
-      fetchEco();
+      fetchEcoAdmin();
     }
 
     function editEco(id) {
-      const e = allEco.find(x => x.id === id);
+      const e = currentAdminData.eco.find(x => x.id === id);
       if (!e) return;
       document.getElementById('eco-id').value = e.id;
       document.getElementById('eco-name').value = e.name || '';
-      document.getElementById('eco-cat').value = e.category || '平台/大自然/教育';
+      document.getElementById('eco-category').value = e.category || '平台/大自然/教育';
       document.getElementById('eco-address').value = e.address || '';
       document.getElementById('eco-phone').value = e.phone || '';
       document.getElementById('eco-website').value = e.website_url || '';
       document.getElementById('eco-ig').value = e.instagram_url || '';
       document.getElementById('eco-fb').value = e.facebook_url || '';
-      document.getElementById('eco-image').value = e.image_url || '';
       document.getElementById('eco-desc').value = e.description || '';
-      document.getElementById('eco-form-title').innerText = "編輯農業/環保單位";
     }
 
-    // --- 6. 劇團 CRUD ---
-    async function fetchTheatre() {
+    async function deleteEco(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('eco_farms').delete().eq('id', id);
+      fetchEcoAdmin();
+    }
+
+    // --- 6. 劇團 ---
+    async function fetchTheatreAdmin() {
       const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
-      allTheatre = data || [];
-      renderAdminTheatre(allTheatre);
+      currentAdminData.theatre = data || [];
+      renderTheatreAdmin(currentAdminData.theatre);
     }
 
-    function renderAdminTheatre(list) {
-      const el = document.getElementById('list-theatre');
-      el.innerHTML = list.map(t => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50">
-          <div><h4 class="font-bold text-slate-800">${t.name} <span class="text-xs text-purple-800 font-normal">(${t.region || '無地區'})</span></h4><p class="text-xs text-slate-500">${t.address || ''}</p></div>
+    function renderTheatreAdmin(list) {
+      const container = document.getElementById('list-theatre');
+      container.innerHTML = list.map(t => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs bg-slate-50">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">${t.name} <span class="text-xs font-normal text-purple-800">(${t.region})</span></h4>
+            <p class="text-slate-500">${t.address || '無地址'}</p>
+          </div>
           <div class="flex gap-2">
-            <button onclick="editTheatre(${t.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteRecord('theatre_groups', ${t.id}, fetchTheatre)" class="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-bold">刪除</button>
+            <button onclick="editTheatre(${t.id})" class="bg-amber-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="deleteTheatre(${t.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1115,79 +977,70 @@
 
     async function saveTheatre(e) {
       e.preventDefault();
-      const id = document.getElementById('th-id').value;
+      const id = document.getElementById('theatre-id').value;
       const payload = {
-        name: document.getElementById('th-name').value,
-        region: document.getElementById('th-region').value,
-        address: document.getElementById('th-address').value,
-        phone: document.getElementById('th-phone').value,
-        website_url: document.getElementById('th-website').value,
-        instagram_url: document.getElementById('th-ig').value,
-        facebook_url: document.getElementById('th-fb').value,
-        image_url: document.getElementById('th-image').value,
-        description: document.getElementById('th-desc').value
+        name: document.getElementById('theatre-name').value,
+        region: document.getElementById('theatre-region').value,
+        address: document.getElementById('theatre-address').value,
+        phone: document.getElementById('theatre-phone').value,
+        website_url: document.getElementById('theatre-website').value,
+        instagram_url: document.getElementById('theatre-ig').value,
+        facebook_url: document.getElementById('theatre-fb').value,
+        description: document.getElementById('theatre-desc').value
       };
 
       if (id) await _supabase.from('theatre_groups').update(payload).eq('id', id);
       else await _supabase.from('theatre_groups').insert([payload]);
 
       resetForm('theatre');
-      fetchTheatre();
+      fetchTheatreAdmin();
     }
 
     function editTheatre(id) {
-      const t = allTheatre.find(x => x.id === id);
+      const t = currentAdminData.theatre.find(x => x.id === id);
       if (!t) return;
-      document.getElementById('th-id').value = t.id;
-      document.getElementById('th-name').value = t.name || '';
-      document.getElementById('th-region').value = t.region || '';
-      document.getElementById('th-address').value = t.address || '';
-      document.getElementById('th-phone').value = t.phone || '';
-      document.getElementById('th-website').value = t.website_url || '';
-      document.getElementById('th-ig').value = t.instagram_url || '';
-      document.getElementById('th-fb').value = t.facebook_url || '';
-      document.getElementById('th-image').value = t.image_url || '';
-      document.getElementById('th-desc').value = t.description || '';
-      document.getElementById('theatre-form-title').innerText = "編輯劇團資料";
+      document.getElementById('theatre-id').value = t.id;
+      document.getElementById('theatre-name').value = t.name || '';
+      document.getElementById('theatre-region').value = t.region || '香港島';
+      document.getElementById('theatre-address').value = t.address || '';
+      document.getElementById('theatre-phone').value = t.phone || '';
+      document.getElementById('theatre-website').value = t.website_url || '';
+      document.getElementById('theatre-ig').value = t.instagram_url || '';
+      document.getElementById('theatre-fb').value = t.facebook_url || '';
+      document.getElementById('theatre-desc').value = t.description || '';
     }
 
-    // 通用刪除
-    async function deleteRecord(table, id, callback) {
-      if (!confirm("確定要刪除此筆資料嗎？此操作無法復原。")) return;
-      const { error } = await _supabase.from(table).delete().eq('id', id);
-      if (error) alert("刪除失敗：" + error.message);
-      else callback();
+    async function deleteTheatre(id) {
+      if (!confirm("確定刪除？")) return;
+      await _supabase.from('theatre_groups').delete().eq('id', id);
+      fetchTheatreAdmin();
     }
 
-    // 重置表單
+    // --- 重置表格 ---
     function resetForm(type) {
-      const form = document.getElementById(`form-${type}`);
-      if (form) form.reset();
-      const idInput = document.getElementById({
-        bookshop: 'bs-id', author: 'au-id', publisher: 'pub-id',
-        product: 'prod-id', eco: 'eco-id', theatre: 'th-id'
-      }[type]);
-      if (idInput) idInput.value = '';
-
-      if (type === 'product') {
-        document.querySelectorAll('.branch-checkbox').forEach(cb => {
-          cb.checked = false;
-          const input = document.getElementById(`qty-${cb.value}`);
-          if (input) { input.disabled = true; input.value = '0'; input.classList.add('bg-gray-100'); }
-        });
-      }
+      document.getElementById(`form-${type}`).reset();
+      const hiddenId = document.getElementById(`${type === 'bookshop' ? 'bs' : type === 'publisher' ? 'pub' : type === 'product' ? 'prod' : type}-id`);
+      if (hiddenId) hiddenId.value = '';
     }
 
-    // 搜尋過濾
+    // --- 搜尋功能 ---
     function filterAdminList() {
       const q = document.getElementById('admin-search').value.toLowerCase();
-      if (activeTab === 'orders') renderOrders(allOrders.filter(o => o.customer_name.toLowerCase().includes(q) || o.customer_phone.includes(q)));
-      else if (activeTab === 'bookshops') renderAdminBookshops(allBookshops.filter(b => b.name.toLowerCase().includes(q)));
-      else if (activeTab === 'authors') renderAdminAuthors(allAuthors.filter(a => a.name.toLowerCase().includes(q)));
-      else if (activeTab === 'publishers') renderAdminPublishers(allPublishers.filter(p => p.name.toLowerCase().includes(q)));
-      else if (activeTab === 'products') renderAdminProducts(allProducts.filter(p => p.name.toLowerCase().includes(q)));
-      else if (activeTab === 'eco') renderAdminEco(allEco.filter(e => e.name.toLowerCase().includes(q)));
-      else if (activeTab === 'theatre') renderAdminTheatre(allTheatre.filter(t => t.name.toLowerCase().includes(q)));
+      if (activeTab === 'orders') {
+        renderOrders(currentAdminData.orders.filter(o => (o.customer_name && o.customer_name.toLowerCase().includes(q)) || (o.customer_phone && o.customer_phone.includes(q))));
+      } else if (activeTab === 'bookshops') {
+        renderBookshopsAdmin(currentAdminData.bookshops.filter(b => b.name && b.name.toLowerCase().includes(q)));
+      } else if (activeTab === 'authors') {
+        renderAuthorsAdmin(currentAdminData.authors.filter(a => a.name && a.name.toLowerCase().includes(q)));
+      } else if (activeTab === 'publishers') {
+        renderPublishersAdmin(currentAdminData.publishers.filter(p => p.name && p.name.toLowerCase().includes(q)));
+      } else if (activeTab === 'products') {
+        renderProductsAdmin(currentAdminData.products.filter(p => p.name && p.name.toLowerCase().includes(q)));
+      } else if (activeTab === 'eco') {
+        renderEcoAdmin(currentAdminData.eco.filter(e => e.name && e.name.toLowerCase().includes(q)));
+      } else if (activeTab === 'theatre') {
+        renderTheatreAdmin(currentAdminData.theatre.filter(t => t.name && t.name.toLowerCase().includes(q)));
+      }
     }
   </script>
 </body>
