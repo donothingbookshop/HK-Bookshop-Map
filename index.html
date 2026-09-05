@@ -739,7 +739,7 @@
       updateCartUI();
     }
 
-    // 安全提交訂單
+    // 安全提交訂單 (已修正資料格式解析與權限異常防護)
     async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
@@ -758,31 +758,36 @@
         qty: Number(item.qty)
       }));
 
-      const { data, error } = await _supabase.from('shop_orders').insert([{
-        customer_name: name,
-        customer_phone: phone,
-        payment_method: payMethod,
-        items: cleanItems,
-        total_amount: totalPrice,
-        status: '待確認'
-      }]).select();
+      try {
+        const { data, error } = await _supabase.from('shop_orders').insert([{
+          customer_name: name,
+          customer_phone: phone,
+          payment_method: payMethod,
+          items: cleanItems,
+          total_amount: totalPrice,
+          status: '待確認'
+        }]).select();
 
-      if (error) {
-        alert("提交訂單時發生錯誤：" + error.message);
-        console.error(error);
-        return;
+        if (error) {
+          console.error("Supabase 訂單寫入失敗原因：", error);
+          alert("提交訂單時發生錯誤：" + error.message + "\n\n請確保已在 Supabase 執行建置 SQL 腳本！");
+          return;
+        }
+
+        if (data && data[0]) {
+          currentOrderId = data[0].id;
+        }
+
+        showPaymentModal(payMethod, totalPrice);
+
+        cart = [];
+        document.getElementById('cust-name').value = '';
+        document.getElementById('cust-phone').value = '';
+        updateCartUI();
+      } catch (err) {
+        console.error("提交異常：", err);
+        alert("提交訂單時發生系統錯誤，請檢查網路連線或資料庫權限。");
       }
-
-      if (data && data[0]) {
-        currentOrderId = data[0].id;
-      }
-
-      showPaymentModal(payMethod, totalPrice);
-
-      cart = [];
-      document.getElementById('cust-name').value = '';
-      document.getElementById('cust-phone').value = '';
-      updateCartUI();
     }
 
     function showPaymentModal(method, amount) {
