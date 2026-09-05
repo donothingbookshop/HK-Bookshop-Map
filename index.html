@@ -18,7 +18,6 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     
-    /* 滾動條美化 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -63,7 +62,7 @@
   <!-- 頁面主體內容區 -->
   <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
 
-    <!-- Tab 1: 書店地圖 / 名冊區塊 -->
+    <!-- Tab 1: 書店地圖 -->
     <section id="tab-map" class="tab-content active">
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">香港獨立書店名冊</h2>
@@ -101,7 +100,7 @@
       </div>
     </section>
 
-    <!-- Tab 2: 文化檔案 (作者 & 出版社) -->
+    <!-- Tab 2: 文化檔案 -->
     <section id="tab-directory" class="tab-content">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -202,10 +201,11 @@
               <select id="payment-method" class="w-full border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-800 bg-white">
                 <option value="FPS">轉數快 (FPS)</option>
                 <option value="PayMe">PayMe</option>
+                <option value="BankTransfer">銀行帳戶轉帳</option>
               </select>
             </div>
             <button onclick="submitOrder()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg transition text-xs shadow flex items-center justify-center gap-1.5 mt-2">
-              <i class="fa-solid fa-paper-plane"></i> 提交訂單
+              <i class="fa-solid fa-paper-plane"></i> 提交訂單並取得付款資料
             </button>
           </div>
         </div>
@@ -213,7 +213,7 @@
       </div>
     </section>
 
-    <!-- Tab 4: 農業 & 環保綠色地圖 -->
+    <!-- Tab 4: 農業/環保 -->
     <section id="tab-eco" class="tab-content">
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">香港農業 & 環保綠色地圖</h2>
@@ -253,9 +253,39 @@
 
   </main>
 
-  <!-- 書籍詳細資料Modal -->
+  <!-- 訂單付款詳情對話框 (Payment Modal) -->
+  <div id="payment-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100">
+      <button onclick="closePaymentModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800">訂單已成功提交！</h3>
+        <p class="text-xs text-slate-500 mt-0.5">請依照以下資料完成轉帳付款，店家將儘快為您處理。</p>
+      </div>
+
+      <div id="payment-details-box" class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-3 mb-4">
+        <!-- 動態填入付款資料 -->
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-[11px] text-amber-900 leading-relaxed mb-4">
+        <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-info mr-1"></i>付款完成後提示：</p>
+        <p>請將入數紙或轉帳截圖，連同訂單編號/電話號碼 WhatsApp 或 Telegram 傳送給我們確認。</p>
+      </div>
+
+      <button onclick="closePaymentModal()" class="w-full bg-amber-900 hover:bg-amber-800 text-white py-2.5 rounded-xl text-xs font-bold transition">
+        我知道了，關閉視窗
+      </button>
+    </div>
+  </div>
+
+  <!-- 書籍詳細資料 Modal -->
   <div id="book-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative animate-fade-in">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative">
       <button onclick="closeBookModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
@@ -304,7 +334,7 @@
     </div>
   </div>
 
-  <!-- 作者/出版社詳細資料 Modal -->
+  <!-- 作者/出版社 Modal -->
   <div id="directory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
       <button onclick="closeDirectoryModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
@@ -312,8 +342,7 @@
       </button>
 
       <div class="flex items-center space-x-4 mb-4 border-b pb-4">
-        <div id="dir-modal-avatar" class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border">
-        </div>
+        <div id="dir-modal-avatar" class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border"></div>
         <div>
           <span id="dir-modal-tag" class="text-[11px] px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-900 mb-1 inline-block"></span>
           <h3 id="dir-modal-title" class="text-xl font-bold text-slate-800"></h3>
@@ -326,12 +355,11 @@
         <p id="dir-modal-desc" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
       </div>
 
-      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="dir-modal-links">
-      </div>
+      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="dir-modal-links"></div>
     </div>
   </div>
 
-  <!-- 環保/農業詳細資料 Modal -->
+  <!-- 環保/農業 Modal -->
   <div id="eco-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
       <button onclick="closeEcoModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
@@ -358,12 +386,11 @@
         <p id="eco-modal-desc" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
       </div>
 
-      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="eco-modal-links">
-      </div>
+      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="eco-modal-links"></div>
     </div>
   </div>
 
-  <!-- 劇團詳細資料 Modal -->
+  <!-- 劇團 Modal -->
   <div id="theatre-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
       <button onclick="closeTheatreModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
@@ -390,8 +417,7 @@
         <p id="theatre-modal-desc" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100"></p>
       </div>
 
-      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="theatre-modal-links">
-      </div>
+      <div class="pt-3 border-t flex flex-wrap gap-3 text-xs" id="theatre-modal-links"></div>
     </div>
   </div>
 
@@ -407,16 +433,7 @@
 
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
-
-    const categoryIcons = {
-      '文學小說': '📖',
-      '心理勵志': '🧠',
-      '人文社科': '🏛️',
-      '藝術設計': '🎨',
-      '生活風格': '🌱',
-      '文創周邊': '🎁',
-      '其他': '📚'
-    };
+    let paymentSettings = null;
 
     function cleanCategory(str) {
       if (!str) return '其他';
@@ -429,7 +446,13 @@
       fetchAuthorsAndPublishers();
       fetchEco();
       fetchTheatre();
+      fetchPaymentSettings();
     };
+
+    async function fetchPaymentSettings() {
+      const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
+      if (data) paymentSettings = data;
+    }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -491,7 +514,7 @@
       else renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館' && b.country === country));
     }
 
-    // --- 作者 & 出版社 (文化檔案) ---
+    // --- 作者 & 出版社 ---
     async function fetchAuthorsAndPublishers() {
       const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
       const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
@@ -668,7 +691,7 @@
 
     function closeBookModal() { document.getElementById('book-modal').classList.add('hidden'); }
 
-    // --- 購物車處理 ---
+    // --- 購物車與提交訂單 ---
     function addToCart(id) {
       const p = allProducts.find(x => x.id === id);
       if (!p) return;
@@ -719,19 +742,77 @@
       updateCartUI();
     }
 
-    function submitOrder() {
+    async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
       const phone = document.getElementById('cust-phone').value.trim();
-      const pay = document.getElementById('payment-method').value;
+      const payMethod = document.getElementById('payment-method').value;
 
       if (!name || !phone) return alert("請填寫訂購人姓名與電話！");
 
-      alert(`✅ 感謝您的訂購！\n訂單已成功提交。\n付款方式：${pay}\n專人將盡快經由電話 (${phone}) 與您確認細節。`);
+      const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+
+      // 儲存訂單到 Supabase
+      const { data, error } = await _supabase.from('shop_orders').insert([{
+        customer_name: name,
+        customer_phone: phone,
+        payment_method: payMethod,
+        items: cart,
+        total_amount: totalPrice,
+        status: '待確認'
+      }]).select();
+
+      if (error) {
+        alert("提交訂單時發生錯誤，請稍後再試。");
+        console.error(error);
+        return;
+      }
+
+      showPaymentModal(payMethod, totalPrice);
+
       cart = [];
       document.getElementById('cust-name').value = '';
       document.getElementById('cust-phone').value = '';
       updateCartUI();
+    }
+
+    function showPaymentModal(method, amount) {
+      const box = document.getElementById('payment-details-box');
+      let html = `<p class="font-bold text-slate-800 text-sm mb-2 border-b pb-1">應付總金額：<span class="text-amber-900 font-extrabold text-base">HK$ ${amount}</span></p>`;
+
+      if (!paymentSettings) {
+        html += `<p class="text-slate-500">暫未設定詳細收款資料，請等待店家專人聯絡。</p>`;
+      } else if (method === 'FPS') {
+        html += `
+          <p><span class="font-bold text-slate-700">付款方式：</span>轉數快 (FPS)</p>
+          <p><span class="font-bold text-slate-700">FPS 識別碼 / 電話：</span><span class="font-mono text-amber-900 font-bold bg-amber-100 px-1.5 py-0.5 rounded">${paymentSettings.fps_number || '未提供'}</span></p>
+          ${paymentSettings.fps_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">FPS QR Code 掃瞄付款：</p><img src="${paymentSettings.fps_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm"></div>` : ''}
+        `;
+      } else if (method === 'PayMe') {
+        html += `
+          <p><span class="font-bold text-slate-700">付款方式：</span>PayMe</p>
+          ${paymentSettings.payme_link ? `<p><span class="font-bold text-slate-700">PayMe 連結：</span><a href="${paymentSettings.payme_link}" target="_blank" class="text-blue-600 underline break-all">${paymentSettings.payme_link}</a></p>` : ''}
+          ${paymentSettings.payme_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">PayMe QR Code 掃瞄付款：</p><img src="${paymentSettings.payme_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm"></div>` : ''}
+        `;
+      } else if (method === 'BankTransfer') {
+        html += `
+          <p><span class="font-bold text-slate-700">付款方式：</span>銀行轉帳</p>
+          <p><span class="font-bold text-slate-700">銀行名稱：</span>${paymentSettings.bank_name || '未提供'}</p>
+          <p><span class="font-bold text-slate-700">戶口號碼：</span><span class="font-mono text-amber-900 font-bold">${paymentSettings.bank_account || '未提供'}</span></p>
+          <p><span class="font-bold text-slate-700">戶口持有人：</span>${paymentSettings.bank_holder || '未提供'}</p>
+        `;
+      }
+
+      if (paymentSettings && paymentSettings.instructions) {
+        html += `<div class="border-t pt-2 mt-2 text-[11px] text-slate-600">${paymentSettings.instructions}</div>`;
+      }
+
+      box.innerHTML = html;
+      document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payment-modal').classList.add('hidden');
     }
 
     // --- 農業 & 環保 ---
@@ -788,9 +869,7 @@
       document.getElementById('eco-modal').classList.remove('hidden');
     }
 
-    function closeEcoModal() {
-      document.getElementById('eco-modal').classList.add('hidden');
-    }
+    function closeEcoModal() { document.getElementById('eco-modal').classList.add('hidden'); }
 
     // --- 劇團 ---
     async function fetchTheatre() {
@@ -846,9 +925,7 @@
       document.getElementById('theatre-modal').classList.remove('hidden');
     }
 
-    function closeTheatreModal() {
-      document.getElementById('theatre-modal').classList.add('hidden');
-    }
+    function closeTheatreModal() { document.getElementById('theatre-modal').classList.add('hidden'); }
   </script>
 </body>
 </html>
