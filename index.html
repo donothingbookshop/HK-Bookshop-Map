@@ -255,7 +255,7 @@
 
   <!-- 訂單付款詳情對話框 (Payment Modal) -->
   <div id="payment-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
       <button onclick="closePaymentModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -265,16 +265,29 @@
           <i class="fa-solid fa-check"></i>
         </div>
         <h3 class="text-lg font-bold text-slate-800">訂單已成功提交！</h3>
-        <p class="text-xs text-slate-500 mt-0.5">請依照以下資料完成轉帳付款，店家將儘快為您處理。</p>
+        <p class="text-xs text-slate-500 mt-0.5">請依照以下資料完成轉帳付款，上傳截圖後店家將儘快處理。</p>
       </div>
 
       <div id="payment-details-box" class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-3 mb-4">
         <!-- 動態填入付款資料 -->
       </div>
 
+      <!-- 客人上傳付款憑證區域 (圖3需求) -->
+      <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 space-y-2">
+        <h4 class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-up"></i> 上傳入數紙 / 付款截圖
+        </h4>
+        <p class="text-[11px] text-blue-700">完成付款後，請在此上傳相片，以加速對帳流程：</p>
+        <input type="file" id="customer-proof-file" accept="image/*" class="w-full text-xs text-slate-600 border border-blue-300 rounded p-1 bg-white">
+        <button onclick="uploadPaymentProof()" id="upload-proof-btn" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-1.5 rounded text-xs transition">
+          上傳付款相片
+        </button>
+        <p id="proof-upload-status" class="text-[11px] text-emerald-700 font-medium hidden text-center mt-1"></p>
+      </div>
+
       <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-[11px] text-amber-900 leading-relaxed mb-4">
         <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-info mr-1"></i>付款完成後提示：</p>
-        <p>請將入數紙或轉帳截圖，連同訂單編號/電話號碼 WhatsApp 或 Telegram 傳送給我們確認。</p>
+        <p>上傳相片後，亦可將訂單編號連同截圖 WhatsApp 或 Telegram 傳送給我們確認。</p>
       </div>
 
       <button onclick="closePaymentModal()" class="w-full bg-amber-900 hover:bg-amber-800 text-white py-2.5 rounded-xl text-xs font-bold transition">
@@ -434,6 +447,7 @@
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
     let paymentSettings = null;
+    let currentOrderId = null; // 紀錄剛提交的訂單ID，便於上傳截圖
 
     function cleanCategory(str) {
       if (!str) return '其他';
@@ -742,6 +756,7 @@
       updateCartUI();
     }
 
+    // 修復圖2：安全提交訂單
     async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
@@ -752,12 +767,19 @@
 
       const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
 
-      // 儲存訂單到 Supabase (加上 created_at 防錯)
+      // 清理購物車資料結構以防止 JSON 寫入錯誤
+      const cleanItems = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        qty: Number(item.qty)
+      }));
+
       const { data, error } = await _supabase.from('shop_orders').insert([{
         customer_name: name,
         customer_phone: phone,
         payment_method: payMethod,
-        items: cart,
+        items: cleanItems,
         total_amount: totalPrice,
         status: '待確認',
         created_at: new Date().toISOString()
@@ -767,6 +789,10 @@
         alert("提交訂單時發生錯誤：" + error.message);
         console.error(error);
         return;
+      }
+
+      if (data && data[0]) {
+        currentOrderId = data[0].id;
       }
 
       showPaymentModal(payMethod, totalPrice);
@@ -809,7 +835,49 @@
       }
 
       box.innerHTML = html;
+      document.getElementById('proof-upload-status').classList.add('hidden');
+      document.getElementById('customer-proof-file').value = '';
       document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    // 圖3需求：客人上傳付款證明相片
+    async function uploadPaymentProof() {
+      const fileInput = document.getElementById('customer-proof-file');
+      const statusEl = document.getElementById('proof-upload-status');
+      const btn = document.getElementById('upload-proof-btn');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        return alert("請選擇要上傳的付款憑證相片！");
+      }
+
+      const file = fileInput.files[0];
+      const ext = file.name.split('.').pop();
+      const fileName = `proof_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
+
+      btn.disabled = true;
+      btn.innerText = "上傳中...";
+
+      try {
+        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
+        if (error) throw error;
+
+        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
+
+        if (currentOrderId) {
+          await _supabase.from('shop_orders').update({
+            payment_proof_url: publicUrl,
+            status: '已傳送憑證'
+          }).eq('id', currentOrderId);
+        }
+
+        statusEl.innerText = "✓ 付款相片已成功上傳！店家將儘快對帳。";
+        statusEl.classList.remove('hidden');
+      } catch (err) {
+        alert("相片上傳失敗：" + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "上傳付款相片";
+      }
     }
 
     function closePaymentModal() {
