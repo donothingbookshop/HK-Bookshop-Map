@@ -258,7 +258,7 @@
       </div>
 
       <div id="payment-details-box" class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-3 mb-4">
-        </div>
+      </div>
 
       <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 space-y-2">
         <h4 class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
@@ -739,7 +739,7 @@
       updateCartUI();
     }
 
-    // 安全提交訂單 (已修正資料格式解析與權限異常防護)
+    // 安全提交訂單 (已增強權限異常與數據校驗)
     async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
@@ -770,7 +770,7 @@
 
         if (error) {
           console.error("Supabase 訂單寫入失敗原因：", error);
-          alert("提交訂單時發生錯誤：" + error.message + "\n\n請確保已在 Supabase 執行建置 SQL 腳本！");
+          alert("提交訂單時發生錯誤：" + error.message + "\n\n請確保已在 Supabase 執行建置與權限 SQL 腳本！");
           return;
         }
 
