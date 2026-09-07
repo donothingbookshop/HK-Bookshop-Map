@@ -58,9 +58,17 @@
   <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
 
     <section id="tab-map" class="tab-content active">
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold mb-2">香港獨立書店名冊</h2>
-        <p class="text-slate-600 text-sm">點擊地區標籤篩選實體獨立書店、海外香港書店與圖書館。</p>
+      <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold mb-1">香港獨立書店名冊</h2>
+          <p class="text-slate-600 text-sm">點擊地區標籤或輸入關鍵字搜尋實體獨立書店、海外香港書店與圖書館。</p>
+        </div>
+        
+        <!-- 新增：書店搜尋輸入框 -->
+        <div class="relative w-full md:w-64">
+          <input type="text" id="bookshop-search" oninput="handleBookshopSearch(this.value)" placeholder="搜尋書店名稱/地址/簡介..." class="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+        </div>
       </div>
 
       <div class="flex flex-wrap gap-2 mb-4">
@@ -429,6 +437,7 @@
 
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
+    let currentBookshopRegion = 'ALL', currentBookshopCountry = 'ALL_OVERSEAS', currentBookshopSearch = '';
     let paymentSettings = null;
     let currentOrderId = null; // 紀錄剛提交的訂單ID，便於上傳截圖
 
@@ -467,7 +476,7 @@
     async function fetchBookshops() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshops = data || [];
-      renderBookshops(allBookshops);
+      applyBookshopFilters();
     }
 
     function renderBookshops(list) {
@@ -501,14 +510,44 @@
     }
 
     function filterRegion(region) {
+      currentBookshopRegion = region;
       document.getElementById('country-filter-bar').classList.toggle('hidden', region !== '外國香港書店/圖書館');
-      if (region === 'ALL') renderBookshops(allBookshops);
-      else renderBookshops(allBookshops.filter(b => b.region === region));
+      applyBookshopFilters();
     }
 
     function filterCountry(country) {
-      if (country === 'ALL_OVERSEAS') renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館'));
-      else renderBookshops(allBookshops.filter(b => b.region === '外國香港書店/圖書館' && b.country === country));
+      currentBookshopCountry = country;
+      applyBookshopFilters();
+    }
+
+    function handleBookshopSearch(q) {
+      currentBookshopSearch = q.toLowerCase();
+      applyBookshopFilters();
+    }
+
+    function applyBookshopFilters() {
+      let filtered = allBookshops;
+
+      // 按地區篩選
+      if (currentBookshopRegion !== 'ALL') {
+        filtered = filtered.filter(b => b.region === currentBookshopRegion);
+      }
+
+      // 按海外國家篩選
+      if (currentBookshopRegion === '外國香港書店/圖書館' && currentBookshopCountry !== 'ALL_OVERSEAS') {
+        filtered = filtered.filter(b => b.country === currentBookshopCountry);
+      }
+
+      // 按關鍵字搜尋 (名稱、地址、簡介)
+      if (currentBookshopSearch) {
+        filtered = filtered.filter(b => 
+          (b.name && b.name.toLowerCase().includes(currentBookshopSearch)) ||
+          (b.address && b.address.toLowerCase().includes(currentBookshopSearch)) ||
+          (b.description && b.description.toLowerCase().includes(currentBookshopSearch))
+        );
+      }
+
+      renderBookshops(filtered);
     }
 
     // --- 作者 & 出版社 ---
