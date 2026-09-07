@@ -93,6 +93,23 @@
           </div>
         </div>
 
+        <!-- 圖2新增：訂金功能區塊 -->
+        <div class="border p-3 rounded-lg bg-amber-50/50 space-y-2 border-amber-200">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="mr-enable-deposit" class="rounded border-slate-300 text-amber-800 focus:ring-amber-800" onchange="toggleDepositInput()">
+            <label for="mr-enable-deposit" class="text-xs font-bold text-amber-950 cursor-pointer">剔選並收取訂金 Deposit</label>
+          </div>
+          <div id="deposit-input-container" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">已付訂金金額 (HKD) *</label>
+              <input type="number" step="0.1" id="mr-deposit-amount" value="0" min="0" placeholder="0" class="w-full border rounded px-3 py-1.5 text-sm" oninput="calcManualReceiptTotal()">
+            </div>
+            <div class="flex items-end pb-1.5">
+              <span class="text-xs text-slate-600 font-medium">尚欠尾款：<strong id="mr-balance-display" class="text-red-700">HK$ 0</strong></span>
+            </div>
+          </div>
+        </div>
+
         <!-- 購買項目動態列表 -->
         <div class="border p-4 rounded-lg bg-slate-50 space-y-3">
           <div class="flex justify-between items-center border-b pb-2">
@@ -417,6 +434,57 @@
 
   </main>
 
+  <!-- 圖1新增：訂單編輯 Modal 彈出視窗 -->
+  <div id="edit-order-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-xl shadow-lg border w-full max-w-lg p-6 space-y-4 m-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-lg text-amber-950"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯訂單資料</h3>
+        <button onclick="closeEditOrderModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="edit-order-id">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">顧客姓名</label>
+          <input type="text" id="edit-order-customer-name" class="w-full border rounded px-3 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">聯絡電話</label>
+          <input type="text" id="edit-order-customer-phone" class="w-full border rounded px-3 py-1.5 text-sm">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">付款方式</label>
+          <select id="edit-order-payment-method" class="w-full border rounded px-3 py-1.5 text-sm">
+            <option value="現金">現金 Cash</option>
+            <option value="FPS 轉數快">FPS 轉數快</option>
+            <option value="PayMe">PayMe</option>
+            <option value="銀行轉帳">銀行轉帳</option>
+            <option value="信用卡">信用卡</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">訂單狀態</label>
+          <select id="edit-order-status" class="w-full border rounded px-3 py-1.5 text-sm">
+            <option value="待確認">待確認</option>
+            <option value="已傳送憑證">已傳送憑證</option>
+            <option value="已確認">已確認</option>
+            <option value="已完成">已完成</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">總金額 (HKD)</label>
+        <input type="number" step="0.1" id="edit-order-total-amount" class="w-full border rounded px-3 py-1.5 text-sm">
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button type="button" onclick="closeEditOrderModal()" class="px-4 py-2 bg-slate-200 text-slate-700 text-xs rounded hover:bg-slate-300 font-medium">取消</button>
+        <button type="button" onclick="saveEditedOrder()" class="px-4 py-2 bg-amber-900 text-white text-xs rounded hover:bg-amber-800 font-medium">儲存修改</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
@@ -426,9 +494,10 @@
     // 僅保留指定的實體門市與網店
     const DEFAULT_BRANCHES = ['網店', '觀塘店', '西營盤店', '荃灣店'];
 
-    // 全局緩存商品列表與分店列表
+    // 全局緩存商品列表、分店列表與訂單列表
     let allProductsMap = {};
     let allBookshopsList = [];
+    let allOrdersMap = {};
 
     window.onload = async function() {
       fetchOrders();
@@ -489,6 +558,9 @@
         return;
       }
 
+      allOrdersMap = {};
+      data.forEach(o => { allOrdersMap[o.id] = o; });
+
       container.innerHTML = data.map(o => {
         let itemsList = [];
         try { itemsList = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch(e) {}
@@ -506,10 +578,13 @@
                 ${(itemsList||[]).map(i => `<div>• ${i.name} x ${i.qty} (HK$ ${i.price})</div>`).join('')}
               </div>
               <p class="text-xs font-bold text-amber-900">總金額：HK$ ${o.total_amount}</p>
+              ${o.notes ? `<p class="text-xs text-slate-500 italic">備註/訂金：${o.notes}</p>` : ''}
               ${o.payment_proof_url ? `<p class="text-xs"><a href="${o.payment_proof_url}" target="_blank" class="text-blue-600 font-bold underline"><i class="fa-solid fa-image mr-1"></i>查看顧客上傳的付款憑證 ↗</a></p>` : ''}
             </div>
             <div class="flex flex-col justify-between gap-2 shrink-0">
-              <div class="flex gap-1.5">
+              <div class="flex gap-1.5 flex-wrap">
+                <!-- 圖1新增：編輯按鈕 -->
+                <button onclick="openEditOrderModal(${o.id})" class="text-xs bg-amber-800 text-white px-2.5 py-1 rounded hover:bg-amber-700"><i class="fa-solid fa-pen mr-1"></i>編輯</button>
                 <button onclick="updateOrderStatus(${o.id}, '已確認')" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-500">已確認</button>
                 <button onclick="updateOrderStatus(${o.id}, '已完成')" class="text-xs bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-500">已完成</button>
                 <button onclick="deleteOrder(${o.id})" class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded hover:bg-red-200">刪除</button>
@@ -523,6 +598,44 @@
       }).join('');
     }
 
+    // 圖1新增：開啟與儲存編輯訂單
+    function openEditOrderModal(orderId) {
+      const o = allOrdersMap[orderId];
+      if (!o) return;
+      document.getElementById('edit-order-id').value = o.id;
+      document.getElementById('edit-order-customer-name').value = o.customer_name || '';
+      document.getElementById('edit-order-customer-phone').value = o.customer_phone || '';
+      document.getElementById('edit-order-payment-method').value = o.payment_method || '現金';
+      document.getElementById('edit-order-status').value = o.status || '待確認';
+      document.getElementById('edit-order-total-amount').value = o.total_amount || 0;
+
+      document.getElementById('edit-order-modal').classList.remove('hidden');
+    }
+
+    function closeEditOrderModal() {
+      document.getElementById('edit-order-modal').classList.add('hidden');
+    }
+
+    async function saveEditedOrder() {
+      const id = document.getElementById('edit-order-id').value;
+      const payload = {
+        customer_name: document.getElementById('edit-order-customer-name').value,
+        customer_phone: document.getElementById('edit-order-customer-phone').value,
+        payment_method: document.getElementById('edit-order-payment-method').value,
+        status: document.getElementById('edit-order-status').value,
+        total_amount: Number(document.getElementById('edit-order-total-amount').value)
+      };
+
+      const { error } = await _supabase.from('shop_orders').update(payload).eq('id', id);
+      if (error) {
+        alert('更新訂單失敗：' + error.message);
+      } else {
+        alert('訂單修改成功！');
+        closeEditOrderModal();
+        fetchOrders();
+      }
+    }
+
     async function updateOrderStatus(id, newStatus) {
       await _supabase.from('shop_orders').update({ status: newStatus }).eq('id', id);
       fetchOrders();
@@ -534,13 +647,29 @@
       fetchOrders();
     }
 
-    // 自動生成並下載收據 PDF
+    // 自動生成並下載收據 PDF（增強：支援訂金顯示）
     async function downloadReceiptPdf(id) {
       const { data: o } = await _supabase.from('shop_orders').select('*').eq('id', id).single();
       if (!o) return alert('找不到該訂單！');
 
       let itemsList = [];
       try { itemsList = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch(e) {}
+
+      // 判斷是否有訂金資訊
+      let depositHtml = '';
+      if (o.deposit_amount && Number(o.deposit_amount) > 0) {
+        const balance = (Number(o.total_amount) - Number(o.deposit_amount)).toFixed(1);
+        depositHtml = `
+          <tr style="color: #92400e; font-weight: bold;">
+            <td colspan="2" style="padding: 6px; text-align: right;">已付訂金 (Deposit)：</td>
+            <td style="padding: 6px; text-align: right;">HK$ ${Number(o.deposit_amount).toFixed(1)}</td>
+          </tr>
+          <tr style="color: #b91c1c; font-weight: bold;">
+            <td colspan="2" style="padding: 6px; text-align: right;">尚欠尾款 (Balance Due)：</td>
+            <td style="padding: 6px; text-align: right;">HK$ ${balance}</td>
+          </tr>
+        `;
+      }
 
       const receiptHtml = `
         <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto;">
@@ -569,8 +698,15 @@
                 </tr>
               `).join('')}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding: 8px; text-align: right; font-weight: bold;">總計金額：</td>
+                <td style="padding: 8px; text-align: right; font-weight: bold; color: #78350f; font-size: 14px;">HK$ ${o.total_amount}</td>
+              </tr>
+              ${depositHtml}
+            </tfoot>
           </table>
-          <p style="text-align: right; font-size: 16px; font-weight: bold; color: #78350f; margin-top: 15px;">總計金額：HK$ ${o.total_amount}</p>
+          ${o.notes ? `<p style="font-size: 11px; color: #666; margin-top: 10px;"><strong>備註：</strong> ${o.notes}</p>` : ''}
           <hr style="border: none; border-top: 1px dotted #ccc; margin: 20px 0;">
           <p style="text-align: center; font-size: 11px; color: #888;">感謝支持香港獨立書店與文化發行！</p>
         </div>
@@ -588,6 +724,19 @@
       };
 
       html2pdf().set(opt).from(element).save();
+    }
+
+    // --- 圖2新增：手動新增收據訂金顯示開關 ---
+    function toggleDepositInput() {
+      const isChecked = document.getElementById('mr-enable-deposit').checked;
+      const container = document.getElementById('deposit-input-container');
+      if (isChecked) {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+        document.getElementById('mr-deposit-amount').value = 0;
+      }
+      calcManualReceiptTotal();
     }
 
     // --- 手動新增收據邏輯 ---
@@ -663,6 +812,19 @@
         total += price * qty;
       });
       document.getElementById('mr-total-display').innerText = `HK$ ${total.toFixed(1)}`;
+
+      // 計算訂金與尾款（圖2功能）
+      const isDepositEnabled = document.getElementById('mr-enable-deposit').checked;
+      const depositVal = parseFloat(document.getElementById('mr-deposit-amount').value) || 0;
+      const balanceDisplay = document.getElementById('mr-balance-display');
+      
+      if (isDepositEnabled) {
+        const balance = Math.max(0, total - depositVal);
+        balanceDisplay.innerText = `HK$ ${balance.toFixed(1)}`;
+      } else {
+        balanceDisplay.innerText = `HK$ 0`;
+      }
+
       return total;
     }
 
@@ -673,7 +835,7 @@
       const customerPhone = document.getElementById('mr-customer-phone').value;
       const paymentMethod = document.getElementById('mr-payment-method').value;
       const status = document.getElementById('mr-status').value;
-      const notes = document.getElementById('mr-notes').value;
+      let notes = document.getElementById('mr-notes').value.trim();
 
       const items = [];
       const rows = document.querySelectorAll('.receipt-item-row');
@@ -693,6 +855,16 @@
 
       const totalAmount = calcManualReceiptTotal();
 
+      // 處理訂金資料（圖2功能）
+      const isDepositEnabled = document.getElementById('mr-enable-deposit').checked;
+      const depositAmount = isDepositEnabled ? (parseFloat(document.getElementById('mr-deposit-amount').value) || 0) : 0;
+
+      if (isDepositEnabled && depositAmount > 0) {
+        const balance = (totalAmount - depositAmount).toFixed(1);
+        const depositNote = `[訂金紀錄] 已付訂金: HK$ ${depositAmount} / 尚欠尾款: HK$ ${balance}`;
+        notes = notes ? `${notes} | ${depositNote}` : depositNote;
+      }
+
       const payload = {
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -700,6 +872,7 @@
         status: status,
         items: items,
         total_amount: totalAmount,
+        deposit_amount: depositAmount,
         notes: notes || '手動後台新增收據'
       };
 
@@ -721,6 +894,8 @@
     function resetManualReceiptForm() {
       document.getElementById('form-manual-receipt').reset();
       document.getElementById('receipt-items-container').innerHTML = '';
+      document.getElementById('mr-enable-deposit').checked = false;
+      toggleDepositInput();
       addReceiptItemRow();
       calcManualReceiptTotal();
     }
