@@ -250,10 +250,10 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">書籍簡介 / 導讀</label><textarea id="prod-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           
-          <!-- 改進後的分店庫存設定 UI -->
+          <!-- 改進後的分店庫存設定 UI（預設固定分店 + 動態整合實體書店） -->
           <div class="border p-3 rounded-lg bg-slate-50 space-y-2">
             <label class="block text-xs font-bold text-slate-700">各分店庫存設定（勾選並設定數量）</label>
-            <div id="branch-stocks-checkboxes" class="space-y-2 max-h-48 overflow-y-auto border rounded bg-white p-2 text-xs">
+            <div id="branch-stocks-checkboxes" class="space-y-2 max-h-56 overflow-y-auto border rounded bg-white p-2 text-xs">
               <span class="text-slate-400 italic">載入分店中...</span>
             </div>
           </div>
@@ -348,7 +348,10 @@
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 全局緩存商品列表與分店列表，防止行內事件 JSON 轉譯錯誤
+    // 預設固定分店名單
+    const DEFAULT_BRANCHES = ['網店', '觀塘店', '西營盤店', '荃灣店'];
+
+    // 全局緩存商品列表與分店列表
     let allProductsMap = {};
     let allBookshopsList = [];
 
@@ -548,42 +551,44 @@
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshopsList = data || [];
       const el = document.getElementById('list-bookshops');
-      if (!data || data.length === 0) { el.innerHTML = '<p class="text-slate-400 italic">無紀錄</p>'; return; }
-      el.innerHTML = data.map(b => `
-        <div class="p-3 border rounded-lg flex justify-between items-center bg-slate-50">
-          <div>
-            <span class="font-bold text-slate-800 text-sm">${b.name}</span>
-            <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded ml-2">${b.region}</span>
-            <p class="text-xs text-slate-500 mt-1">${b.address || ''}</p>
+      if (!data || data.length === 0) { el.innerHTML = '<p class="text-slate-400 italic">無紀錄</p>'; }
+      else {
+        el.innerHTML = data.map(b => `
+          <div class="p-3 border rounded-lg flex justify-between items-center bg-slate-50">
+            <div>
+              <span class="font-bold text-slate-800 text-sm">${b.name}</span>
+              <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded ml-2">${b.region}</span>
+              <p class="text-xs text-slate-500 mt-1">${b.address || ''}</p>
+            </div>
+            <div class="space-x-1">
+              <button onclick='editBookshop(${JSON.stringify(b)})' class="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded">編輯</button>
+              <button onclick="deleteBookshop(${b.id})" class="text-xs bg-red-100 text-red-800 px-2.5 py-1 rounded">刪除</button>
+            </div>
           </div>
-          <div class="space-x-1">
-            <button onclick='editBookshop(${JSON.stringify(b)})' class="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded">編輯</button>
-            <button onclick="deleteBookshop(${b.id})" class="text-xs bg-red-100 text-red-800 px-2.5 py-1 rounded">刪除</button>
-          </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
 
       renderBranchCheckboxes({});
     }
 
-    // 動態渲染可勾選的分店庫存列表
+    // 動態渲染可勾選的分店庫存列表（預設固定分店 + 書店資料表合併）
     function renderBranchCheckboxes(existingStocks = {}) {
       const container = document.getElementById('branch-stocks-checkboxes');
       if (!container) return;
-      if (allBookshopsList.length === 0) {
-        container.innerHTML = '<span class="text-slate-400 italic">尚未建立任何實體書店</span>';
-        return;
-      }
 
-      container.innerHTML = allBookshopsList.map((b, idx) => {
-        const isChecked = existingStocks && existingStocks.hasOwnProperty(b.name);
-        const qty = isChecked ? existingStocks[b.name] : 1;
+      // 整合預設分店與從資料庫載入的書店名稱
+      const extraBranchNames = allBookshopsList.map(b => b.name);
+      const combinedBranchNames = Array.from(new Set([...DEFAULT_BRANCHES, ...extraBranchNames]));
+
+      container.innerHTML = combinedBranchNames.map((branchName, idx) => {
+        const isChecked = existingStocks && existingStocks.hasOwnProperty(branchName);
+        const qty = isChecked ? existingStocks[branchName] : 1;
 
         return `
           <div class="flex items-center justify-between gap-2 border-b pb-1 last:border-b-0">
             <label class="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer">
-              <input type="checkbox" class="branch-chk rounded border-slate-300 text-amber-800 focus:ring-amber-800" value="${b.name}" ${isChecked ? 'checked' : ''} onchange="toggleBranchInput(${idx})">
-              <span>${b.name}</span>
+              <input type="checkbox" class="branch-chk rounded border-slate-300 text-amber-800 focus:ring-amber-800" value="${branchName}" ${isChecked ? 'checked' : ''} onchange="toggleBranchInput(${idx})">
+              <span>${branchName}</span>
             </label>
             <div class="flex items-center gap-1">
               <span class="text-[11px] text-slate-400">數量:</span>
