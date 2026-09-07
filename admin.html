@@ -250,11 +250,12 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">書籍簡介 / 導讀</label><textarea id="prod-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           
-          <!-- 分店庫存 -->
+          <!-- 改進後的分店庫存設定 UI -->
           <div class="border p-3 rounded-lg bg-slate-50 space-y-2">
-            <label class="block text-xs font-bold text-slate-700">各分店庫存設定 (JSON 格式或點擊自動生成)</label>
-            <textarea id="prod-branch-stocks" rows="2" class="w-full border rounded px-2 py-1 text-xs font-mono" placeholder='{"總店": 5, "旺角店": 2}'></textarea>
-            <button type="button" onclick="presetBranchJson()" class="text-[11px] bg-amber-100 text-amber-900 px-2 py-1 rounded hover:bg-amber-200">填入預設分店樣板</button>
+            <label class="block text-xs font-bold text-slate-700">各分店庫存設定（勾選並設定數量）</label>
+            <div id="branch-stocks-checkboxes" class="space-y-2 max-h-48 overflow-y-auto border rounded bg-white p-2 text-xs">
+              <span class="text-slate-400 italic">載入分店中...</span>
+            </div>
           </div>
 
           <div class="flex gap-2">
@@ -347,10 +348,14 @@
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    window.onload = function() {
+    // 全局緩存商品列表與分店列表，防止行內事件 JSON 轉譯錯誤
+    let allProductsMap = {};
+    let allBookshopsList = [];
+
+    window.onload = async function() {
       fetchOrders();
       fetchPaymentSettingsAdmin();
-      fetchBookshops();
+      await fetchBookshops(); // 優先取得書店以建置庫存勾選清單
       fetchAuthors();
       fetchPublishers();
       fetchProducts();
@@ -541,6 +546,7 @@
     // --- 1. 書店 CRUD ---
     async function fetchBookshops() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
+      allBookshopsList = data || [];
       const el = document.getElementById('list-bookshops');
       if (!data || data.length === 0) { el.innerHTML = '<p class="text-slate-400 italic">無紀錄</p>'; return; }
       el.innerHTML = data.map(b => `
@@ -556,6 +562,44 @@
           </div>
         </div>
       `).join('');
+
+      renderBranchCheckboxes({});
+    }
+
+    // 動態渲染可勾選的分店庫存列表
+    function renderBranchCheckboxes(existingStocks = {}) {
+      const container = document.getElementById('branch-stocks-checkboxes');
+      if (!container) return;
+      if (allBookshopsList.length === 0) {
+        container.innerHTML = '<span class="text-slate-400 italic">尚未建立任何實體書店</span>';
+        return;
+      }
+
+      container.innerHTML = allBookshopsList.map((b, idx) => {
+        const isChecked = existingStocks && existingStocks.hasOwnProperty(b.name);
+        const qty = isChecked ? existingStocks[b.name] : 1;
+
+        return `
+          <div class="flex items-center justify-between gap-2 border-b pb-1 last:border-b-0">
+            <label class="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer">
+              <input type="checkbox" class="branch-chk rounded border-slate-300 text-amber-800 focus:ring-amber-800" value="${b.name}" ${isChecked ? 'checked' : ''} onchange="toggleBranchInput(${idx})">
+              <span>${b.name}</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <span class="text-[11px] text-slate-400">數量:</span>
+              <input type="number" id="branch-qty-${idx}" value="${qty}" ${isChecked ? '' : 'disabled'} class="branch-qty-input w-16 border rounded px-1.5 py-0.5 text-xs text-right disabled:bg-slate-100 disabled:text-slate-400">
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleBranchInput(index) {
+      const chk = document.querySelectorAll('.branch-chk')[index];
+      const qtyInput = document.getElementById(`branch-qty-${index}`);
+      if (chk && qtyInput) {
+        qtyInput.disabled = !chk.checked;
+      }
     }
 
     async function saveBookshop(e) {
@@ -722,6 +766,11 @@
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       const el = document.getElementById('list-products');
       if (!data || data.length === 0) { el.innerHTML = '<p class="text-slate-400 italic">無紀錄</p>'; return; }
+      
+      // 避免換行字元破壞 onclick 的 HTML 屬性
+      allProductsMap = {};
+      data.forEach(p => { allProductsMap[p.id] = p; });
+
       el.innerHTML = data.map(p => `
         <div class="p-3 border rounded-lg flex justify-between items-center bg-slate-50">
           <div>
@@ -729,28 +778,27 @@
             <span class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded ml-2">HK$ ${p.price}</span>
             <p class="text-xs text-slate-500 mt-1">作者：${p.author || '無'} | 類別：${p.category}</p>
           </div>
-          <div class="space-x-1">
-            <button onclick='editProduct(${JSON.stringify(p)})' class="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded">編輯</button>
+          <div class="space-x-1 shrink-0">
+            <button onclick="editProductById(${p.id})" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteProduct(${p.id})" class="text-xs bg-red-100 text-red-800 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
       `).join('');
     }
 
-    function presetBranchJson() {
-      document.getElementById('prod-branch-stocks').value = JSON.stringify({"總店": 5, "分店": 2}, null, 2);
-    }
-
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prod-id').value;
+      
+      // 從勾選清單讀取各分店庫存數量
       let branchStocks = {};
-      try {
-        const val = document.getElementById('prod-branch-stocks').value;
-        if (val) branchStocks = JSON.parse(val);
-      } catch(err) {
-        return alert("分店庫存 JSON 格式錯誤，請檢查！");
-      }
+      const chks = document.querySelectorAll('.branch-chk');
+      chks.forEach((chk, idx) => {
+        if (chk.checked) {
+          const qtyVal = document.getElementById(`branch-qty-${idx}`).value;
+          branchStocks[chk.value] = Number(qtyVal) || 0;
+        }
+      });
 
       const payload = {
         name: document.getElementById('prod-name').value,
@@ -772,7 +820,9 @@
       fetchProducts();
     }
 
-    function editProduct(p) {
+    function editProductById(id) {
+      const p = allProductsMap[id];
+      if (!p) return;
       document.getElementById('prod-id').value = p.id;
       document.getElementById('prod-name').value = p.name || '';
       document.getElementById('prod-category').value = p.category || '文學小說';
@@ -783,7 +833,14 @@
       document.getElementById('prod-qty').value = p.quantity || 1;
       document.getElementById('prod-image').value = p.image_url || '';
       document.getElementById('prod-desc').value = p.description || '';
-      document.getElementById('prod-branch-stocks').value = p.branch_stocks ? JSON.stringify(p.branch_stocks, null, 2) : '';
+      
+      // 根據商品的 branch_stocks 設定勾選狀態
+      let stocksObj = {};
+      try {
+        stocksObj = typeof p.branch_stocks === 'string' ? JSON.parse(p.branch_stocks) : (p.branch_stocks || {});
+      } catch(e) {}
+      renderBranchCheckboxes(stocksObj);
+
       document.getElementById('product-form-title').innerText = '編輯網店商品';
     }
 
@@ -913,6 +970,10 @@
       document.getElementById(`form-${type}`).reset();
       const hiddenId = document.getElementById(`${type==='bookshop'?'bs':(type==='product'?'prod':type)}-id`);
       if (hiddenId) hiddenId.value = '';
+      if (type === 'product') {
+        renderBranchCheckboxes({});
+        document.getElementById('product-form-title').innerText = '新增網店商品/書籍';
+      }
     }
   </script>
 </body>
