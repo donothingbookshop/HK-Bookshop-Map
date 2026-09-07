@@ -250,7 +250,7 @@
           </div>
           <div><label class="block text-xs font-medium text-slate-600 mb-1">書籍簡介 / 導讀</label><textarea id="prod-desc" rows="3" class="w-full border rounded px-3 py-1.5 text-sm"></textarea></div>
           
-          <!-- 改進後的分店庫存設定 UI（預設固定分店 + 動態整合實體書店） -->
+          <!-- 分店庫存設定 UI（僅保留指定分店：網店、觀塘店、西營盤店、荃灣店） -->
           <div class="border p-3 rounded-lg bg-slate-50 space-y-2">
             <label class="block text-xs font-bold text-slate-700">各分店庫存設定（勾選並設定數量）</label>
             <div id="branch-stocks-checkboxes" class="space-y-2 max-h-56 overflow-y-auto border rounded bg-white p-2 text-xs">
@@ -348,7 +348,7 @@
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 預設固定分店名單
+    // 僅保留指定的實體門市與網店
     const DEFAULT_BRANCHES = ['網店', '觀塘店', '西營盤店', '荃灣店'];
 
     // 全局緩存商品列表與分店列表
@@ -358,7 +358,7 @@
     window.onload = async function() {
       fetchOrders();
       fetchPaymentSettingsAdmin();
-      await fetchBookshops(); // 優先取得書店以建置庫存勾選清單
+      await fetchBookshops();
       fetchAuthors();
       fetchPublishers();
       fetchProducts();
@@ -571,16 +571,12 @@
       renderBranchCheckboxes({});
     }
 
-    // 動態渲染可勾選的分店庫存列表（預設固定分店 + 書店資料表合併）
+    // 渲染指定的分店庫存列表（只包含：網店, 觀塘店, 西營盤店, 荃灣店）
     function renderBranchCheckboxes(existingStocks = {}) {
       const container = document.getElementById('branch-stocks-checkboxes');
       if (!container) return;
 
-      // 整合預設分店與從資料庫載入的書店名稱
-      const extraBranchNames = allBookshopsList.map(b => b.name);
-      const combinedBranchNames = Array.from(new Set([...DEFAULT_BRANCHES, ...extraBranchNames]));
-
-      container.innerHTML = combinedBranchNames.map((branchName, idx) => {
+      container.innerHTML = DEFAULT_BRANCHES.map((branchName, idx) => {
         const isChecked = existingStocks && existingStocks.hasOwnProperty(branchName);
         const qty = isChecked ? existingStocks[branchName] : 1;
 
