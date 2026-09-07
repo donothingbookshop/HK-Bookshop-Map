@@ -33,6 +33,7 @@
     <!-- 分頁選單 -->
     <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-3 items-center">
       <button onclick="switchTab('orders', this)" class="tab-btn active bg-amber-900 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition">📦 訂單管理</button>
+      <button onclick="switchTab('manual-receipt', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🧾 手動新增收據</button>
       <button onclick="switchTab('payment-settings', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">💳 收款設定</button>
       <button onclick="switchTab('bookshops', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">🏪 實體書店</button>
       <button onclick="switchTab('authors', this)" class="tab-btn bg-white hover:bg-amber-50 px-3.5 py-2 rounded-lg text-xs font-medium border transition">✍️ 獨立作者</button>
@@ -51,6 +52,80 @@
         </div>
         <div id="list-orders" class="space-y-3">載入訂單中...</div>
       </div>
+    </section>
+
+    <!-- 0.5 手動新增收據 -->
+    <section id="tab-manual-receipt" class="tab-content">
+      <form id="form-manual-receipt" onsubmit="saveManualReceipt(event)" class="bg-white p-6 rounded-xl shadow-sm border max-w-3xl space-y-4 mx-auto">
+        <h3 class="font-bold text-lg text-amber-950 border-b pb-2"><i class="fa-solid fa-file-invoice-dollar mr-2"></i>手動新增顧客購買收據</h3>
+        <p class="text-xs text-slate-500">此功能可用於現場銷售或手動建立未上架網店的商品收據，完成後會自動存入訂單紀錄。</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">顧客姓名 *</label>
+            <input type="text" id="mr-customer-name" required placeholder="例如：張先生 / 現場顧客" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">聯絡電話</label>
+            <input type="text" id="mr-customer-phone" placeholder="例如：91234567" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">付款方式 *</label>
+            <select id="mr-payment-method" class="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="現金">現金 Cash</option>
+              <option value="FPS 轉數快">FPS 轉數快</option>
+              <option value="PayMe">PayMe</option>
+              <option value="銀行轉帳">銀行轉帳</option>
+              <option value="信用卡">信用卡</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">訂單狀態 *</label>
+            <select id="mr-status" class="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="已完成">已完成</option>
+              <option value="已確認">已確認</option>
+              <option value="待確認">待確認</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 購買項目動態列表 -->
+        <div class="border p-4 rounded-lg bg-slate-50 space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h4 class="font-bold text-xs text-slate-700"><i class="fa-solid fa-basket-shopping mr-1"></i>購買書籍 / 商品項目</h4>
+            <button type="button" onclick="addReceiptItemRow()" class="text-xs bg-amber-800 text-white px-2.5 py-1 rounded hover:bg-amber-700">
+              <i class="fa-solid fa-plus mr-1"></i>新增項目
+            </button>
+          </div>
+
+          <div id="receipt-items-container" class="space-y-2">
+            <!-- 項目列會動態插入於此 -->
+          </div>
+
+          <div class="text-right pt-2 border-t">
+            <span class="text-xs text-slate-600 font-medium">總計金額：</span>
+            <span id="mr-total-display" class="text-base font-bold text-amber-950">HK$ 0</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">備註資訊</label>
+          <textarea id="mr-notes" rows="2" placeholder="例：市集現場購買 / 預購特刊" class="w-full border rounded px-3 py-1.5 text-sm"></textarea>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 bg-emerald-700 hover:bg-emerald-600 text-white py-2.5 rounded-lg text-xs font-bold shadow">
+            建立收據並儲存
+          </button>
+          <button type="button" onclick="resetManualReceiptForm()" class="bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg text-xs font-medium hover:bg-slate-300">
+            重置
+          </button>
+        </div>
+      </form>
     </section>
 
     <!-- 收款設定 -->
@@ -361,9 +436,12 @@
       await fetchBookshops();
       fetchAuthors();
       fetchPublishers();
-      fetchProducts();
+      await fetchProducts();
       fetchEco();
       fetchTheatre();
+
+      // 初始化手動收據的第一條項目列
+      addReceiptItemRow();
     };
 
     function switchTab(tabId, btn) {
@@ -423,7 +501,7 @@
                 <span class="text-xs px-2 py-0.5 rounded font-semibold ${o.status==='已完成'?'bg-emerald-100 text-emerald-800':(o.status==='已傳送憑證'?'bg-blue-100 text-blue-800':'bg-amber-100 text-amber-800')}">${o.status}</span>
                 <span class="text-xs text-slate-400">${new Date(o.created_at).toLocaleString()}</span>
               </div>
-              <p class="text-xs text-slate-700"><strong>顧客：</strong>${o.customer_name} (${o.customer_phone}) | <strong>付款：</strong>${o.payment_method}</p>
+              <p class="text-xs text-slate-700"><strong>顧客：</strong>${o.customer_name} (${o.customer_phone || '無'}) | <strong>付款：</strong>${o.payment_method}</p>
               <div class="text-xs text-slate-600 bg-white p-2 rounded border space-y-1">
                 ${(itemsList||[]).map(i => `<div>• ${i.name} x ${i.qty} (HK$ ${i.price})</div>`).join('')}
               </div>
@@ -472,7 +550,7 @@
           <p style="font-size: 12px;"><strong>訂單編號：</strong> #${o.id}</p>
           <p style="font-size: 12px;"><strong>日期：</strong> ${new Date(o.created_at).toLocaleString()}</p>
           <p style="font-size: 12px;"><strong>顧客姓名：</strong> ${o.customer_name}</p>
-          <p style="font-size: 12px;"><strong>聯絡電話：</strong> ${o.customer_phone}</p>
+          <p style="font-size: 12px;"><strong>聯絡電話：</strong> ${o.customer_phone || '-'}</p>
           <p style="font-size: 12px;"><strong>付款方式：</strong> ${o.payment_method}</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px;">
             <thead>
@@ -510,6 +588,141 @@
       };
 
       html2pdf().set(opt).from(element).save();
+    }
+
+    // --- 手動新增收據邏輯 ---
+    let receiptItemCounter = 0;
+
+    function addReceiptItemRow() {
+      receiptItemCounter++;
+      const container = document.getElementById('receipt-items-container');
+      
+      const productOptions = Object.values(allProductsMap).map(p => 
+        `<option value="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price}">${p.name} (HK$ ${p.price})</option>`
+      ).join('');
+
+      const rowHtml = `
+        <div id="receipt-item-row-${receiptItemCounter}" class="receipt-item-row flex flex-wrap md:flex-nowrap items-center gap-2 bg-white p-2.5 rounded border">
+          <div class="w-full md:w-1/3">
+            <select class="item-select w-full border rounded px-2 py-1 text-xs" onchange="onReceiptProductSelect(${receiptItemCounter})">
+              <option value="custom">✍️ [手動輸入自定義書籍/商品]</option>
+              ${productOptions}
+            </select>
+          </div>
+          <div class="flex-grow w-full md:w-auto">
+            <input type="text" class="item-name w-full border rounded px-2 py-1 text-xs" placeholder="商品 / 書名名稱 *" required>
+          </div>
+          <div class="w-24">
+            <input type="number" step="0.1" class="item-price w-full border rounded px-2 py-1 text-xs text-right" placeholder="單價 HK$" required onchange="calcManualReceiptTotal()" oninput="calcManualReceiptTotal()">
+          </div>
+          <div class="w-16">
+            <input type="number" value="1" min="1" class="item-qty w-full border rounded px-2 py-1 text-xs text-center" placeholder="數量" required onchange="calcManualReceiptTotal()" oninput="calcManualReceiptTotal()">
+          </div>
+          <button type="button" onclick="removeReceiptItemRow(${receiptItemCounter})" class="text-red-500 hover:text-red-700 px-2 py-1 text-xs shrink-0">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', rowHtml);
+      calcManualReceiptTotal();
+    }
+
+    function removeReceiptItemRow(rowId) {
+      const row = document.getElementById(`receipt-item-row-${rowId}`);
+      if (row) row.remove();
+      calcManualReceiptTotal();
+    }
+
+    function onReceiptProductSelect(rowId) {
+      const row = document.getElementById(`receipt-item-row-${rowId}`);
+      if (!row) return;
+
+      const select = row.querySelector('.item-select');
+      const nameInput = row.querySelector('.item-name');
+      const priceInput = row.querySelector('.item-price');
+
+      if (select.value === 'custom') {
+        nameInput.value = '';
+        priceInput.value = '';
+        nameInput.removeAttribute('readonly');
+      } else {
+        const selectedOption = select.options[select.selectedIndex];
+        nameInput.value = selectedOption.getAttribute('data-name') || '';
+        priceInput.value = selectedOption.getAttribute('data-price') || 0;
+      }
+      calcManualReceiptTotal();
+    }
+
+    function calcManualReceiptTotal() {
+      let total = 0;
+      const rows = document.querySelectorAll('.receipt-item-row');
+      rows.forEach(row => {
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+        total += price * qty;
+      });
+      document.getElementById('mr-total-display').innerText = `HK$ ${total.toFixed(1)}`;
+      return total;
+    }
+
+    async function saveManualReceipt(e) {
+      e.preventDefault();
+
+      const customerName = document.getElementById('mr-customer-name').value;
+      const customerPhone = document.getElementById('mr-customer-phone').value;
+      const paymentMethod = document.getElementById('mr-payment-method').value;
+      const status = document.getElementById('mr-status').value;
+      const notes = document.getElementById('mr-notes').value;
+
+      const items = [];
+      const rows = document.querySelectorAll('.receipt-item-row');
+      rows.forEach(row => {
+        const name = row.querySelector('.item-name').value.trim();
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const qty = parseInt(row.querySelector('.item-qty').value) || 1;
+        if (name) {
+          items.push({ name, price, qty });
+        }
+      });
+
+      if (items.length === 0) {
+        alert('請至少新增一個購買項目！');
+        return;
+      }
+
+      const totalAmount = calcManualReceiptTotal();
+
+      const payload = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        status: status,
+        items: items,
+        total_amount: totalAmount,
+        notes: notes || '手動後台新增收據'
+      };
+
+      const { data, error } = await _supabase.from('shop_orders').insert([payload]).select();
+
+      if (error) {
+        alert('建立收據失敗：' + error.message);
+      } else {
+        alert('成功建立手動收據！');
+        resetManualReceiptForm();
+        fetchOrders();
+        switchTab('orders', document.querySelectorAll('.tab-btn')[0]);
+        if (data && data[0]) {
+          downloadReceiptPdf(data[0].id);
+        }
+      }
+    }
+
+    function resetManualReceiptForm() {
+      document.getElementById('form-manual-receipt').reset();
+      document.getElementById('receipt-items-container').innerHTML = '';
+      addReceiptItemRow();
+      calcManualReceiptTotal();
     }
 
     // --- 收款設定 ---
