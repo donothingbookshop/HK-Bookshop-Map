@@ -60,7 +60,7 @@
     <section id="tab-map" class="tab-content active">
       <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold mb-1">香港獨立書店名冊</h2>
+          <h2 class="text-2xl font-bold mb-1">香港本地獨立書店名冊</h2>
           <p class="text-slate-600 text-sm">點擊地區標籤或輸入關鍵字搜尋實體獨立書店、海外香港書店與圖書館。</p>
         </div>
         
@@ -111,15 +111,15 @@
 
         <div class="flex gap-2 bg-slate-200/70 p-1 rounded-lg w-fit">
           <button onclick="switchDirectorySubTab('all', this)" class="dir-sub-btn bg-white text-slate-800 shadow-sm px-3 py-1.5 rounded-md text-xs font-medium transition">全部顯示</button>
-          <button onclick="switchDirectorySubTab('authors', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">✍️ 獨立作者</button>
-          <button onclick="switchDirectorySubTab('publishers', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">🏛️ 獨立出版社</button>
+          <button onclick="switchDirectorySubTab('authors', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">✍️ 本地作者</button>
+          <button onclick="switchDirectorySubTab('publishers', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">🏛️ 本地出版社</button>
         </div>
       </div>
 
       <div id="directory-content-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div id="dir-section-authors" class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900 flex items-center justify-between">
-            <span><i class="fa-solid fa-pen-nib mr-2"></i>獨立作者</span>
+            <span><i class="fa-solid fa-pen-nib mr-2"></i>本地作者</span>
             <span class="text-xs font-normal text-slate-400">點擊查看詳情</span>
           </h3>
           <div id="author-list" class="space-y-3 text-sm text-slate-600"><p class="text-slate-400 italic">暫無作者資料</p></div>
@@ -127,7 +127,7 @@
 
         <div id="dir-section-publishers" class="bg-white p-6 rounded-xl border shadow-sm">
           <h3 class="font-bold text-lg mb-4 border-b pb-2 text-amber-900 flex items-center justify-between">
-            <span><i class="fa-solid fa-building-columns mr-2"></i>獨立出版社</span>
+            <span><i class="fa-solid fa-building-columns mr-2"></i>本地出版社</span>
             <span class="text-xs font-normal text-slate-400">點擊查看詳情</span>
           </h3>
           <div id="publisher-list" class="space-y-3 text-sm text-slate-600"><p class="text-slate-400 italic">暫無出版社資料</p></div>
@@ -610,7 +610,7 @@
       const item = (type === 'author' ? allAuthors : allPublishers).find(x => x.id === id);
       if (!item) return;
 
-      document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 獨立作者' : '🏛️ 獨立出版社';
+      document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 本地作者' : '🏛️ 本地出版社';
       document.getElementById('dir-modal-title').innerText = item.name;
       document.getElementById('dir-modal-phone').innerText = item.phone ? `電話：${item.phone}` : '';
       document.getElementById('dir-modal-desc').innerText = (type === 'author' ? item.bio : item.description) || '暫無簡介';
