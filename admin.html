@@ -355,6 +355,8 @@
             <label class="block text-xs font-medium text-slate-600 mb-1">主題分類</label>
             <select id="prod-category" class="w-full border rounded px-3 py-1.5 text-xs bg-white">
               <option value="小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）">📖 小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）</option>
+              <option value="Zine／雜誌">📰 Zine／雜誌</option>
+              <option value="童書繪本">🎨 童書繪本</option>
               <option value="詩集">📜 詩集</option>
               <option value="心理勵志">🧠 心理勵志</option>
               <option value="人文社科">🏛️ 人文社科</option>
@@ -545,331 +547,197 @@
 
         return `
           <div class="border rounded-xl p-4 bg-slate-50 space-y-3">
-            <div class="flex flex-wrap justify-between items-start gap-2 border-b pb-2">
+            <div class="flex flex-wrap justify-between items-start gap-2">
               <div>
-                <span class="text-xs font-mono font-bold text-amber-900">單號：#${o.id}</span>
-                <span class="text-xs text-slate-400 ml-2">${dateStr}</span>
-                <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded ${getStatusBadgeClass(o.status)}">${o.status}</span>
+                <span class="text-xs font-mono text-slate-400">#${o.id}</span>
+                <h4 class="font-bold text-slate-800 text-sm">${o.customer_name || '無名氏'} <span class="text-xs font-normal text-slate-500">(${o.customer_phone || '無電話'})</span></h4>
+                <p class="text-[11px] text-slate-400">${dateStr} · 付款方式: ${o.payment_method || '未提供'}</p>
               </div>
               <div class="flex items-center gap-2">
-                <select onchange="updateOrderStatus(${o.id}, this.value)" class="text-xs border rounded px-2 py-1 bg-white font-medium">
+                <select onchange="updateOrderStatus(${o.id}, this.value)" class="border text-xs rounded px-2 py-1 bg-white font-semibold">
                   <option value="待確認" ${o.status==='待確認'?'selected':''}>待確認</option>
                   <option value="已傳送憑證" ${o.status==='已傳送憑證'?'selected':''}>已傳送憑證</option>
                   <option value="已確認" ${o.status==='已確認'?'selected':''}>已確認</option>
-                  <option value="已發貨" ${o.status==='已發貨'?'selected':''}>已發貨</option>
                   <option value="已完成" ${o.status==='已完成'?'selected':''}>已完成</option>
                   <option value="已取消" ${o.status==='已取消'?'selected':''}>已取消</option>
                 </select>
-                <button onclick="printReceipt(${o.id})" class="text-xs bg-amber-800 text-white px-2.5 py-1 rounded hover:bg-amber-700 font-bold transition flex items-center gap-1">
-                  <i class="fa-solid fa-print"></i> 列印收據
-                </button>
-                <button onclick="deleteOrder(${o.id})" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="deleteOrder(${o.id})" class="text-red-600 hover:text-red-800 text-xs px-2 py-1 border rounded bg-white">刪除</button>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div>
-                <p class="font-bold text-slate-700 mb-1">顧客資料：</p>
-                <p>姓名：${o.customer_name || '無'}</p>
-                <p>電話：${o.customer_phone || '無'}</p>
-                <p>付款方式：<span class="font-bold text-amber-900">${o.payment_method || '未填'}</span></p>
-                ${o.notes ? `<p class="mt-1 text-slate-500 italic">備註：${o.notes}</p>` : ''}
-                ${o.payment_proof_url ? `
-                  <div class="mt-2">
-                    <p class="font-bold text-blue-900 mb-1">付款截圖憑證：</p>
-                    <a href="${o.payment_proof_url}" target="_blank" class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200 hover:underline">
-                      <i class="fa-solid fa-image mr-1"></i>查看顧客上傳相片 ↗
-                    </a>
-                  </div>
-                ` : '<p class="text-slate-400 mt-1">未上傳付款憑證</p>'}
+            <div class="border-t pt-2 text-xs text-slate-600 space-y-1">
+              ${items.map(i => `<div class="flex justify-between"><span>${i.name} x ${i.qty}</span><span>HK$ ${i.price * i.qty}</span></div>`).join('')}
+              <div class="border-t pt-1 flex justify-between font-bold text-amber-950">
+                <span>總計：</span>
+                <span>HK$ ${totalAmount}</span>
               </div>
-
-              <div>
-                <p class="font-bold text-slate-700 mb-1">購買商品項目：</p>
-                <ul class="space-y-1 mb-2 border-b pb-2">
-                  ${items.map(i => `
-                    <li class="flex justify-between">
-                      <span>${i.name} x ${i.qty}</span>
-                      <span class="font-bold">HK$ ${i.price * i.qty}</span>
-                    </li>
-                  `).join('')}
-                </ul>
-                <div class="space-y-0.5 text-right">
-                  <p class="text-slate-700">總金額：<strong class="text-amber-900 text-sm">HK$ ${totalAmount}</strong></p>
-                  ${depositAmount > 0 ? `
-                    <p class="text-emerald-700">已付訂金 Deposit：<strong>HK$ ${depositAmount}</strong></p>
-                    <p class="text-red-700 font-bold">尚欠尾款 Balance：<strong>HK$ ${balanceAmount}</strong></p>
-                  ` : ''}
-                </div>
-              </div>
+              ${depositAmount > 0 ? `
+                <div class="flex justify-between text-emerald-800 font-semibold"><span>已付訂金：</span><span>HK$ ${depositAmount}</span></div>
+                <div class="flex justify-between text-red-700 font-bold"><span>尚欠尾款：</span><span>HK$ ${balanceAmount}</span></div>
+              ` : ''}
             </div>
+
+            ${o.payment_proof_url ? `
+              <div class="pt-2 border-t">
+                <p class="text-[11px] text-blue-800 font-bold mb-1"><i class="fa-solid fa-image mr-1"></i>付款憑證照片：</p>
+                <a href="${o.payment_proof_url}" target="_blank" class="inline-block">
+                  <img src="${o.payment_proof_url}" class="h-20 rounded border hover:opacity-90 transition">
+                </a>
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
     }
 
-    function getStatusBadgeClass(status) {
-      if (status === '已完成') return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
-      if (status === '已確認' || status === '已發貨') return 'bg-blue-100 text-blue-800 border border-blue-300';
-      if (status === '已傳送憑證') return 'bg-purple-100 text-purple-800 border border-purple-300';
-      if (status === '已取消') return 'bg-slate-200 text-slate-600';
-      return 'bg-amber-100 text-amber-900 border border-amber-300';
-    }
-
-    async function updateOrderStatus(id, newStatus) {
-      await _supabase.from('shop_orders').update({ status: newStatus }).eq('id', id);
-      fetchOrders();
+    async function updateOrderStatus(id, status) {
+      await _supabase.from('shop_orders').update({ status }).eq('id', id);
     }
 
     async function deleteOrder(id) {
-      if (!confirm("確定要刪除此訂單紀錄嗎？")) return;
+      if (!confirm("確定要刪除此訂單嗎？")) return;
       await _supabase.from('shop_orders').delete().eq('id', id);
       fetchOrders();
     }
 
-    // --- 0.5 手動新增收據與列印功能 ---
+    // --- 0.5 手動新增收據 ---
+    let receiptRowCounter = 0;
+
     function toggleDepositInput() {
       const enabled = document.getElementById('mr-enable-deposit').checked;
       document.getElementById('deposit-input-container').classList.toggle('hidden', !enabled);
+      if (!enabled) document.getElementById('mr-deposit-amount').value = 0;
       calcManualReceiptTotal();
     }
 
     function addReceiptItemRow() {
+      receiptRowCounter++;
       const container = document.getElementById('receipt-items-container');
-      const rowId = Date.now();
-
-      const div = document.createElement('div');
-      div.className = "flex gap-2 items-center receipt-item-row";
-      div.id = `row-${rowId}`;
-      div.innerHTML = `
-        <input type="text" placeholder="商品/書籍名稱 *" required class="flex-grow border rounded px-2.5 py-1.5 text-xs mr-item-name" oninput="calcManualReceiptTotal()">
-        <input type="number" placeholder="單價" step="0.1" value="0" min="0" required class="w-20 border rounded px-2 py-1.5 text-xs mr-item-price" oninput="calcManualReceiptTotal()">
-        <input type="number" placeholder="數量" value="1" min="1" required class="w-16 border rounded px-2 py-1.5 text-xs mr-item-qty" oninput="calcManualReceiptTotal()">
-        <button type="button" onclick="removeReceiptItemRow('row-${rowId}')" class="text-red-500 hover:text-red-700 px-1.5 py-1 text-xs">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
+      const row = document.createElement('div');
+      row.id = `receipt-row-${receiptRowCounter}`;
+      row.className = 'flex flex-wrap md:flex-nowrap items-center gap-2 border-b pb-2 md:border-b-0 md:pb-0';
+      row.innerHTML = `
+        <input type="text" placeholder="商品/書籍名稱 *" required class="mr-item-name flex-1 border rounded px-2 py-1 text-xs">
+        <input type="number" placeholder="單價" required step="0.1" min="0" oninput="calcManualReceiptTotal()" class="mr-item-price w-20 border rounded px-2 py-1 text-xs">
+        <input type="number" placeholder="數量" required value="1" min="1" oninput="calcManualReceiptTotal()" class="mr-item-qty w-16 border rounded px-2 py-1 text-xs">
+        <button type="button" onclick="removeReceiptItemRow(${receiptRowCounter})" class="text-red-500 hover:text-red-700 text-xs px-2 py-1"><i class="fa-solid fa-trash"></i></button>
       `;
-      container.appendChild(div);
-      calcManualReceiptTotal();
+      container.appendChild(row);
     }
 
-    function removeReceiptItemRow(rowId) {
-      const row = document.getElementById(rowId);
+    function removeReceiptItemRow(id) {
+      const row = document.getElementById(`receipt-row-${id}`);
       if (row) row.remove();
       calcManualReceiptTotal();
     }
 
     function calcManualReceiptTotal() {
-      const rows = document.querySelectorAll('.receipt-item-row');
       let total = 0;
+      const names = document.querySelectorAll('.mr-item-name');
+      const prices = document.querySelectorAll('.mr-item-price');
+      const qtys = document.querySelectorAll('.mr-item-qty');
 
-      rows.forEach(r => {
-        const p = Number(r.querySelector('.mr-item-price').value) || 0;
-        const q = Number(r.querySelector('.mr-item-qty').value) || 0;
-        total += p * q;
+      prices.forEach((p, idx) => {
+        const price = Number(p.value) || 0;
+        const qty = Number(qtys[idx].value) || 0;
+        total += price * qty;
       });
 
       document.getElementById('mr-total-display').innerText = `HK$ ${total}`;
 
-      const enableDeposit = document.getElementById('mr-enable-deposit').checked;
-      const depositVal = enableDeposit ? (Number(document.getElementById('mr-deposit-amount').value) || 0) : 0;
-      const balance = Math.max(0, total - depositVal);
-
+      const deposit = Number(document.getElementById('mr-deposit-amount').value) || 0;
+      const balance = Math.max(0, total - deposit);
       document.getElementById('mr-balance-display').innerText = `HK$ ${balance}`;
     }
 
     async function saveManualReceipt(e) {
       e.preventDefault();
-
-      const name = document.getElementById('mr-customer-name').value.trim();
-      const phone = document.getElementById('mr-customer-phone').value.trim();
-      const payMethod = document.getElementById('mr-payment-method').value;
+      const customerName = document.getElementById('mr-customer-name').value.trim();
+      const customerPhone = document.getElementById('mr-customer-phone').value.trim();
+      const paymentMethod = document.getElementById('mr-payment-method').value;
       const status = document.getElementById('mr-status').value;
+      const enableDeposit = document.getElementById('mr-enable-deposit').checked;
+      const depositAmount = enableDeposit ? (Number(document.getElementById('mr-deposit-amount').value) || 0) : 0;
       const notes = document.getElementById('mr-notes').value.trim();
 
-      const rows = document.querySelectorAll('.receipt-item-row');
-      if (rows.length === 0) return alert("請至少新增一個購物項目！");
+      const names = document.querySelectorAll('.mr-item-name');
+      const prices = document.querySelectorAll('.mr-item-price');
+      const qtys = document.querySelectorAll('.mr-item-qty');
 
       const items = [];
-      let totalAmount = 0;
+      let total = 0;
 
-      rows.forEach(r => {
-        const itemName = r.querySelector('.mr-item-name').value.trim();
-        const price = Number(r.querySelector('.mr-item-price').value) || 0;
-        const qty = Number(r.querySelector('.mr-item-qty').value) || 1;
-
-        if (itemName) {
-          items.push({ name: itemName, price, qty });
-          totalAmount += price * qty;
+      names.forEach((n, idx) => {
+        const name = n.value.trim();
+        const price = Number(prices[idx].value) || 0;
+        const qty = Number(qtys[idx].value) || 1;
+        if (name) {
+          items.push({ name, price, qty });
+          total += price * qty;
         }
       });
 
-      if (items.length === 0) return alert("請輸入有效的商品名稱與金額！");
+      if (items.length === 0) return alert("請至少填寫一項商品！");
 
-      const enableDeposit = document.getElementById('mr-enable-deposit').checked;
-      const depositAmount = enableDeposit ? (Number(document.getElementById('mr-deposit-amount').value) || 0) : 0;
-
-      const { data, error } = await _supabase.from('shop_orders').insert([{
-        customer_name: name,
-        customer_phone: phone,
-        payment_method: payMethod,
-        items,
-        total_amount: totalAmount,
+      const { error } = await _supabase.from('shop_orders').insert([{
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        status: status,
+        items: items,
+        total_amount: total,
         deposit_amount: depositAmount,
-        status,
-        notes
-      }]).select();
+        notes: notes
+      }]);
 
       if (error) {
-        alert("建立收據失敗：" + error.message);
-        return;
+        alert("儲存收據失敗：" + error.message);
+      } else {
+        alert("收據成功建立！");
+        resetManualReceiptForm();
+        fetchOrders();
       }
-
-      alert("✓ 收據建立成功！已存入訂單紀錄。");
-      resetManualReceiptForm();
-      fetchOrders();
-      switchTab('orders', document.querySelectorAll('.tab-btn')[0]);
     }
 
     function resetManualReceiptForm() {
       document.getElementById('form-manual-receipt').reset();
       document.getElementById('receipt-items-container').innerHTML = '';
-      document.getElementById('mr-enable-deposit').checked = false;
-      toggleDepositInput();
+      receiptRowCounter = 0;
       addReceiptItemRow();
-    }
-
-    // 列印收據功能 (使用獨立視窗)
-    async function printReceipt(orderId) {
-      const { data: o } = await _supabase.from('shop_orders').select('*').eq('id', orderId).single();
-      if (!o) return alert("找不到該訂單資料！");
-
-      let items = o.items || [];
-      if (typeof items === 'string') { try { items = JSON.parse(items); } catch(e) { items = []; } }
-
-      const dateStr = new Date(o.created_at).toLocaleString('zh-HK');
-      const depositAmount = Number(o.deposit_amount) || 0;
-      const totalAmount = Number(o.total_amount) || 0;
-      const balanceAmount = Math.max(0, totalAmount - depositAmount);
-
-      const printWin = window.open('', '_blank', 'width=800,height=900');
-      printWin.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>銷售收據 - #${o.id}</title>
-          <style>
-            body { font-family: "PingFang HK", "Helvetica Neue", sans-serif; padding: 30px; color: #1e293b; max-width: 650px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 2px solid #78350f; padding-bottom: 15px; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 22px; color: #78350f; }
-            .header p { margin: 4px 0 0; font-size: 13px; color: #64748b; }
-            .meta-table, .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-            .meta-table td { padding: 4px 0; }
-            .items-table th, .items-table td { border-bottom: 1px solid #e2e8f0; padding: 8px 4px; text-align: left; }
-            .items-table th { border-top: 1px solid #e2e8f0; font-weight: bold; background: #f8fafc; }
-            .text-right { text-align: right; }
-            .totals { margin-top: 15px; border-top: 2px solid #1e293b; pt: 10px; font-size: 14px; }
-            .totals p { font-size: 13px; margin: 4px 0; text-align: right; }
-            .totals .grand-total { font-size: 18px; font-weight: bold; color: #78350f; }
-            .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-            <button onclick="window.print()" style="padding: 8px 16px; background: #78350f; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">列印此頁本</button>
-          </div>
-
-          <div class="header">
-            <h1>無所事事小書店</h1>
-            <p>銷售與訂金交易收據 Receipt</p>
-          </div>
-
-          <table class="meta-table">
-            <tr>
-              <td><strong>收據單號：</strong> #${o.id}</td>
-              <td class="text-right"><strong>開立日期：</strong> ${dateStr}</td>
-            </tr>
-            <tr>
-              <td><strong>顧客姓名：</strong> ${o.customer_name || '現場顧客'}</td>
-              <td class="text-right"><strong>聯絡電話：</strong> ${o.customer_phone || '無'}</td>
-            </tr>
-            <tr>
-              <td><strong>付款方式：</strong> ${o.payment_method || '現金'}</td>
-              <td class="text-right"><strong>狀態：</strong> ${o.status}</td>
-            </tr>
-            ${o.notes ? `<tr><td colspan="2"><strong>備註：</strong> ${o.notes}</td></tr>` : ''}
-          </table>
-
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>項目名稱</th>
-                <th class="text-right">單價</th>
-                <th class="text-right">數量</th>
-                <th class="text-right">小計</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map(i => `
-                <tr>
-                  <td>${i.name}</td>
-                  <td class="text-right">HK$ ${i.price}</td>
-                  <td class="text-right">${i.qty}</td>
-                  <td class="text-right">HK$ ${i.price * i.qty}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="totals">
-            <p class="grand-total">總計金額 Total: HK$ ${totalAmount}</p>
-            ${depositAmount > 0 ? `
-              <p>已付訂金 Deposit Paid: HK$ ${depositAmount}</p>
-              <p style="color: #c2410c; font-weight: bold; font-size: 15px;">尚欠尾款 Balance Due: HK$ ${balanceAmount}</p>
-            ` : ''}
-          </div>
-
-          <div class="footer">
-            <p>感謝您的支持！多謝光臨無所事事小書店。</p>
-          </div>
-        </body>
-        </html>
-      `);
-      printWin.document.close();
+      toggleDepositInput();
+      calcManualReceiptTotal();
     }
 
     // --- 收款設定 ---
     async function fetchPaymentSettings() {
       const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
-      if (data) {
-        document.getElementById('pay-fps-num').value = data.fps_number || '';
-        document.getElementById('pay-fps-qr-url').value = data.fps_qr_url || '';
-        if (data.fps_qr_url) document.getElementById('pay-fps-qr-preview').innerHTML = `<img src="${data.fps_qr_url}" class="w-20 h-20 border rounded">`;
+      if (!data) return;
 
-        document.getElementById('pay-payme-link').value = data.payme_link || '';
-        document.getElementById('pay-payme-qr-url').value = data.payme_qr_url || '';
-        if (data.payme_qr_url) document.getElementById('pay-payme-qr-preview').innerHTML = `<img src="${data.payme_qr_url}" class="w-20 h-20 border rounded">`;
+      document.getElementById('pay-fps-num').value = data.fps_number || '';
+      document.getElementById('pay-fps-qr-url').value = data.fps_qr_url || '';
+      if (data.fps_qr_url) document.getElementById('pay-fps-qr-preview').innerHTML = `<img src="${data.fps_qr_url}" class="h-16 mt-1 border">`;
 
-        document.getElementById('pay-bank-name').value = data.bank_name || '';
-        document.getElementById('pay-bank-account').value = data.bank_account || '';
-        document.getElementById('pay-bank-holder').value = data.bank_holder || '';
-        document.getElementById('pay-instructions').value = data.instructions || '';
-      }
+      document.getElementById('pay-payme-link').value = data.payme_link || '';
+      document.getElementById('pay-payme-qr-url').value = data.payme_qr_url || '';
+      if (data.payme_qr_url) document.getElementById('pay-payme-qr-preview').innerHTML = `<img src="${data.payme_qr_url}" class="h-16 mt-1 border">`;
+
+      document.getElementById('pay-bank-name').value = data.bank_name || '';
+      document.getElementById('pay-bank-holder').value = data.bank_holder || '';
+      document.getElementById('pay-bank-account').value = data.bank_account || '';
+      document.getElementById('pay-instructions').value = data.instructions || '';
     }
 
     async function savePaymentSettings(e) {
       e.preventDefault();
 
       let fpsQrUrl = document.getElementById('pay-fps-qr-url').value;
-      const fpsFileUrl = await uploadFile('pay-fps-qr-file');
-      if (fpsFileUrl) fpsQrUrl = fpsFileUrl;
-
       let paymeQrUrl = document.getElementById('pay-payme-qr-url').value;
-      const paymeFileUrl = await uploadFile('pay-payme-qr-file');
-      if (paymeFileUrl) paymeQrUrl = paymeFileUrl;
+
+      const newFpsQr = await uploadFile('pay-fps-qr-file');
+      if (newFpsQr) fpsQrUrl = newFpsQr;
+
+      const newPaymeQr = await uploadFile('pay-payme-qr-file');
+      if (newPaymeQr) paymeQrUrl = newPaymeQr;
 
       const payload = {
         id: 'default',
@@ -878,37 +746,37 @@
         payme_link: document.getElementById('pay-payme-link').value.trim(),
         payme_qr_url: paymeQrUrl,
         bank_name: document.getElementById('pay-bank-name').value.trim(),
-        bank_account: document.getElementById('pay-bank-account').value.trim(),
         bank_holder: document.getElementById('pay-bank-holder').value.trim(),
+        bank_account: document.getElementById('pay-bank-account').value.trim(),
         instructions: document.getElementById('pay-instructions').value.trim()
       };
 
       const { error } = await _supabase.from('payment_settings').upsert(payload);
       if (error) alert("儲存失敗：" + error.message);
-      else alert("✓ 收款設定已更新！");
+      else { alert("預設收款設定已儲存！"); fetchPaymentSettings(); }
     }
 
     // --- 1. 實體書店 ---
+    let allBookshops = [];
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
-      renderBookshops(data || []);
+      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
+      allBookshops = data || [];
+      renderBookshopsList(allBookshops);
     }
 
-    function renderBookshops(list) {
-      const container = document.getElementById('list-bookshops');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無書店。</p>`; return; }
-      container.innerHTML = list.map(s => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
+    function renderBookshopsList(list) {
+      const el = document.getElementById('list-bookshops');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(s => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800 text-sm">${s.name}</span>
-            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">
-              ${s.region === '外國香港書店/圖書館' ? (s.country || '海外') : s.region}
-            </span>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${s.region}</span>
             <p class="text-slate-500 mt-1">${s.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick="editBookshop(${s.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deleteBookshop(${s.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+            <button onclick="editBookshop(${s.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deleteBookshop(${s.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -917,10 +785,10 @@
     async function saveBookshop(e) {
       e.preventDefault();
       const id = document.getElementById('shop-id').value;
+      let imgUrl = document.getElementById('shop-img-url').value;
 
-      let imageUrl = document.getElementById('shop-img-url').value;
-      const uploadedUrl = await uploadFile('shop-file');
-      if (uploadedUrl) imageUrl = uploadedUrl;
+      const newImg = await uploadFile('shop-file');
+      if (newImg) imgUrl = newImg;
 
       const payload = {
         name: document.getElementById('shop-name').value.trim(),
@@ -934,7 +802,7 @@
         website_url: document.getElementById('shop-web-url').value.trim(),
         instagram_url: document.getElementById('shop-ig-url').value.trim(),
         facebook_url: document.getElementById('shop-fb-url').value.trim(),
-        image_url: imageUrl
+        image_url: imgUrl
       };
 
       if (id) await _supabase.from('bookshops').update(payload).eq('id', id);
@@ -944,18 +812,15 @@
       fetchBookshops();
     }
 
-    async function editBookshop(id) {
-      const { data: s } = await _supabase.from('bookshops').select('*').eq('id', id).single();
+    function editBookshop(id) {
+      const s = allBookshops.find(x => x.id === id);
       if (!s) return;
-
       document.getElementById('form-bookshop-title').innerText = "編輯實體書店";
       document.getElementById('shop-id').value = s.id;
-      document.getElementById('shop-name').value = s.name;
-      document.getElementById('shop-region').value = s.region;
-      
+      document.getElementById('shop-name').value = s.name || '';
+      document.getElementById('shop-region').value = s.region || '香港島';
       toggleCountryInput(s.region);
       if (s.country) document.getElementById('shop-country').value = s.country;
-
       document.getElementById('shop-address').value = s.address || '';
       document.getElementById('shop-phone').value = s.phone || '';
       document.getElementById('shop-hours').value = s.opening_hours || '';
@@ -965,10 +830,11 @@
       document.getElementById('shop-ig-url').value = s.instagram_url || '';
       document.getElementById('shop-fb-url').value = s.facebook_url || '';
       document.getElementById('shop-img-url').value = s.image_url || '';
+      if (s.image_url) document.getElementById('shop-img-preview').innerHTML = `<img src="${s.image_url}" class="h-16 mt-1 border">`;
     }
 
     async function deleteBookshop(id) {
-      if (!confirm("確定要刪除這間書店嗎？")) return;
+      if (!confirm("確定要刪除這家書店嗎？")) return;
       await _supabase.from('bookshops').delete().eq('id', id);
       fetchBookshops();
     }
@@ -977,28 +843,28 @@
       document.getElementById('form-bookshop').reset();
       document.getElementById('shop-id').value = '';
       document.getElementById('shop-img-url').value = '';
+      document.getElementById('shop-img-preview').innerHTML = '';
       document.getElementById('form-bookshop-title').innerText = "新增實體書店";
       toggleCountryInput('香港島');
     }
 
-    // --- 2. 作者 ---
+    // --- 2. 本地作者 ---
+    let allAuthors = [];
     async function fetchAuthors() {
       const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      renderAuthors(data || []);
+      allAuthors = data || [];
+      renderAuthorsList(allAuthors);
     }
 
-    function renderAuthors(list) {
-      const container = document.getElementById('list-authors');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無作者。</p>`; return; }
-      container.innerHTML = list.map(a => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
-          <div>
-            <span class="font-bold text-slate-800 text-sm">${a.name}</span>
-            <p class="text-slate-500 line-clamp-1 mt-0.5">${a.bio || '無簡介'}</p>
-          </div>
-          <div class="flex gap-2 shrink-0">
-            <button onclick="editAuthor(${a.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deleteAuthor(${a.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+    function renderAuthorsList(list) {
+      const el = document.getElementById('list-authors');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(a => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
+          <div><span class="font-bold text-slate-800 text-sm">${a.name}</span><p class="text-slate-500 line-clamp-1 mt-0.5">${a.bio || '無簡介'}</p></div>
+          <div class="flex gap-2">
+            <button onclick="editAuthor(${a.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deleteAuthor(${a.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1007,10 +873,10 @@
     async function saveAuthor(e) {
       e.preventDefault();
       const id = document.getElementById('author-id').value;
+      let imgUrl = document.getElementById('author-img-url').value;
 
-      let imageUrl = document.getElementById('author-img-url').value;
-      const uploadedUrl = await uploadFile('author-file');
-      if (uploadedUrl) imageUrl = uploadedUrl;
+      const newImg = await uploadFile('author-file');
+      if (newImg) imgUrl = newImg;
 
       const payload = {
         name: document.getElementById('author-name').value.trim(),
@@ -1019,7 +885,7 @@
         website_url: document.getElementById('author-web-url').value.trim(),
         instagram_url: document.getElementById('author-ig-url').value.trim(),
         facebook_url: document.getElementById('author-fb-url').value.trim(),
-        image_url: imageUrl
+        image_url: imgUrl
       };
 
       if (id) await _supabase.from('authors').update(payload).eq('id', id);
@@ -1029,23 +895,23 @@
       fetchAuthors();
     }
 
-    async function editAuthor(id) {
-      const { data: a } = await _supabase.from('authors').select('*').eq('id', id).single();
+    function editAuthor(id) {
+      const a = allAuthors.find(x => x.id === id);
       if (!a) return;
-
-      document.getElementById('form-author-title').innerText = "編輯作者資料";
+      document.getElementById('form-author-title').innerText = "編輯本地作者";
       document.getElementById('author-id').value = a.id;
-      document.getElementById('author-name').value = a.name;
+      document.getElementById('author-name').value = a.name || '';
       document.getElementById('author-phone').value = a.phone || '';
       document.getElementById('author-bio').value = a.bio || '';
       document.getElementById('author-web-url').value = a.website_url || '';
       document.getElementById('author-ig-url').value = a.instagram_url || '';
       document.getElementById('author-fb-url').value = a.facebook_url || '';
       document.getElementById('author-img-url').value = a.image_url || '';
+      if (a.image_url) document.getElementById('author-img-preview').innerHTML = `<img src="${a.image_url}" class="h-16 mt-1 border">`;
     }
 
     async function deleteAuthor(id) {
-      if (!confirm("確定刪除此作者？")) return;
+      if (!confirm("確定要刪除這位作者嗎？")) return;
       await _supabase.from('authors').delete().eq('id', id);
       fetchAuthors();
     }
@@ -1054,27 +920,27 @@
       document.getElementById('form-author').reset();
       document.getElementById('author-id').value = '';
       document.getElementById('author-img-url').value = '';
+      document.getElementById('author-img-preview').innerHTML = '';
       document.getElementById('form-author-title').innerText = "新增本地作者";
     }
 
-    // --- 3. 出版社 ---
+    // --- 3. 本地出版社 ---
+    let allPublishers = [];
     async function fetchPublishers() {
       const { data } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
-      renderPublishers(data || []);
+      allPublishers = data || [];
+      renderPublishersList(allPublishers);
     }
 
-    function renderPublishers(list) {
-      const container = document.getElementById('list-publishers');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無出版社。</p>`; return; }
-      container.innerHTML = list.map(p => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
-          <div>
-            <span class="font-bold text-slate-800 text-sm">${p.name}</span>
-            <p class="text-slate-500 line-clamp-1 mt-0.5">${p.description || '無簡介'}</p>
-          </div>
-          <div class="flex gap-2 shrink-0">
-            <button onclick="editPublisher(${p.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deletePublisher(${p.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+    function renderPublishersList(list) {
+      const el = document.getElementById('list-publishers');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(p => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
+          <div><span class="font-bold text-slate-800 text-sm">${p.name}</span><p class="text-slate-500 line-clamp-1 mt-0.5">${p.description || '無簡介'}</p></div>
+          <div class="flex gap-2">
+            <button onclick="editPublisher(${p.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deletePublisher(${p.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1083,10 +949,10 @@
     async function savePublisher(e) {
       e.preventDefault();
       const id = document.getElementById('publisher-id').value;
+      let imgUrl = document.getElementById('publisher-img-url').value;
 
-      let imageUrl = document.getElementById('publisher-img-url').value;
-      const uploadedUrl = await uploadFile('publisher-file');
-      if (uploadedUrl) imageUrl = uploadedUrl;
+      const newImg = await uploadFile('publisher-file');
+      if (newImg) imgUrl = newImg;
 
       const payload = {
         name: document.getElementById('publisher-name').value.trim(),
@@ -1095,7 +961,7 @@
         website_url: document.getElementById('publisher-web-url').value.trim(),
         instagram_url: document.getElementById('publisher-ig-url').value.trim(),
         facebook_url: document.getElementById('publisher-fb-url').value.trim(),
-        image_url: imageUrl
+        image_url: imgUrl
       };
 
       if (id) await _supabase.from('publishers').update(payload).eq('id', id);
@@ -1105,23 +971,23 @@
       fetchPublishers();
     }
 
-    async function editPublisher(id) {
-      const { data: p } = await _supabase.from('publishers').select('*').eq('id', id).single();
+    function editPublisher(id) {
+      const p = allPublishers.find(x => x.id === id);
       if (!p) return;
-
-      document.getElementById('form-publisher-title').innerText = "編輯出版社資料";
+      document.getElementById('form-publisher-title').innerText = "編輯本地出版社";
       document.getElementById('publisher-id').value = p.id;
-      document.getElementById('publisher-name').value = p.name;
+      document.getElementById('publisher-name').value = p.name || '';
       document.getElementById('publisher-phone').value = p.phone || '';
       document.getElementById('publisher-desc').value = p.description || '';
       document.getElementById('publisher-web-url').value = p.website_url || '';
       document.getElementById('publisher-ig-url').value = p.instagram_url || '';
       document.getElementById('publisher-fb-url').value = p.facebook_url || '';
       document.getElementById('publisher-img-url').value = p.image_url || '';
+      if (p.image_url) document.getElementById('publisher-img-preview').innerHTML = `<img src="${p.image_url}" class="h-16 mt-1 border">`;
     }
 
     async function deletePublisher(id) {
-      if (!confirm("確定刪除此出版社？")) return;
+      if (!confirm("確定要刪除這家出版社嗎？")) return;
       await _supabase.from('publishers').delete().eq('id', id);
       fetchPublishers();
     }
@@ -1130,28 +996,31 @@
       document.getElementById('form-publisher').reset();
       document.getElementById('publisher-id').value = '';
       document.getElementById('publisher-img-url').value = '';
+      document.getElementById('publisher-img-preview').innerHTML = '';
       document.getElementById('form-publisher-title').innerText = "新增本地出版社";
     }
 
     // --- 4. 網店商品 ---
+    let allProducts = [];
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
-      renderProducts(data || []);
+      allProducts = data || [];
+      renderProductsList(allProducts);
     }
 
-    function renderProducts(list) {
-      const container = document.getElementById('list-products');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">尚無商品。</p>`; return; }
-      container.innerHTML = list.map(p => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
+    function renderProductsList(list) {
+      const el = document.getElementById('list-products');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(p => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800 text-sm">${p.name}</span>
-            <span class="text-amber-900 font-bold ml-2">HK$ ${p.price}</span>
-            <p class="text-slate-500 mt-0.5">作者：${p.author || '未提供'} | 類別：${p.category || '未設定'}</p>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${p.category || '未分類'}</span>
+            <p class="text-slate-500 mt-1">HK$ ${p.price} · 作者: ${p.author || '無'}</p>
           </div>
-          <div class="flex gap-2 shrink-0">
-            <button onclick="editProduct(${p.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deleteProduct(${p.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+          <div class="flex gap-2">
+            <button onclick="editProduct(${p.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deleteProduct(${p.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1160,20 +1029,17 @@
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prod-id').value;
+      let imgUrl = document.getElementById('prod-img-url').value;
 
-      let imageUrl = document.getElementById('prod-img-url').value;
-      const uploadedUrl = await uploadFile('prod-file');
-      if (uploadedUrl) imageUrl = uploadedUrl;
+      const newImg = await uploadFile('prod-file');
+      if (newImg) imgUrl = newImg;
 
-      // 四個指定分店的數量
       const branchStocks = {
         '網店': Number(document.getElementById('stock-online').value) || 0,
         '觀塘店': Number(document.getElementById('stock-kwun-tong').value) || 0,
         '西營盤店': Number(document.getElementById('stock-sai-ying-pun').value) || 0,
         '荃灣店': Number(document.getElementById('stock-tsuen-wan').value) || 0
       };
-
-      const totalQty = Object.values(branchStocks).reduce((a, b) => a + b, 0);
 
       const payload = {
         name: document.getElementById('prod-name').value.trim(),
@@ -1184,8 +1050,7 @@
         category: document.getElementById('prod-category').value,
         description: document.getElementById('prod-desc').value.trim(),
         branch_stocks: branchStocks,
-        quantity: totalQty,
-        image_url: imageUrl
+        image_url: imgUrl
       };
 
       if (id) await _supabase.from('shop_products').update(payload).eq('id', id);
@@ -1195,33 +1060,32 @@
       fetchProducts();
     }
 
-    async function editProduct(id) {
-      const { data: p } = await _supabase.from('shop_products').select('*').eq('id', id).single();
+    function editProduct(id) {
+      const p = allProducts.find(x => x.id === id);
       if (!p) return;
-
-      document.getElementById('form-product-title').innerText = "編輯書籍 / 商品";
+      document.getElementById('form-product-title').innerText = "編輯網店書籍 / 商品";
       document.getElementById('prod-id').value = p.id;
-      document.getElementById('prod-name').value = p.name;
+      document.getElementById('prod-name').value = p.name || '';
       document.getElementById('prod-author').value = p.author || '';
       document.getElementById('prod-isbn').value = p.isbn || '';
-      document.getElementById('prod-price').value = p.price;
+      document.getElementById('prod-price').value = p.price || 0;
       document.getElementById('prod-stock-type').value = p.stock_type || '買斷';
       document.getElementById('prod-category').value = p.category || '小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）';
       document.getElementById('prod-desc').value = p.description || '';
-      document.getElementById('prod-img-url').value = p.image_url || '';
 
       let stocks = p.branch_stocks || {};
       if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-
-      // 載入四個指定分店庫存數值
       document.getElementById('stock-online').value = stocks['網店'] || 0;
       document.getElementById('stock-kwun-tong').value = stocks['觀塘店'] || 0;
       document.getElementById('stock-sai-ying-pun').value = stocks['西營盤店'] || 0;
       document.getElementById('stock-tsuen-wan').value = stocks['荃灣店'] || 0;
+
+      document.getElementById('prod-img-url').value = p.image_url || '';
+      if (p.image_url) document.getElementById('prod-img-preview').innerHTML = `<img src="${p.image_url}" class="h-16 mt-1 border">`;
     }
 
     async function deleteProduct(id) {
-      if (!confirm("確定刪除此商品？")) return;
+      if (!confirm("確定要刪除這件商品嗎？")) return;
       await _supabase.from('shop_products').delete().eq('id', id);
       fetchProducts();
     }
@@ -1230,32 +1094,31 @@
       document.getElementById('form-product').reset();
       document.getElementById('prod-id').value = '';
       document.getElementById('prod-img-url').value = '';
+      document.getElementById('prod-img-preview').innerHTML = '';
       document.getElementById('form-product-title').innerText = "新增網店書籍 / 商品";
-      document.getElementById('stock-online').value = 0;
-      document.getElementById('stock-kwun-tong').value = 0;
-      document.getElementById('stock-sai-ying-pun').value = 0;
-      document.getElementById('stock-tsuen-wan').value = 0;
     }
 
     // --- 5. 農業/環保 ---
+    let allEco = [];
     async function fetchEco() {
       const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
-      renderEco(data || []);
+      allEco = data || [];
+      renderEcoList(allEco);
     }
 
-    function renderEco(list) {
-      const container = document.getElementById('list-eco');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無紀錄。</p>`; return; }
-      container.innerHTML = list.map(e => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
+    function renderEcoList(list) {
+      const el = document.getElementById('list-eco');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(e => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800 text-sm">${e.name}</span>
-            <span class="ml-2 bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">${e.category || '農業/環保'}</span>
-            <p class="text-slate-500 mt-0.5">${e.address || '無地址'}</p>
+            <span class="ml-2 bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-semibold">${e.category || '農業/環保'}</span>
+            <p class="text-slate-500 mt-1">${e.address || '無地址'}</p>
           </div>
-          <div class="flex gap-2 shrink-0">
-            <button onclick="editEco(${e.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deleteEco(${e.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+          <div class="flex gap-2">
+            <button onclick="editEco(${e.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deleteEco(${e.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1283,13 +1146,12 @@
       fetchEco();
     }
 
-    async function editEco(id) {
-      const { data: e } = await _supabase.from('eco_farms').select('*').eq('id', id).single();
+    function editEco(id) {
+      const e = allEco.find(x => x.id === id);
       if (!e) return;
-
       document.getElementById('form-eco-title').innerText = "編輯農業/環保機構";
       document.getElementById('eco-id').value = e.id;
-      document.getElementById('eco-name').value = e.name;
+      document.getElementById('eco-name').value = e.name || '';
       document.getElementById('eco-category').value = e.category || '平台/大自然/教育';
       document.getElementById('eco-address').value = e.address || '';
       document.getElementById('eco-phone').value = e.phone || '';
@@ -1300,7 +1162,7 @@
     }
 
     async function deleteEco(id) {
-      if (!confirm("確定刪除此紀錄？")) return;
+      if (!confirm("確定要刪除此機構嗎？")) return;
       await _supabase.from('eco_farms').delete().eq('id', id);
       fetchEco();
     }
@@ -1312,24 +1174,26 @@
     }
 
     // --- 6. 劇團 ---
+    let allTheatre = [];
     async function fetchTheatre() {
       const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
-      renderTheatre(data || []);
+      allTheatre = data || [];
+      renderTheatreList(allTheatre);
     }
 
-    function renderTheatre(list) {
-      const container = document.getElementById('list-theatre');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無劇團。</p>`; return; }
-      container.innerHTML = list.map(t => `
-        <div class="border rounded-lg p-3 flex justify-between items-center bg-slate-50 text-xs">
+    function renderTheatreList(list) {
+      const el = document.getElementById('list-theatre');
+      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">無紀錄</p>`; return; }
+      el.innerHTML = list.map(t => `
+        <div class="border rounded-lg p-3 bg-slate-50 flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800 text-sm">${t.name}</span>
-            <span class="ml-2 bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-bold">${t.region || '劇團'}</span>
-            <p class="text-slate-500 mt-0.5">${t.address || '無地址'}</p>
+            <span class="ml-2 bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-semibold">${t.region || '劇團'}</span>
+            <p class="text-slate-500 mt-1">${t.address || '無地址'}</p>
           </div>
-          <div class="flex gap-2 shrink-0">
-            <button onclick="editTheatre(${t.id})" class="bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">編輯</button>
-            <button onclick="deleteTheatre(${t.id})" class="bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">刪除</button>
+          <div class="flex gap-2">
+            <button onclick="editTheatre(${t.id})" class="bg-amber-100 text-amber-900 px-2.5 py-1 rounded font-bold hover:bg-amber-200">編輯</button>
+            <button onclick="deleteTheatre(${t.id})" class="bg-red-100 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-200">刪除</button>
           </div>
         </div>
       `).join('');
@@ -1357,13 +1221,12 @@
       fetchTheatre();
     }
 
-    async function editTheatre(id) {
-      const { data: t } = await _supabase.from('theatre_groups').select('*').eq('id', id).single();
+    function editTheatre(id) {
+      const t = allTheatre.find(x => x.id === id);
       if (!t) return;
-
-      document.getElementById('form-theatre-title').innerText = "編輯劇團資料";
+      document.getElementById('form-theatre-title').innerText = "編輯劇團";
       document.getElementById('theatre-id').value = t.id;
-      document.getElementById('theatre-name').value = t.name;
+      document.getElementById('theatre-name').value = t.name || '';
       document.getElementById('theatre-region').value = t.region || '香港島';
       document.getElementById('theatre-address').value = t.address || '';
       document.getElementById('theatre-phone').value = t.phone || '';
@@ -1374,7 +1237,7 @@
     }
 
     async function deleteTheatre(id) {
-      if (!confirm("確定刪除此劇團？")) return;
+      if (!confirm("確定要刪除此劇團嗎？")) return;
       await _supabase.from('theatre_groups').delete().eq('id', id);
       fetchTheatre();
     }
