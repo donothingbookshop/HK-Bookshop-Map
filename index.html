@@ -93,7 +93,7 @@
         <button onclick="filterCountry('德國')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇩🇪 德國</button>
         <button onclick="filterCountry('泰國')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇹🇭 泰國</button>
         <button onclick="filterCountry('荷蘭')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇳🇱 荷蘭</button>
-        <button onclick="filterCountry('馬來西亞')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇲🇾 馬來西亞</button>
+        <button onclick="filterCountry('馬來西亞')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇲🇾 馬來西亞</option>
         <button onclick="filterCountry('新加坡')" class="bg-white border px-2 py-1 rounded hover:bg-amber-100">🇸🇬 新加坡</button>
       </div>
 
@@ -717,10 +717,21 @@
       let stocks = p.branch_stocks || {};
       if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
       
+      // 保留四個預設分店名：網店, 觀塘店, 西營盤店, 荃灣店
+      const allowedBranches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
+      let branchEntries = Object.entries(stocks).filter(([b]) => allowedBranches.includes(b));
+      
+      // 若資料庫內無特定分店鍵，補全為 0
+      allowedBranches.forEach(b => {
+        if (!stocks.hasOwnProperty(b)) {
+          branchEntries.push([b, 0]);
+        }
+      });
+
       const branchContainer = document.getElementById('modal-branches');
-      branchContainer.innerHTML = Object.entries(stocks).map(([b, q]) => `
+      branchContainer.innerHTML = branchEntries.map(([b, q]) => `
         <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">${b}: ${q}本</span>
-      `).join(' ') || '<span class="text-xs text-slate-400">存貨詳情未填寫</span>';
+      `).join(' ');
 
       const btn = document.getElementById('modal-add-btn');
       btn.onclick = () => { addToCart(p.id); closeBookModal(); };
