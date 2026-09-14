@@ -129,6 +129,14 @@
           </div>
         </div>
 
+        <!-- 顧客購買書籍/商品相片上傳 -->
+        <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>顧客購買書籍/商品相片</label>
+          <input type="file" id="mr-photo-file" accept="image/*" class="w-full text-xs text-slate-500 border rounded p-1 bg-white">
+          <input type="hidden" id="mr-photo-url">
+          <div id="mr-photo-preview" class="mt-2 text-xs text-slate-400"></div>
+        </div>
+
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">備註資訊</label>
           <textarea id="mr-notes" rows="2" placeholder="例：觀塘店現場購買 / 預購特刊" class="w-full border rounded px-3 py-1.5 text-sm"></textarea>
@@ -472,11 +480,115 @@
 
   </main>
 
+  <!-- 編輯訂單 Modal (彈出視窗) -->
+  <div id="modal-edit-order" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 my-8">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯顧客訂單</h3>
+        <button onclick="closeEditOrderModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="form-edit-order" onsubmit="saveEditedOrder(event)" class="space-y-4">
+        <input type="hidden" id="edit-order-id">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">顧客姓名 *</label>
+            <input type="text" id="edit-customer-name" required class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">聯絡電話</label>
+            <input type="text" id="edit-customer-phone" class="w-full border rounded px-3 py-1.5 text-sm">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">付款方式 *</label>
+            <select id="edit-payment-method" class="w-full border rounded px-3 py-1.5 text-sm bg-white">
+              <option value="現金">現金 Cash</option>
+              <option value="FPS 轉數快">FPS 轉數快</option>
+              <option value="PayMe">PayMe</option>
+              <option value="銀行轉帳">銀行轉帳</option>
+              <option value="信用卡">信用卡</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">訂單狀態 *</label>
+            <select id="edit-status" class="w-full border rounded px-3 py-1.5 text-sm bg-white">
+              <option value="待確認">待確認</option>
+              <option value="已傳送憑證">已傳送憑證</option>
+              <option value="已確認">已確認</option>
+              <option value="已完成">已完成</option>
+              <option value="已取消">已取消</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="border p-3 rounded-lg bg-amber-50/50 space-y-2 border-amber-200">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">已付訂金金額 (HKD)</label>
+              <input type="number" step="0.1" id="edit-deposit-amount" min="0" class="w-full border rounded px-3 py-1.5 text-sm" oninput="calcEditOrderTotal()">
+            </div>
+            <div class="flex items-end pb-1.5">
+              <span class="text-xs text-slate-600 font-medium">尚欠尾款：<strong id="edit-balance-display" class="text-red-700">HK$ 0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 購買項目動態列表 -->
+        <div class="border p-4 rounded-lg bg-slate-50 space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h4 class="font-bold text-xs text-slate-700"><i class="fa-solid fa-basket-shopping mr-1"></i>購買書籍 / 商品項目</h4>
+            <button type="button" onclick="addEditOrderItemRow()" class="text-xs bg-amber-800 text-white px-2.5 py-1 rounded hover:bg-amber-700">
+              <i class="fa-solid fa-plus mr-1"></i>新增項目
+            </button>
+          </div>
+
+          <div id="edit-order-items-container" class="space-y-2">
+            <!-- 項目列動態插入 -->
+          </div>
+
+          <div class="text-right pt-2 border-t">
+            <span class="text-xs text-slate-600 font-medium">總計金額：</span>
+            <span id="edit-total-display" class="text-base font-bold text-amber-950">HK$ 0</span>
+          </div>
+        </div>
+
+        <!-- 顧客購買書籍/商品相片上傳 -->
+        <div class="border p-4 rounded-lg bg-slate-50 space-y-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1"><i class="fa-solid fa-camera mr-1"></i>顧客購買書籍/商品相片</label>
+          <input type="file" id="edit-photo-file" accept="image/*" class="w-full text-xs text-slate-500 border rounded p-1 bg-white">
+          <input type="hidden" id="edit-photo-url">
+          <div id="edit-photo-preview" class="mt-2 text-xs text-slate-400"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">備註資訊</label>
+          <textarea id="edit-notes" rows="2" class="w-full border rounded px-3 py-1.5 text-sm"></textarea>
+        </div>
+
+        <div class="flex gap-2 pt-3 border-t">
+          <button type="submit" class="flex-1 bg-amber-900 hover:bg-amber-800 text-white py-2 rounded-lg text-xs font-bold shadow transition">
+            儲存變更
+          </button>
+          <button type="button" onclick="closeEditOrderModal()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-300">
+            取消
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allOrders = [];
 
     window.onload = function() {
       fetchOrders();
@@ -529,7 +641,8 @@
     async function fetchOrders() {
       const { data, error } = await _supabase.from('shop_orders').select('*').order('created_at', { ascending: false });
       if (error) { console.error(error); return; }
-      renderOrders(data || []);
+      allOrders = data || [];
+      renderOrders(allOrders);
     }
 
     function renderOrders(list) {
@@ -561,6 +674,7 @@
                   <option value="已完成" ${o.status==='已完成'?'selected':''}>已完成</option>
                   <option value="已取消" ${o.status==='已取消'?'selected':''}>已取消</option>
                 </select>
+                <button onclick="openEditOrderModal(${o.id})" class="text-amber-800 hover:text-amber-950 text-xs px-2.5 py-1 border rounded bg-amber-50 hover:bg-amber-100 font-bold"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯</button>
                 <button onclick="deleteOrder(${o.id})" class="text-red-600 hover:text-red-800 text-xs px-2 py-1 border rounded bg-white">刪除</button>
               </div>
             </div>
@@ -577,14 +691,25 @@
               ` : ''}
             </div>
 
+            ${o.purchased_photo_url ? `
+              <div class="pt-2 border-t">
+                <p class="text-[11px] text-amber-900 font-bold mb-1"><i class="fa-solid fa-camera mr-1"></i>顧客購買書籍/商品相片：</p>
+                <a href="${o.purchased_photo_url}" target="_blank" class="inline-block">
+                  <img src="${o.purchased_photo_url}" class="h-20 rounded border hover:opacity-90 transition object-cover">
+                </a>
+              </div>
+            ` : ''}
+
             ${o.payment_proof_url ? `
               <div class="pt-2 border-t">
                 <p class="text-[11px] text-blue-800 font-bold mb-1"><i class="fa-solid fa-image mr-1"></i>付款憑證照片：</p>
                 <a href="${o.payment_proof_url}" target="_blank" class="inline-block">
-                  <img src="${o.payment_proof_url}" class="h-20 rounded border hover:opacity-90 transition">
+                  <img src="${o.payment_proof_url}" class="h-20 rounded border hover:opacity-90 transition object-cover">
                 </a>
               </div>
             ` : ''}
+
+            ${o.notes ? `<p class="text-xs text-slate-500 bg-white p-2 rounded border italic">備註: ${o.notes}</p>` : ''}
           </div>
         `;
       }).join('');
@@ -598,6 +723,147 @@
       if (!confirm("確定要刪除此訂單嗎？")) return;
       await _supabase.from('shop_orders').delete().eq('id', id);
       fetchOrders();
+    }
+
+    // --- 訂單編輯 Modal 控制 ---
+    let editItemCounter = 0;
+
+    function openEditOrderModal(id) {
+      const o = allOrders.find(x => x.id === id);
+      if (!o) return;
+
+      document.getElementById('edit-order-id').value = o.id;
+      document.getElementById('edit-customer-name').value = o.customer_name || '';
+      document.getElementById('edit-customer-phone').value = o.customer_phone || '';
+      document.getElementById('edit-payment-method').value = o.payment_method || '現金';
+      document.getElementById('edit-status').value = o.status || '待確認';
+      document.getElementById('edit-deposit-amount').value = o.deposit_amount || 0;
+      document.getElementById('edit-notes').value = o.notes || '';
+      document.getElementById('edit-photo-url').value = o.purchased_photo_url || '';
+
+      const photoPreview = document.getElementById('edit-photo-preview');
+      if (o.purchased_photo_url) {
+        photoPreview.innerHTML = `<img src="${o.purchased_photo_url}" class="h-20 rounded border mt-1">`;
+      } else {
+        photoPreview.innerHTML = '';
+      }
+
+      const container = document.getElementById('edit-order-items-container');
+      container.innerHTML = '';
+      editItemCounter = 0;
+
+      let items = o.items || [];
+      if (typeof items === 'string') { try { items = JSON.parse(items); } catch(e) { items = []; } }
+
+      if (items.length > 0) {
+        items.forEach(i => addEditOrderItemRow(i.name, i.price, i.qty));
+      } else {
+        addEditOrderItemRow();
+      }
+
+      calcEditOrderTotal();
+      document.getElementById('modal-edit-order').classList.remove('hidden');
+    }
+
+    function closeEditOrderModal() {
+      document.getElementById('modal-edit-order').classList.add('hidden');
+      document.getElementById('form-edit-order').reset();
+    }
+
+    function addEditOrderItemRow(name = '', price = '', qty = 1) {
+      editItemCounter++;
+      const container = document.getElementById('edit-order-items-container');
+      const row = document.createElement('div');
+      row.id = `edit-row-${editItemCounter}`;
+      row.className = 'flex flex-wrap md:flex-nowrap items-center gap-2 border-b pb-2 md:border-b-0 md:pb-0';
+      row.innerHTML = `
+        <input type="text" placeholder="商品/書籍名稱 *" value="${name}" required class="edit-item-name flex-1 border rounded px-2 py-1 text-xs">
+        <input type="number" placeholder="單價" value="${price}" required step="0.1" min="0" oninput="calcEditOrderTotal()" class="edit-item-price w-20 border rounded px-2 py-1 text-xs">
+        <input type="number" placeholder="數量" value="${qty}" required min="1" oninput="calcEditOrderTotal()" class="edit-item-qty w-16 border rounded px-2 py-1 text-xs">
+        <button type="button" onclick="removeEditOrderItemRow(${editItemCounter})" class="text-red-500 hover:text-red-700 text-xs px-2 py-1"><i class="fa-solid fa-trash"></i></button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeEditOrderItemRow(id) {
+      const row = document.getElementById(`edit-row-${id}`);
+      if (row) row.remove();
+      calcEditOrderTotal();
+    }
+
+    function calcEditOrderTotal() {
+      let total = 0;
+      const names = document.querySelectorAll('.edit-item-name');
+      const prices = document.querySelectorAll('.edit-item-price');
+      const qtys = document.querySelectorAll('.edit-item-qty');
+
+      prices.forEach((p, idx) => {
+        const price = Number(p.value) || 0;
+        const qty = Number(qtys[idx].value) || 0;
+        total += price * qty;
+      });
+
+      document.getElementById('edit-total-display').innerText = `HK$ ${total}`;
+
+      const deposit = Number(document.getElementById('edit-deposit-amount').value) || 0;
+      const balance = Math.max(0, total - deposit);
+      document.getElementById('edit-balance-display').innerText = `HK$ ${balance}`;
+    }
+
+    async function saveEditedOrder(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-order-id').value;
+      const customerName = document.getElementById('edit-customer-name').value.trim();
+      const customerPhone = document.getElementById('edit-customer-phone').value.trim();
+      const paymentMethod = document.getElementById('edit-payment-method').value;
+      const status = document.getElementById('edit-status').value;
+      const depositAmount = Number(document.getElementById('edit-deposit-amount').value) || 0;
+      const notes = document.getElementById('edit-notes').value.trim();
+
+      let photoUrl = document.getElementById('edit-photo-url').value;
+      const newPhoto = await uploadFile('edit-photo-file');
+      if (newPhoto) photoUrl = newPhoto;
+
+      const names = document.querySelectorAll('.edit-item-name');
+      const prices = document.querySelectorAll('.edit-item-price');
+      const qtys = document.querySelectorAll('.edit-item-qty');
+
+      const items = [];
+      let total = 0;
+
+      names.forEach((n, idx) => {
+        const name = n.value.trim();
+        const price = Number(prices[idx].value) || 0;
+        const qty = Number(qtys[idx].value) || 1;
+        if (name) {
+          items.push({ name, price, qty });
+          total += price * qty;
+        }
+      });
+
+      if (items.length === 0) return alert("請至少填寫一項商品！");
+
+      const payload = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        status: status,
+        items: items,
+        total_amount: total,
+        deposit_amount: depositAmount,
+        notes: notes,
+        purchased_photo_url: photoUrl
+      };
+
+      const { error } = await _supabase.from('shop_orders').update(payload).eq('id', id);
+
+      if (error) {
+        alert("儲存變更失敗：" + error.message);
+      } else {
+        alert("訂單已順利更新！");
+        closeEditOrderModal();
+        fetchOrders();
+      }
     }
 
     // --- 0.5 手動新增收據 ---
@@ -660,6 +926,10 @@
       const depositAmount = enableDeposit ? (Number(document.getElementById('mr-deposit-amount').value) || 0) : 0;
       const notes = document.getElementById('mr-notes').value.trim();
 
+      let photoUrl = document.getElementById('mr-photo-url').value;
+      const newPhoto = await uploadFile('mr-photo-file');
+      if (newPhoto) photoUrl = newPhoto;
+
       const names = document.querySelectorAll('.mr-item-name');
       const prices = document.querySelectorAll('.mr-item-price');
       const qtys = document.querySelectorAll('.mr-item-qty');
@@ -687,7 +957,8 @@
         items: items,
         total_amount: total,
         deposit_amount: depositAmount,
-        notes: notes
+        notes: notes,
+        purchased_photo_url: photoUrl
       }]);
 
       if (error) {
@@ -702,6 +973,8 @@
     function resetManualReceiptForm() {
       document.getElementById('form-manual-receipt').reset();
       document.getElementById('receipt-items-container').innerHTML = '';
+      document.getElementById('mr-photo-url').value = '';
+      document.getElementById('mr-photo-preview').innerHTML = '';
       receiptRowCounter = 0;
       addReceiptItemRow();
       toggleDepositInput();
