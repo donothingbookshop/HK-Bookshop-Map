@@ -64,7 +64,6 @@
           <p class="text-slate-600 text-sm">點擊地區標籤或輸入關鍵字搜尋實體獨立書店、海外香港書店與圖書館。</p>
         </div>
         
-        <!-- 新增：書店搜尋輸入框 -->
         <div class="relative w-full md:w-64">
           <input type="text" id="bookshop-search" oninput="handleBookshopSearch(this.value)" placeholder="搜尋書店名稱/地址/簡介..." class="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
@@ -442,7 +441,7 @@
     let currentSearchQuery = '', currentCategoryFilter = 'ALL';
     let currentBookshopRegion = 'ALL', currentBookshopCountry = 'ALL_OVERSEAS', currentBookshopSearch = '';
     let paymentSettings = null;
-    let currentOrderId = null; // 紀錄剛提交的訂單ID，便於上傳截圖
+    let currentOrderId = null;
 
     function cleanCategory(str) {
       if (!str) return '其他';
@@ -533,17 +532,14 @@
     function applyBookshopFilters() {
       let filtered = allBookshops;
 
-      // 按地區篩選
       if (currentBookshopRegion !== 'ALL') {
         filtered = filtered.filter(b => b.region === currentBookshopRegion);
       }
 
-      // 按海外國家篩選
       if (currentBookshopRegion === '外國香港書店/圖書館' && currentBookshopCountry !== 'ALL_OVERSEAS') {
         filtered = filtered.filter(b => b.country === currentBookshopCountry);
       }
 
-      // 按關鍵字搜尋 (名稱、地址、簡介)
       if (currentBookshopSearch) {
         filtered = filtered.filter(b => 
           (b.name && b.name.toLowerCase().includes(currentBookshopSearch)) ||
@@ -719,11 +715,9 @@
       let stocks = p.branch_stocks || {};
       if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
       
-      // 保留四個預設分店名：網店, 觀塘店, 西營盤店, 荃灣店
       const allowedBranches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
       let branchEntries = Object.entries(stocks).filter(([b]) => allowedBranches.includes(b));
       
-      // 若資料庫內無特定分店鍵，補全為 0
       allowedBranches.forEach(b => {
         if (!stocks.hasOwnProperty(b)) {
           branchEntries.push([b, 0]);
@@ -794,7 +788,6 @@
       updateCartUI();
     }
 
-    // 安全提交訂單 (已增強權限異常與數據校驗)
     async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
@@ -805,7 +798,6 @@
 
       const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
 
-      // 清理購物車資料結構以防止 JSON 寫入錯誤
       const cleanItems = cart.map(item => ({
         id: item.id,
         name: item.name,
@@ -825,7 +817,7 @@
 
         if (error) {
           console.error("Supabase 訂單寫入失敗原因：", error);
-          alert("提交訂單時發生錯誤：" + error.message + "\n\n請確保已在 Supabase 執行建置與權限 SQL 腳本！");
+          alert("提交訂單時發生錯誤：" + error.message);
           return;
         }
 
@@ -882,7 +874,6 @@
       document.getElementById('payment-modal').classList.remove('hidden');
     }
 
-    // 客人上傳付款證明相片
     async function uploadPaymentProof() {
       const fileInput = document.getElementById('customer-proof-file');
       const statusEl = document.getElementById('proof-upload-status');
@@ -916,7 +907,7 @@
         statusEl.classList.remove('hidden');
       } catch (err) {
         alert("相片上傳失敗：" + err.message);
-      } finally {
+      } font-medium {
         btn.disabled = false;
         btn.innerText = "上傳付款相片";
       }
