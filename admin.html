@@ -1110,46 +1110,62 @@
       };
 
       const { error } = await _supabase.from('payment_settings').upsert(payload);
-      if (error) alert("儲存收款設定失敗：" + error.message);
-      else alert("✓ 收款設定已成功更新！");
+      if (error) {
+        alert("儲存收款設定失敗：" + error.message);
+      } else {
+        alert("✓ 收款設定儲存成功！");
+      }
     }
 
-    // --- 實體書店管理 ---
+    // --- 實體書店 ---
+    function toggleCountryInput(val) {
+      const container = document.getElementById('country-input-container');
+      if (val === '外國香港書店/圖書館') container.classList.remove('hidden');
+      else container.classList.add('hidden');
+    }
+
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
-      renderBookshopsList(data || []);
+      const { data, error } = await _supabase.from('bookshops').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入書店失敗", error);
+        document.getElementById('list-bookshops').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderBookshops(data || []);
     }
 
-    function renderBookshopsList(list) {
+    function renderBookshops(list) {
       const container = document.getElementById('list-bookshops');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無實體書店資料</p>`; return; }
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無書店紀錄。</p>`; return; }
+
       container.innerHTML = list.map(s => `
-        <div class="p-3 border rounded-lg flex justify-between items-center text-xs">
-          <div>
-            <span class="font-bold text-slate-800 text-sm">${s.name}</span>
-            <span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold ml-2">${s.region === '外國香港書店/圖書館' ? (s.country || '海外') : s.region}</span>
-            <p class="text-slate-500 mt-1">${s.address || '無地址'}</p>
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-amber-950">${s.name}</span>
+              <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-medium text-[11px]">${s.region}${s.country ? ` (${s.country})` : ''}</span>
+            </div>
+            ${s.address ? `<p class="text-slate-600"><i class="fa-solid fa-location-dot mr-1"></i>${s.address}</p>` : ''}
+            ${s.phone ? `<p class="text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${s.phone}</p>` : ''}
+            ${s.hours ? `<p class="text-slate-600"><i class="fa-clock far mr-1"></i>${s.hours}</p>` : ''}
+            ${s.description ? `<p class="text-slate-500 italic mt-1">${s.description}</p>` : ''}
           </div>
-          <div class="flex gap-2">
-            <button onclick="editBookshop(${s.id})" class="text-amber-800 hover:underline">編輯</button>
-            <button onclick="deleteBookshop(${s.id})" class="text-red-600 hover:underline">刪除</button>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editBookshop(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="bg-amber-800 hover:bg-amber-700 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deleteBookshop(${s.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
           </div>
         </div>
       `).join('');
     }
 
-    function toggleCountryInput(val) {
-      document.getElementById('country-input-container').classList.toggle('hidden', val !== '外國香港書店/圖書館');
-    }
-
     async function saveBookshop(e) {
       e.preventDefault();
       const id = document.getElementById('shop-id').value;
+      let imageUrl = document.getElementById('shop-image-url').value;
 
-      let imgUrl = document.getElementById('shop-image-url').value;
       if (document.getElementById('shop-image-file').files.length > 0) {
         const u = await uploadFile('shop-image-file', 'shop-image-url', 'shop-image-preview');
-        if (u) imgUrl = u;
+        if (u) imageUrl = u;
       }
 
       const payload = {
@@ -1158,26 +1174,543 @@
         country: document.getElementById('shop-region').value === '外國香港書店/圖書館' ? document.getElementById('shop-country').value : null,
         address: document.getElementById('shop-address').value.trim(),
         phone: document.getElementById('shop-phone').value.trim(),
-        opening_hours: document.getElementById('shop-hours').value.trim(),
-        image_url: imgUrl,
+        hours: document.getElementById('shop-hours').value.trim(),
+        image_url: imageUrl,
         description: document.getElementById('shop-desc').value.trim(),
         website_url: document.getElementById('shop-web').value.trim(),
         instagram_url: document.getElementById('shop-ig').value.trim(),
         facebook_url: document.getElementById('shop-fb').value.trim(),
-        google_map_url: document.getElementById('shop-map').value.trim()
+        map_url: document.getElementById('shop-map').value.trim()
       };
 
-      let error;
+      let err = null;
       if (id) {
-        const res = await _supabase.from('bookshops').update(payload).eq('id', id);
-        error = res.error;
+        const { error } = await _supabase.from('bookshops').update(payload).eq('id', id);
+        err = error;
       } else {
-        const res = await _supabase.from('bookshops').insert([payload]);
-        error = res.error;
+        const { error } = await _supabase.from('bookshops').insert([payload]);
+        err = error;
       }
 
-      if (error) alert("儲存失敗：" + error.message);
-      else { alert("✓ 書店已儲存！"); resetBookshopForm(); fetchBookshops(); }
+      if (err) alert("儲存書店失敗：" + err.message);
+      else { alert("✓ 書店資料儲存成功！"); resetBookshopForm(); fetchBookshops(); }
+    }
+
+    function editBookshop(s) {
+      document.getElementById('form-bookshop-title').innerText = "編輯實體書店";
+      document.getElementById('shop-id').value = s.id;
+      document.getElementById('shop-name').value = s.name || '';
+      document.getElementById('shop-region').value = s.region || '香港島';
+      toggleCountryInput(s.region);
+      if (s.country) document.getElementById('shop-country').value = s.country;
+      document.getElementById('shop-address').value = s.address || '';
+      document.getElementById('shop-phone').value = s.phone || '';
+      document.getElementById('shop-hours').value = s.hours || '';
+      document.getElementById('shop-image-url').value = s.image_url || '';
+      document.getElementById('shop-desc').value = s.description || '';
+      document.getElementById('shop-web').value = s.website_url || '';
+      document.getElementById('shop-ig').value = s.instagram_url || '';
+      document.getElementById('shop-fb').value = s.facebook_url || '';
+      document.getElementById('shop-map').value = s.map_url || '';
+
+      if (s.image_url) document.getElementById('shop-image-preview').innerHTML = `<img src="${s.image_url}" class="h-16 object-contain border rounded mt-1">`;
+      else document.getElementById('shop-image-preview').innerHTML = '';
+    }
+
+    function resetBookshopForm() {
+      document.getElementById('form-bookshop-title').innerText = "新增實體書店";
+      document.getElementById('form-bookshop').reset();
+      document.getElementById('shop-id').value = '';
+      document.getElementById('shop-image-url').value = '';
+      document.getElementById('shop-image-preview').innerHTML = '';
+      toggleCountryInput('香港島');
+    }
+
+    async function deleteBookshop(id) {
+      if (!confirm("確定要刪除此書店記錄嗎？")) return;
+      const { error } = await _supabase.from('bookshops').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchBookshops();
+    }
+
+    // --- 本地作者 ---
+    async function fetchAuthors() {
+      const { data, error } = await _supabase.from('authors').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入作者失敗", error);
+        document.getElementById('list-authors').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderAuthors(data || []);
+    }
+
+    function renderAuthors(list) {
+      const container = document.getElementById('list-authors');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無本地作者紀錄。</p>`; return; }
+
+      container.innerHTML = list.map(a => `
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <span class="font-bold text-sm text-amber-950">${a.name}</span>
+            ${a.phone ? `<p class="text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${a.phone}</p>` : ''}
+            ${a.bio ? `<p class="text-slate-500 italic mt-1">${a.bio}</p>` : ''}
+          </div>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editAuthor(${JSON.stringify(a).replace(/'/g, "&apos;")})' class="bg-amber-800 hover:bg-amber-700 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deleteAuthor(${a.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveAuthor(e) {
+      e.preventDefault();
+      const id = document.getElementById('author-id').value;
+      let imageUrl = document.getElementById('author-image-url').value;
+
+      if (document.getElementById('author-image-file').files.length > 0) {
+        const u = await uploadFile('author-image-file', 'author-image-url', 'author-image-preview');
+        if (u) imageUrl = u;
+      }
+
+      const payload = {
+        name: document.getElementById('author-name').value.trim(),
+        phone: document.getElementById('author-phone').value.trim(),
+        image_url: imageUrl,
+        bio: document.getElementById('author-bio').value.trim(),
+        website_url: document.getElementById('author-web').value.trim(),
+        instagram_url: document.getElementById('author-ig').value.trim(),
+        facebook_url: document.getElementById('author-fb').value.trim()
+      };
+
+      let err = null;
+      if (id) {
+        const { error } = await _supabase.from('authors').update(payload).eq('id', id);
+        err = error;
+      } else {
+        const { error } = await _supabase.from('authors').insert([payload]);
+        err = error;
+      }
+
+      if (err) alert("儲存作者失敗：" + err.message);
+      else { alert("✓ 作者資料儲存成功！"); resetAuthorForm(); fetchAuthors(); }
+    }
+
+    function editAuthor(a) {
+      document.getElementById('form-author-title').innerText = "編輯本地作者";
+      document.getElementById('author-id').value = a.id;
+      document.getElementById('author-name').value = a.name || '';
+      document.getElementById('author-phone').value = a.phone || '';
+      document.getElementById('author-image-url').value = a.image_url || '';
+      document.getElementById('author-bio').value = a.bio || '';
+      document.getElementById('author-web').value = a.website_url || '';
+      document.getElementById('author-ig').value = a.instagram_url || '';
+      document.getElementById('author-fb').value = a.facebook_url || '';
+
+      if (a.image_url) document.getElementById('author-image-preview').innerHTML = `<img src="${a.image_url}" class="h-16 object-contain border rounded mt-1">`;
+      else document.getElementById('author-image-preview').innerHTML = '';
+    }
+
+    function resetAuthorForm() {
+      document.getElementById('form-author-title').innerText = "新增本地作者";
+      document.getElementById('form-author').reset();
+      document.getElementById('author-id').value = '';
+      document.getElementById('author-image-url').value = '';
+      document.getElementById('author-image-preview').innerHTML = '';
+    }
+
+    async function deleteAuthor(id) {
+      if (!confirm("確定要刪除此作者記錄嗎？")) return;
+      const { error } = await _supabase.from('authors').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchAuthors();
+    }
+
+    // --- 本地出版社 ---
+    async function fetchPublishers() {
+      const { data, error } = await _supabase.from('publishers').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入出版社失敗", error);
+        document.getElementById('list-publishers').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderPublishers(data || []);
+    }
+
+    function renderPublishers(list) {
+      const container = document.getElementById('list-publishers');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無本地出版社紀錄。</p>`; return; }
+
+      container.innerHTML = list.map(p => `
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <span class="font-bold text-sm text-amber-950">${p.name}</span>
+            ${p.phone ? `<p class="text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${p.phone}</p>` : ''}
+            ${p.description ? `<p class="text-slate-500 italic mt-1">${p.description}</p>` : ''}
+          </div>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editPublisher(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="bg-amber-800 hover:bg-amber-700 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deletePublisher(${p.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function savePublisher(e) {
+      e.preventDefault();
+      const id = document.getElementById('pub-id').value;
+      let imageUrl = document.getElementById('pub-image-url').value;
+
+      if (document.getElementById('pub-image-file').files.length > 0) {
+        const u = await uploadFile('pub-image-file', 'pub-image-url', 'pub-image-preview');
+        if (u) imageUrl = u;
+      }
+
+      const payload = {
+        name: document.getElementById('pub-name').value.trim(),
+        phone: document.getElementById('pub-phone').value.trim(),
+        image_url: imageUrl,
+        description: document.getElementById('pub-desc').value.trim(),
+        website_url: document.getElementById('pub-web').value.trim(),
+        instagram_url: document.getElementById('pub-ig').value.trim(),
+        facebook_url: document.getElementById('pub-fb').value.trim()
+      };
+
+      let err = null;
+      if (id) {
+        const { error } = await _supabase.from('publishers').update(payload).eq('id', id);
+        err = error;
+      } else {
+        const { error } = await _supabase.from('publishers').insert([payload]);
+        err = error;
+      }
+
+      if (err) alert("儲存出版社失敗：" + err.message);
+      else { alert("✓ 出版社資料儲存成功！"); resetPublisherForm(); fetchPublishers(); }
+    }
+
+    function editPublisher(p) {
+      document.getElementById('form-publisher-title').innerText = "編輯本地出版社";
+      document.getElementById('pub-id').value = p.id;
+      document.getElementById('pub-name').value = p.name || '';
+      document.getElementById('pub-phone').value = p.phone || '';
+      document.getElementById('pub-image-url').value = p.image_url || '';
+      document.getElementById('pub-desc').value = p.description || '';
+      document.getElementById('pub-web').value = p.website_url || '';
+      document.getElementById('pub-ig').value = p.instagram_url || '';
+      document.getElementById('pub-fb').value = p.facebook_url || '';
+
+      if (p.image_url) document.getElementById('pub-image-preview').innerHTML = `<img src="${p.image_url}" class="h-16 object-contain border rounded mt-1">`;
+      else document.getElementById('pub-image-preview').innerHTML = '';
+    }
+
+    function resetPublisherForm() {
+      document.getElementById('form-publisher-title').innerText = "新增本地出版社";
+      document.getElementById('form-publisher').reset();
+      document.getElementById('pub-id').value = '';
+      document.getElementById('pub-image-url').value = '';
+      document.getElementById('pub-image-preview').innerHTML = '';
+    }
+
+    async function deletePublisher(id) {
+      if (!confirm("確定要刪除此出版社記錄嗎？")) return;
+      const { error } = await _supabase.from('publishers').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchPublishers();
+    }
+
+    // --- 網店商品 ---
+    async function fetchProducts() {
+      const { data, error } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入商品失敗", error);
+        document.getElementById('list-products').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderProducts(data || []);
+    }
+
+    function renderProducts(list) {
+      const container = document.getElementById('list-products');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無網店商品紀錄。</p>`; return; }
+
+      container.innerHTML = list.map(p => `
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-amber-950">${p.name}</span>
+              <span class="px-2 py-0.5 bg-slate-200 rounded text-[11px] font-medium">${p.category || '未分類'}</span>
+              <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[11px]">HK$ ${p.price}</span>
+            </div>
+            <p class="text-slate-600">作者：${p.author || '未知'} ${p.publisher ? `| 出版社：${p.publisher}` : ''} | 進貨類型：${p.stock_type || '買斷'}</p>
+            <div class="text-[11px] text-slate-500 flex flex-wrap gap-2 pt-1">
+              <span>網店: <strong>${p.stock_online || 0}</strong></span>
+              <span>觀塘: <strong>${p.stock_kwun_tong || 0}</strong></span>
+              <span>西營盤: <strong>${p.stock_sai_ying_pun || 0}</strong></span>
+              <span>荃灣: <strong>${p.stock_tsuen_wan || 0}</strong></span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="bg-amber-800 hover:bg-amber-700 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deleteProduct(${p.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('prod-id').value;
+      let imageUrl = document.getElementById('prod-image-url').value;
+
+      if (document.getElementById('prod-image-file').files.length > 0) {
+        const u = await uploadFile('prod-image-file', 'prod-image-url', 'prod-image-preview');
+        if (u) imageUrl = u;
+      }
+
+      const payload = {
+        name: document.getElementById('prod-name').value.trim(),
+        author: document.getElementById('prod-author').value.trim(),
+        translator: document.getElementById('prod-translator').value.trim(),
+        publisher: document.getElementById('prod-publisher').value.trim(),
+        weight: Number(document.getElementById('prod-weight').value || 0),
+        price: Number(document.getElementById('prod-price').value || 0),
+        isbn: document.getElementById('prod-isbn').value.trim(),
+        category: document.getElementById('prod-category').value,
+        stock_type: document.getElementById('prod-stock-type').value,
+        stock_online: Number(document.getElementById('stock-online').value || 0),
+        stock_kwun_tong: Number(document.getElementById('stock-kwun-tong').value || 0),
+        stock_sai_ying_pun: Number(document.getElementById('stock-sai-ying-pun').value || 0),
+        stock_tsuen_wan: Number(document.getElementById('stock-tsuen-wan').value || 0),
+        image_url: imageUrl,
+        description: document.getElementById('prod-desc').value.trim()
+      };
+
+      let err = null;
+      if (id) {
+        const { error } = await _supabase.from('products').update(payload).eq('id', id);
+        err = error;
+      } else {
+        const { error } = await _supabase.from('products').insert([payload]);
+        err = error;
+      }
+
+      if (err) alert("儲存商品失敗：" + err.message);
+      else { alert("✓ 商品資料儲存成功！"); resetProductForm(); fetchProducts(); }
+    }
+
+    function editProduct(p) {
+      document.getElementById('form-product-title').innerText = "編輯網店書籍 / 商品";
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-name').value = p.name || '';
+      document.getElementById('prod-author').value = p.author || '';
+      document.getElementById('prod-translator').value = p.translator || '';
+      document.getElementById('prod-publisher').value = p.publisher || '';
+      document.getElementById('prod-weight').value = p.weight || '';
+      document.getElementById('prod-price').value = p.price || 0;
+      document.getElementById('prod-isbn').value = p.isbn || '';
+      document.getElementById('prod-category').value = p.category || '其他';
+      document.getElementById('prod-stock-type').value = p.stock_type || '買斷';
+      document.getElementById('stock-online').value = p.stock_online || 0;
+      document.getElementById('stock-kwun-tong').value = p.stock_kwun_tong || 0;
+      document.getElementById('stock-sai-ying-pun').value = p.stock_sai_ying_pun || 0;
+      document.getElementById('stock-tsuen-wan').value = p.stock_tsuen_wan || 0;
+      document.getElementById('prod-image-url').value = p.image_url || '';
+      document.getElementById('prod-desc').value = p.description || '';
+
+      if (p.image_url) document.getElementById('prod-image-preview').innerHTML = `<img src="${p.image_url}" class="h-16 object-contain border rounded mt-1">`;
+      else document.getElementById('prod-image-preview').innerHTML = '';
+    }
+
+    function resetProductForm() {
+      document.getElementById('form-product-title').innerText = "新增網店書籍 / 商品";
+      document.getElementById('form-product').reset();
+      document.getElementById('prod-id').value = '';
+      document.getElementById('prod-image-url').value = '';
+      document.getElementById('prod-image-preview').innerHTML = '';
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm("確定要刪除此商品記錄嗎？")) return;
+      const { error } = await _supabase.from('products').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchProducts();
+    }
+
+    // --- 農業/環保 ---
+    async function fetchEco() {
+      const { data, error } = await _supabase.from('eco_orgs').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入農業環保機構失敗", error);
+        document.getElementById('list-eco').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderEco(data || []);
+    }
+
+    function renderEco(list) {
+      const container = document.getElementById('list-eco');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無農業/環保機構紀錄。</p>`; return; }
+
+      container.innerHTML = list.map(e => `
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-emerald-950">${e.name}</span>
+              <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-medium text-[11px]">${e.category}</span>
+            </div>
+            ${e.address ? `<p class="text-slate-600"><i class="fa-solid fa-location-dot mr-1"></i>${e.address}</p>` : ''}
+            ${e.phone ? `<p class="text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${e.phone}</p>` : ''}
+            ${e.description ? `<p class="text-slate-500 italic mt-1">${e.description}</p>` : ''}
+          </div>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editEco(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="bg-emerald-800 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deleteEco(${e.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveEco(e) {
+      e.preventDefault();
+      const id = document.getElementById('eco-id').value;
+
+      const payload = {
+        name: document.getElementById('eco-name').value.trim(),
+        category: document.getElementById('eco-category').value,
+        address: document.getElementById('eco-address').value.trim(),
+        phone: document.getElementById('eco-phone').value.trim(),
+        description: document.getElementById('eco-desc').value.trim(),
+        website_url: document.getElementById('eco-web').value.trim(),
+        facebook_url: document.getElementById('eco-fb').value.trim(),
+        instagram_url: document.getElementById('eco-ig').value.trim()
+      };
+
+      let err = null;
+      if (id) {
+        const { error } = await _supabase.from('eco_orgs').update(payload).eq('id', id);
+        err = error;
+      } else {
+        const { error } = await _supabase.from('eco_orgs').insert([payload]);
+        err = error;
+      }
+
+      if (err) alert("儲存機構失敗：" + err.message);
+      else { alert("✓ 機構資料儲存成功！"); resetEcoForm(); fetchEco(); }
+    }
+
+    function editEco(e) {
+      document.getElementById('form-eco-title').innerText = "編輯農業/環保機構";
+      document.getElementById('eco-id').value = e.id;
+      document.getElementById('eco-name').value = e.name || '';
+      document.getElementById('eco-category').value = e.category || '平台/大自然/教育';
+      document.getElementById('eco-address').value = e.address || '';
+      document.getElementById('eco-phone').value = e.phone || '';
+      document.getElementById('eco-desc').value = e.description || '';
+      document.getElementById('eco-web').value = e.website_url || '';
+      document.getElementById('eco-fb').value = e.facebook_url || '';
+      document.getElementById('eco-ig').value = e.instagram_url || '';
+    }
+
+    function resetEcoForm() {
+      document.getElementById('form-eco-title').innerText = "新增農業/環保機構";
+      document.getElementById('form-eco').reset();
+      document.getElementById('eco-id').value = '';
+    }
+
+    async function deleteEco(id) {
+      if (!confirm("確定要刪除此機構記錄嗎？")) return;
+      const { error } = await _supabase.from('eco_orgs').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchEco();
+    }
+
+    // --- 劇團 ---
+    async function fetchTheatre() {
+      const { data, error } = await _supabase.from('theatres').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error("載入劇團失敗", error);
+        document.getElementById('list-theatre').innerHTML = `<p class="text-red-500">載入失敗：${error.message}</p>`;
+        return;
+      }
+      renderTheatre(data || []);
+    }
+
+    function renderTheatre(list) {
+      const container = document.getElementById('list-theatre');
+      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic">暫無劇團紀錄。</p>`; return; }
+
+      container.innerHTML = list.map(t => `
+        <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-start gap-3 text-xs">
+          <div class="space-y-1 flex-grow">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-purple-950">${t.name}</span>
+              <span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-medium text-[11px]">${t.region || '未分類'}</span>
+            </div>
+            ${t.address ? `<p class="text-slate-600"><i class="fa-solid fa-location-dot mr-1"></i>${t.address}</p>` : ''}
+            ${t.phone ? `<p class="text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${t.phone}</p>` : ''}
+            ${t.description ? `<p class="text-slate-500 italic mt-1">${t.description}</p>` : ''}
+          </div>
+          <div class="flex flex-col gap-1 shrink-0">
+            <button onclick='editTheatre(${JSON.stringify(t).replace(/'/g, "&apos;")})' class="bg-purple-900 hover:bg-purple-800 text-white px-2.5 py-1 rounded text-xs">編輯</button>
+            <button onclick="deleteTheatre(${t.id})" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1 rounded text-xs">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveTheatre(e) {
+      e.preventDefault();
+      const id = document.getElementById('theatre-id').value;
+
+      const payload = {
+        name: document.getElementById('theatre-name').value.trim(),
+        region: document.getElementById('theatre-region').value,
+        address: document.getElementById('theatre-address').value.trim(),
+        phone: document.getElementById('theatre-phone').value.trim(),
+        description: document.getElementById('theatre-desc').value.trim(),
+        website_url: document.getElementById('theatre-web').value.trim(),
+        facebook_url: document.getElementById('theatre-fb').value.trim(),
+        instagram_url: document.getElementById('theatre-ig').value.trim()
+      };
+
+      let err = null;
+      if (id) {
+        const { error } = await _supabase.from('theatres').update(payload).eq('id', id);
+        err = error;
+      } else {
+        const { error } = await _supabase.from('theatres').insert([payload]);
+        err = error;
+      }
+
+      if (err) alert("儲存劇團失敗：" + err.message);
+      else { alert("✓ 劇團資料儲存成功！"); resetTheatreForm(); fetchTheatre(); }
+    }
+
+    function editTheatre(t) {
+      document.getElementById('form-theatre-title').innerText = "編輯劇團";
+      document.getElementById('theatre-id').value = t.id;
+      document.getElementById('theatre-name').value = t.name || '';
+      document.getElementById('theatre-region').value = t.region || '香港島';
+      document.getElementById('theatre-address').value = t.address || '';
+      document.getElementById('theatre-phone').value = t.phone || '';
+      document.getElementById('theatre-desc').value = t.description || '';
+      document.getElementById('theatre-web').value = t.website_url || '';
+      document.getElementById('theatre-fb').value = t.facebook_url || '';
+      document.getElementById('theatre-ig').value = t.instagram_url || '';
+    }
+
+    function resetTheatreForm() {
+      document.getElementById('form-theatre-title').innerText = "新增劇團";
+      document.getElementById('form-theatre').reset();
+      document.getElementById('theatre-id').value = '';
+    }
+
+    async function deleteTheatre(id) {
+      if (!confirm("確定要刪除此劇團記錄嗎？")) return;
+      const { error } = await _supabase.from('theatres').delete().eq('id', id);
+      if (error) alert("刪除失敗：" + error.message);
+      else fetchTheatre();
     }
   </script>
 </body>
