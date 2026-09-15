@@ -146,7 +146,7 @@
         
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative flex-1 sm:flex-none">
-            <input type="text" id="shop-search" oninput="handleSearch(this.value)" placeholder="搜尋書名/作者/ISBN..." class="w-full sm:w-48 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-800">
+            <input type="text" id="shop-search" oninput="handleSearch(this.value)" placeholder="搜尋書名/作者/譯者/出版社/ISBN..." class="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-800">
             <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
           </div>
 
@@ -315,6 +315,9 @@
             
             <div class="space-y-1 mb-4 text-xs text-slate-500 border-b pb-3">
               <p id="modal-author"><i class="fa-solid fa-user-pen mr-1.5 text-amber-800"></i>作者：<span></span></p>
+              <p id="modal-translator"><i class="fa-solid fa-language mr-1.5 text-amber-800"></i>譯者：<span></span></p>
+              <p id="modal-publisher"><i class="fa-solid fa-building-columns mr-1.5 text-amber-800"></i>出版社：<span></span></p>
+              <p id="modal-weight"><i class="fa-solid fa-weight-hanging mr-1.5 text-amber-800"></i>重量：<span></span></p>
               <p id="modal-isbn"><i class="fa-solid fa-barcode mr-1.5 text-amber-800"></i>ISBN：<span></span></p>
             </div>
 
@@ -657,6 +660,7 @@
                 <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
                 <h3 class="font-bold text-base text-slate-800 mt-1 cursor-pointer hover:text-amber-800" onclick="openBookModal(${p.id})">${p.name}</h3>
                 <p class="text-xs text-slate-500 mt-0.5">作者：${p.author || '未提供'}</p>
+                ${p.publisher ? `<p class="text-xs text-slate-500 mt-0.5">出版社：${p.publisher}</p>` : ''}
               </div>
               <div class="mt-3 border-t pt-3 flex justify-between items-center">
                 <div>
@@ -693,6 +697,8 @@
         filtered = filtered.filter(p => 
           (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
           (p.author && p.author.toLowerCase().includes(currentSearchQuery)) ||
+          (p.translator && p.translator.toLowerCase().includes(currentSearchQuery)) ||
+          (p.publisher && p.publisher.toLowerCase().includes(currentSearchQuery)) ||
           (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
         );
       }
@@ -708,6 +714,9 @@
       document.getElementById('modal-stock-type').innerText = p.stock_type || '買斷';
       document.getElementById('modal-title').innerText = p.name;
       document.querySelector('#modal-author span').innerText = p.author || '未提供';
+      document.querySelector('#modal-translator span').innerText = p.translator || '未提供';
+      document.querySelector('#modal-publisher span').innerText = p.publisher || '未提供';
+      document.querySelector('#modal-weight span').innerText = p.weight ? `${p.weight} g` : '未提供';
       document.querySelector('#modal-isbn span').innerText = p.isbn || '未提供';
       document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
       document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
@@ -907,7 +916,7 @@
         statusEl.classList.remove('hidden');
       } catch (err) {
         alert("相片上傳失敗：" + err.message);
-      } font-medium {
+      } finally {
         btn.disabled = false;
         btn.innerText = "上傳付款相片";
       }
