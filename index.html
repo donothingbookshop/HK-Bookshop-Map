@@ -77,7 +77,7 @@
     <section id="tab-map" class="tab-content active">
       <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold mb-1">🗺️ 香港與海外獨立書店動態地圖索引</h2>
+          <h2 class="text-2xl font-bold mb-1">🗺️ 香港與海外書店動態地圖索引</h2>
           <p class="text-slate-600 text-sm">點擊地區標籤或輸入關鍵字搜尋實體獨立書店、海外香港書店與圖書館。</p>
         </div>
         
@@ -89,25 +89,6 @@
 
       <!-- Leaflet 地圖容器 -->
       <div id="bookstoreMap" class="mb-6 shadow-md border border-slate-200"></div>
-
-      <!-- 地圖特色簡介卡片組 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1">無所事事小書店</h3>
-          <div class="mb-2"><span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded font-bold mr-1">香港在地</span><span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded font-bold">獨立書店</span></div>
-          <p class="text-xs text-slate-600">社區文化紀錄、Zine 出版、獨立書目託售與文化交流 space。</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1">海外香港文化空間</h3>
-          <div class="mb-2"><span class="bg-blue-100 text-blue-900 text-[10px] px-2 py-0.5 rounded font-bold mr-1">英國</span><span class="bg-blue-100 text-blue-900 text-[10px] px-2 py-0.5 rounded font-bold mr-1">台灣</span><span class="bg-blue-100 text-blue-900 text-[10px] px-2 py-0.5 rounded font-bold">加拿大</span></div>
-          <p class="text-xs text-slate-600">連接離散社群與在地文化紀錄之獨立空間與圖書網絡。</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1">公共圖書館典藏地圖</h3>
-          <div class="mb-2"><span class="bg-emerald-100 text-emerald-900 text-[10px] px-2 py-0.5 rounded font-bold mr-1">圖書館館藏</span><span class="bg-emerald-100 text-emerald-900 text-[10px] px-2 py-0.5 rounded font-bold">專題書目</span></div>
-          <p class="text-xs text-slate-600">追蹤與整理在地出版物於公共機構之典藏現況。</p>
-        </div>
-      </div>
 
       <!-- 地區篩選按鈕 -->
       <div class="flex flex-wrap gap-2 mb-4">
@@ -145,7 +126,7 @@
     <section id="tab-directory" class="tab-content">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 class="text-2xl font-bold">📚 文化檔案與《書店浪遊手冊》Zine 紀錄</h2>
+          <h2 class="text-2xl font-bold">📚 文化檔案</h2>
           <p class="text-slate-600 text-sm mt-1">點擊文化人或出版社卡片即可查看完整詳細資料與相關連結。</p>
         </div>
 
@@ -153,26 +134,6 @@
           <button onclick="switchDirectorySubTab('all', this)" class="dir-sub-btn bg-white text-slate-800 shadow-sm px-3 py-1.5 rounded-md text-xs font-medium transition">全部顯示</button>
           <button onclick="switchDirectorySubTab('authors', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">✍️ 本地作者</button>
           <button onclick="switchDirectorySubTab('publishers', this)" class="dir-sub-btn text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md text-xs font-medium transition">🏛️ 本地出版社</button>
-        </div>
-      </div>
-
-      <!-- 新增：出版與研究專題區塊 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-amber-50/60 p-5 rounded-xl border border-amber-200 shadow-sm">
-          <h3 class="font-bold text-base text-amber-900 mb-2 flex items-center"><i class="fa-solid fa-book-open-reader mr-2"></i>《書店浪遊手冊》Zine 系列</h3>
-          <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside">
-            <li>手繪地圖與獨立書店踏查紀錄</li>
-            <li>社區歷史與空間變遷檔案</li>
-            <li>NFT 電子書 / 寫作 NFT (Liker Land 託售)</li>
-          </ul>
-        </div>
-        <div class="bg-blue-50/60 p-5 rounded-xl border border-blue-200 shadow-sm">
-          <h3 class="font-bold text-base text-blue-900 mb-2 flex items-center"><i class="fa-solid fa-landmark mr-2"></i>社區文獻典藏與研究</h3>
-          <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside">
-            <li>九龍華德學校等戰後校園建築紀錄</li>
-            <li>多倫多大學 Canada-Hong Kong Library 典藏合作</li>
-            <li>社區報與香港專題書刊保存計劃</li>
-          </ul>
         </div>
       </div>
 
@@ -197,26 +158,19 @@
 
     <!-- 3. 網上商店 Tab -->
     <section id="tab-shop" class="tab-content">
-      <!-- 平台連結與簡介區塊 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1"><i class="fa-solid fa-store text-amber-800 mr-1.5"></i>SHOPLINE 網店</h3>
-          <p class="text-xs text-slate-600">實體書、獨立出版物及選物銷售。</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1"><i class="fa-solid fa-headphones text-amber-800 mr-1.5"></i>3ook.com 平台</h3>
-          <p class="text-xs text-slate-600">數位閱讀、AI 語音朗讀與電子書發行。</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-800 text-sm mb-1"><i class="fa-solid fa-coins text-amber-800 mr-1.5"></i>Liker Land 託售</h3>
-          <p class="text-xs text-slate-600">Writing NFT 與去中心化電子書銷售。</p>
-        </div>
-      </div>
 
       <div class="mb-6 bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div class="flex items-center gap-2">
             <h2 class="text-2xl font-bold text-slate-800">網上選購</h2>
+            
+            <a href="https://3ook.com" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500
+                  text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          前往 3ook.com
+        </a>
+            
             <span class="bg-amber-100 text-amber-900 text-xs px-2.5 py-1 rounded-full font-bold border border-amber-300"><i class="fa-solid fa-store mr-1"></i>無所事事小書店</span>
           </div>
           <p class="text-xs text-slate-500 mt-1">支持本地獨立書店，點擊書籍圖片或「詳情」即可查閱完整書評與簡介。</p>
@@ -296,19 +250,8 @@
     <!-- 4. 農業/環保 Tab -->
     <section id="tab-eco" class="tab-content">
       <div class="mb-6">
-        <h2 class="text-2xl font-bold mb-2">🌱 農業、永續生活與「Dear Home」展覽</h2>
+        <h2 class="text-2xl font-bold mb-2">🌱 香港農業&環保綠色地圖</h2>
         <p class="text-slate-600 text-sm">關注永續城市生活風格、綠色閱讀（Green Page）與在地農業議題，點擊卡片可查看詳細資料。</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-emerald-50/60 p-5 rounded-xl border border-emerald-200 shadow-sm">
-          <h3 class="font-bold text-base text-emerald-900 mb-2 flex items-center"><i class="fa-solid fa-house-chimney-window mr-2"></i>Dear Home 永續生活展覽</h3>
-          <p class="text-xs text-slate-700 leading-relaxed">推廣綠色永續生活方式、社區生態及環境議題閱讀。</p>
-        </div>
-        <div class="bg-emerald-50/60 p-5 rounded-xl border border-emerald-200 shadow-sm">
-          <h3 class="font-bold text-base text-emerald-900 mb-2 flex items-center"><i class="fa-solid fa-seedling mr-2"></i>綠色閱讀與農業專題</h3>
-          <p class="text-xs text-slate-700 leading-relaxed">紀錄在地農業發展、生態永續與永續閱讀書單。</p>
-        </div>
       </div>
       
       <div class="flex flex-wrap gap-2 mb-6">
@@ -323,22 +266,11 @@
       </div>
     </section>
 
-    <!-- 5. 劇團/展演 Tab -->
+    <!-- 5. 劇團 Tab -->
     <section id="tab-theatre" class="tab-content">
       <div class="mb-6">
-        <h2 class="text-2xl font-bold mb-2">🎭 劇團、藝術展覽與跨界合作</h2>
-        <p class="text-slate-600 text-sm">涵蓋劇場演出、藝術展覽策劃（如 Shepard Fairey 策展項目）與跨界文化活動。</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-purple-50/60 p-5 rounded-xl border border-purple-200 shadow-sm">
-          <h3 class="font-bold text-base text-purple-900 mb-2 flex items-center"><i class="fa-solid fa-masks-theater mr-2"></i>劇場與跨界展演</h3>
-          <p class="text-xs text-slate-700 leading-relaxed">社區劇場活動、空間跨界合作與文化對話。</p>
-        </div>
-        <div class="bg-purple-50/60 p-5 rounded-xl border border-purple-200 shadow-sm">
-          <h3 class="font-bold text-base text-purple-900 mb-2 flex items-center"><i class="fa-solid fa-palette mr-2"></i>藝術展覽與策劃</h3>
-          <p class="text-xs text-slate-700 leading-relaxed">參與藝術展覽交流、視覺設計與藝術出版合作。</p>
-        </div>
+        <h2 class="text-2xl font-bold mb-2">🎭 香港本地劇團名冊</h2>
+        <p class="text-slate-600 text-sm">支持本地獨立劇團與表演藝術團體，點擊卡片可查看詳細資料。</p>
       </div>
 
       <div class="flex flex-wrap gap-2 mb-6">
