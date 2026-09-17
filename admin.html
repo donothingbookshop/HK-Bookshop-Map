@@ -769,18 +769,32 @@ function initAdminBookshopMap() {
     12
   );
 
- // --- Leaflet 地圖初始化 ---
+// --- Leaflet 地圖初始化 ---
 function initMap() {
-    map = L.map('bookstoreMap').setView([22.3193, 114.1694], 12);
+    if (map) {
+        map.remove();
+        map = null;
+    }
 
-    L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    map = L.map('bookstoreMap', {
+        center: [22.3193, 114.1694],
+        zoom: 12
+    });
+
+    const baseLayer = L.tileLayer(
+        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         {
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20
+            maxZoom: 20,
+            crossOrigin: true
         }
-    ).addTo(map);
+    );
+
+    baseLayer.addTo(map);
+
+    setTimeout(function () {
+        map.invalidateSize();
+    }, 300);
 }
 
   adminBookshopMap.on('click', function (event) {
