@@ -40,15 +40,29 @@
 
   <!-- 後台頂部導覽 -->
   <header class="bg-amber-950 text-amber-50 shadow-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-gears text-xl text-amber-400"></i>
-        <h1 class="text-base sm:text-lg font-bold">後台管理系統</h1>
-      </div>
-      <a href="index.html" class="bg-amber-800 hover:bg-amber-700 text-amber-50 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-        <i class="fa-solid fa-arrow-left"></i> 返回前台首頁 ↗
-      </a>
-    </div>
+    <div class="flex items-center gap-2">
+  <span
+    id="current-admin-name"
+    class="hidden sm:inline text-xs text-amber-100"
+  ></span>
+
+  <button
+    type="button"
+    onclick="logoutAdmin()"
+    class="bg-red-800 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"
+  >
+    <i class="fa-solid fa-right-from-bracket"></i>
+    登出
+  </button>
+
+  <a
+    href="index.html"
+    class="bg-amber-800 hover:bg-amber-700 text-amber-50 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"
+  >
+    <i class="fa-solid fa-arrow-left"></i>
+    返回網站
+  </a>
+</div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
@@ -878,20 +892,72 @@ async function searchBookshopAddress(event) {
   }
 }
     
-    window.onload = function() {
-      fetchOrders();
-      fetchPaymentSettings();
-      fetchBookshops();
-      fetchAuthors();
-      fetchPublishers();
-      fetchProducts();
-      fetchEco();
-      fetchTheatre();
+    async function protectAdminPage() {
+  const { data: { user }, error: userError } =
+    await supabase.auth.getUser();
 
-      document.getElementById('bs-region').addEventListener('change', function() {
-        document.getElementById('bs-country-box').classList.toggle('hidden', this.value !== '外國香港書店/圖書館');
-      });
-    };
+  if (userError || !user) {
+    window.location.replace('login.html');
+    return false;
+  }
+
+  const { data: admin, error: adminError } =
+    await supabase
+      .from('admin_users')
+      .select('user_id, display_name, role, active')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .maybeSingle();
+
+  if (
+    adminError ||
+    !admin ||
+    !['owner', 'admin'].includes(admin.role)
+  ) {
+    await supabase.auth.signOut();
+    window.location.replace('login.html');
+    return false;
+  }
+
+  const nameElement = document.getElementById('current-admin-name');
+
+  if (nameElement) {
+    nameElement.textContent = `目前登入：${admin.display_name}`;
+  }
+
+  return true;
+}
+
+async function logoutAdmin() {
+  await supabase.auth.signOut();
+  window.location.replace('login.html');
+}
+
+window.onload = async function () {
+  const allowed = await protectAdminPage();
+
+  if (!allowed) return;
+
+  fetchOrders();
+  fetchPaymentSettings();
+  fetchBookshops();
+  fetchAuthors();
+  fetchPublishers();
+  fetchProducts();
+  fetchEco();
+  fetchTheatre();
+
+  document
+    .getElementById('bs-region')
+    .addEventListener('change', function () {
+      document
+        .getElementById('bs-country-box')
+        .classList.toggle(
+          'hidden',
+          this.value !== '外國香港書店/圖書館'
+        );
+    });
+};
 
     function switchAdminTab(secId, event) {
   document.querySelectorAll('.admin-section').forEach(el => {
