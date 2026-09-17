@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -11,6 +12,10 @@
   <!-- Font Awesome 圖示 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <!-- Leaflet：後台書店位置選擇地圖 -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -18,6 +23,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
+    #admin-bookshop-map {
+  height: 300px;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  z-index: 1;
+}
     .admin-section { display: none; }
     .admin-section.active { display: block; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -44,31 +56,31 @@
     <!-- 功能快捷導覽按鈕列 -->
     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6">
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
-        <button onclick="switchAdminTab('orders')" class="admin-nav-btn bg-amber-900 text-white p-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
+        <button onclick="switchAdminTab('orders', event)" class="admin-nav-btn bg-amber-900 text-white p-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
           <i class="fa-solid fa-box-archive"></i> 訂單管理
         </button>
-        <button onclick="switchAdminTab('manual-receipt')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('manual-receipt', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-receipt"></i> 手動新增收據
         </button>
-        <button onclick="switchAdminTab('payment-settings')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('payment-settings', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-credit-card"></i> 收款設定
         </button>
-        <button onclick="switchAdminTab('bookshops')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('bookshops', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-store"></i> 實體書店
         </button>
-        <button onclick="switchAdminTab('authors')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('authors', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-pen-nib"></i> 本地作者
         </button>
-        <button onclick="switchAdminTab('publishers')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('publishers', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-building-columns"></i> 本地出版社
         </button>
-        <button onclick="switchAdminTab('products')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('products', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-book"></i> 網店商品
         </button>
-        <button onclick="switchAdminTab('eco')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('eco', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-leaf"></i> 農業/環保
         </button>
-        <button onclick="switchAdminTab('theatre')" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <button onclick="switchAdminTab('theatre', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-masks-theater"></i> 劇團
         </button>
       </div>
@@ -275,24 +287,45 @@
               <label class="block font-bold text-slate-700 mb-1">營業時間</label>
               <input type="text" id="bs-hours" class="w-full border rounded px-3 py-2" placeholder="例：週一至週日 12:00-20:00">
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">緯度 (Latitude)</label>
-                <input type="number" step="any" id="bs-lat" class="w-full border rounded px-3 py-2" placeholder="22.3193">
+                    <!-- 書店地圖位置：不需手動輸入經緯度 -->
+            <div class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <label class="block font-bold text-amber-900">
+                  <i class="fa-solid fa-map-location-dot mr-1"></i>書店地圖位置
+                </label>
+
+                <button type="button" onclick="searchBookshopAddress(event)"
+                        class="bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold transition">
+                  <i class="fa-solid fa-magnifying-glass mr-1"></i>搜尋地址
+                </button>
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">經度 (Longitude)</label>
-                <input type="number" step="any" id="bs-lng" class="w-full border rounded px-3 py-2" placeholder="114.1694">
-              </div>
+
+              <p class="text-[11px] text-slate-600">
+                先填寫上方「地址」，再按「搜尋地址」；亦可以直接喺地圖點擊或拖動標記修正位置。
+              </p>
+
+              <div id="admin-bookshop-map"></div>
+
+              <!-- 系統儲存座標，不會顯示畀管理員手動填寫 -->
+              <input type="hidden" id="bs-lat">
+              <input type="hidden" id="bs-lng">
+
+              <p id="bs-location-status" class="text-[11px] text-slate-500">
+                尚未選擇地圖位置。
+              </p>
             </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">門市照片</label>
-              <input type="file" id="bs-image-file" accept="image/*" class="w-full border rounded p-1">
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">簡介說明</label>
-              <textarea id="bs-desc" rows="3" class="w-full border rounded px-3 py-2"></textarea>
-            </div>
+
+           <!-- 門市照片 -->
+<div>
+  <label class="block font-bold text-slate-700 mb-1">門市照片</label>
+  <input type="file" id="bs-image-file" accept="image/*" class="w-full border rounded p-1">
+</div>
+
+<!-- 簡介說明 -->
+<div>
+  <label class="block font-bold text-slate-700 mb-1">簡介說明</label>
+  <textarea id="bs-desc" rows="3" class="w-full border rounded px-3 py-2"></textarea>
+</div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">官方網站 URL</label>
               <input type="url" id="bs-web" class="w-full border rounded px-3 py-2">
@@ -684,6 +717,123 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===== 書店位置選擇地圖 =====
+let adminBookshopMap;
+let adminBookshopMarker;
+const DEFAULT_BOOKSHOP_POSITION = [22.3193, 114.1694]; // 香港中心
+
+function setBookshopCoordinates(lat, lng, zoom = 16) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return;
+  }
+
+  document.getElementById('bs-lat').value = latitude;
+  document.getElementById('bs-lng').value = longitude;
+
+  const status = document.getElementById('bs-location-status');
+  status.textContent = '已選擇地圖位置。';
+  status.className = 'text-[11px] text-emerald-700 font-medium';
+
+  if (!adminBookshopMap) return;
+
+  if (!adminBookshopMarker) {
+    adminBookshopMarker = L.marker([latitude, longitude], {
+      draggable: true
+    }).addTo(adminBookshopMap);
+
+    adminBookshopMarker.on('dragend', function () {
+      const point = adminBookshopMarker.getLatLng();
+      setBookshopCoordinates(point.lat, point.lng, adminBookshopMap.getZoom());
+    });
+  } else {
+    adminBookshopMarker.setLatLng([latitude, longitude]);
+  }
+
+  adminBookshopMap.setView([latitude, longitude], zoom);
+}
+
+function initAdminBookshopMap() {
+  if (adminBookshopMap) {
+    setTimeout(() => adminBookshopMap.invalidateSize(), 150);
+    return;
+  }
+
+  const mapElement = document.getElementById('admin-bookshop-map');
+  if (!mapElement) return;
+
+  adminBookshopMap = L.map('admin-bookshop-map').setView(
+    DEFAULT_BOOKSHOP_POSITION,
+    12
+  );
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(adminBookshopMap);
+
+  adminBookshopMap.on('click', function (event) {
+    setBookshopCoordinates(
+      event.latlng.lat,
+      event.latlng.lng,
+      adminBookshopMap.getZoom()
+    );
+  });
+
+  setTimeout(() => adminBookshopMap.invalidateSize(), 150);
+}
+
+async function searchBookshopAddress(event) {
+  const addressInput = document.getElementById('bs-address');
+  const address = addressInput.value.trim();
+
+  if (!address) {
+    alert('請先填寫書店地址，再按「搜尋地址」。');
+    addressInput.focus();
+    return;
+  }
+
+  const button = event.currentTarget;
+  const oldHtml = button.innerHTML;
+
+  try {
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>搜尋中';
+
+    const query = encodeURIComponent(address);
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`,
+      {
+        headers: {
+          'Accept-Language': 'zh-HK,zh-TW,zh,en'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('地址搜尋服務暫時未能使用。');
+    }
+
+    const results = await response.json();
+
+    if (!results.length) {
+      alert('未能找到這個地址。請將地址寫得更完整，或直接在地圖上點擊正確位置。');
+      return;
+    }
+
+    initAdminBookshopMap();
+    setBookshopCoordinates(results[0].lat, results[0].lon, 17);
+  } catch (error) {
+    console.error(error);
+    alert(error.message || '搜尋地址時發生錯誤，請直接在地圖上點擊位置。');
+  } finally {
+    button.disabled = false;
+    button.innerHTML = oldHtml;
+  }
+}
+    
     window.onload = function() {
       fetchOrders();
       fetchPaymentSettings();
@@ -699,15 +849,26 @@
       });
     };
 
-    function switchAdminTab(secId) {
-      document.querySelectorAll('.admin-section').forEach(el => el.classList.remove('active'));
-      document.getElementById(`sec-${secId}`).classList.add('active');
+    function switchAdminTab(secId, event) {
+  document.querySelectorAll('.admin-section').forEach(el => {
+    el.classList.remove('active');
+  });
 
-      document.querySelectorAll('.admin-nav-btn').forEach(btn => {
-        btn.className = "admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2";
-      });
-      event.currentTarget.className = "admin-nav-btn bg-amber-900 text-white p-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm";
-    }
+  document.getElementById(`sec-${secId}`).classList.add('active');
+
+  document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+    btn.className = "admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2";
+  });
+
+  if (event && event.currentTarget) {
+    event.currentTarget.className = "admin-nav-btn bg-amber-900 text-white p-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm";
+  }
+
+  if (secId === 'bookshops') {
+    setTimeout(initAdminBookshopMap, 100);
+  }
+}
+
 
     // --- 1. 訂單管理 ---
     async function fetchOrders() {
@@ -740,9 +901,23 @@
           `;
         }
 
-        let proofHtml = o.payment_proof_url ? 
-          `<a href="${o.payment_proof_url}" target="_blank" class="text-blue-600 font-bold hover:underline text-xs flex items-center gap-1 mt-1"><i class="fa-solid fa-image"></i> 查看顧客上傳入數紙</a>` : 
-          `<span class="text-slate-400 text-xs mt-1 block">未上傳入數紙</span>`;
+        let proofHtml = `
+          <div class="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                ${o.payment_proof_url
+                  ? `<a href="${o.payment_proof_url}" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-bold hover:underline text-xs inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> 查看現有付款／入數紙相片</a>`
+                  : `<span class="text-slate-500 text-xs">未上傳付款／入數紙相片</span>`}
+              </div>
+              <span id="order-proof-status-${o.id}" class="hidden text-[11px] font-semibold"></span>
+            </div>
+            <div class="mt-2 flex flex-col sm:flex-row gap-2">
+              <input type="file" id="order-proof-file-${o.id}" accept="image/*" class="min-w-0 flex-grow text-xs text-slate-600 border border-blue-300 rounded p-1 bg-white">
+              <button type="button" id="order-proof-btn-${o.id}" onclick="uploadOrderPaymentProof(${o.id})" class="bg-blue-700 hover:bg-blue-600 disabled:bg-slate-400 text-white font-bold px-3 py-2 rounded text-xs transition whitespace-nowrap">
+                <i class="fa-solid fa-cloud-arrow-up mr-1"></i>${o.payment_proof_url ? '更換相片' : '上傳相片'}
+              </button>
+            </div>
+          </div>`;
 
         return `
           <div class="bg-white p-5 rounded-xl shadow-sm border space-y-3">
@@ -777,7 +952,6 @@
               </div>
               
               <div class="flex gap-2">
-                <button onclick='editOrder(${JSON.stringify(o)})' class="bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded transition"><i class="fa-solid fa-pen mr-1"></i>編輯</button>
                 <button onclick='downloadReceiptPdf(${JSON.stringify(o)})' class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition"><i class="fa-solid fa-file-pdf mr-1"></i>下載收據</button>
                 <button onclick="deleteOrder(${o.id})" class="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded transition"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
               </div>
@@ -848,8 +1022,65 @@
       });
     }
 
-    function editOrder(order) {
-      alert("編輯功能：您可以在訂單列表中直接更改狀態，或前往 Supabase 後台微調詳細資料。");
+    async function uploadOrderPaymentProof(orderId) {
+      const fileInput = document.getElementById(`order-proof-file-${orderId}`);
+      const statusEl = document.getElementById(`order-proof-status-${orderId}`);
+      const button = document.getElementById(`order-proof-btn-${orderId}`);
+      const file = fileInput?.files?.[0];
+
+      if (!file) {
+        alert("請先選擇付款／入數紙相片。");
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        alert("只接受圖片檔案。");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert("圖片不可大於 10MB。");
+        return;
+      }
+
+      const originalHtml = button.innerHTML;
+      const extension = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const fileName = `order_proofs/order_${orderId}_${Date.now()}.${extension}`;
+
+      try {
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>上傳中';
+        statusEl.classList.remove('hidden', 'text-red-600', 'text-emerald-700');
+        statusEl.classList.add('text-slate-600');
+        statusEl.textContent = '正在上傳相片…';
+
+        const { error: uploadError } = await _supabase.storage
+          .from('images')
+          .upload(fileName, file, { cacheControl: '3600', upsert: false });
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = _supabase.storage.from('images').getPublicUrl(fileName);
+        const publicUrl = publicUrlData?.publicUrl;
+        if (!publicUrl) throw new Error('未能取得相片網址。');
+
+        const { error: updateError } = await _supabase
+          .from('shop_orders')
+          .update({ payment_proof_url: publicUrl })
+          .eq('id', orderId);
+        if (updateError) throw updateError;
+
+        statusEl.classList.remove('text-slate-600', 'text-red-600');
+        statusEl.classList.add('text-emerald-700');
+        statusEl.textContent = '相片已成功儲存。';
+        await fetchOrders();
+      } catch (error) {
+        console.error('上傳訂單付款相片失敗：', error);
+        statusEl.classList.remove('text-slate-600', 'text-emerald-700');
+        statusEl.classList.add('text-red-600');
+        statusEl.textContent = `上傳失敗：${error.message}`;
+        alert("上傳失敗：" + error.message);
+      } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+      }
     }
 
     // --- 2. 手動新增收據 ---
@@ -1020,15 +1251,36 @@
         imageUrl = publicUrl;
       }
 
-      const payload = {
+const latitudeText = document.getElementById('bs-lat').value.trim();
+const longitudeText = document.getElementById('bs-lng').value.trim();
+
+if (latitudeText === '' || longitudeText === '') {
+  alert('請先在地圖上選擇書店位置，或按「搜尋地址」。');
+  return;
+}
+
+const latitude = Number(latitudeText);
+const longitude = Number(longitudeText);
+
+if (
+  !Number.isFinite(latitude) ||
+  !Number.isFinite(longitude) ||
+  latitude < -90 ||
+  latitude > 90 ||
+  longitude < -180 ||
+  longitude > 180
+) {
+  alert('地圖位置無效，請重新搜尋地址或在地圖上點選位置。');
+  return;
+}      const payload = {
         name: document.getElementById('bs-name').value,
         region: document.getElementById('bs-region').value,
         country: document.getElementById('bs-country').value,
         address: document.getElementById('bs-address').value,
         phone: document.getElementById('bs-phone').value,
         opening_hours: document.getElementById('bs-hours').value,
-        latitude: Number(document.getElementById('bs-lat').value) || null,
-        longitude: Number(document.getElementById('bs-lng').value) || null,
+        latitude: latitude,
+longitude: longitude,
         description: document.getElementById('bs-desc').value,
         website_url: document.getElementById('bs-web').value,
         instagram_url: document.getElementById('bs-ig').value,
@@ -1058,8 +1310,24 @@
       document.getElementById('bs-address').value = b.address || '';
       document.getElementById('bs-phone').value = b.phone || '';
       document.getElementById('bs-hours').value = b.opening_hours || '';
-      document.getElementById('bs-lat').value = b.latitude || '';
-      document.getElementById('bs-lng').value = b.longitude || '';
+      setTimeout(() => {
+  initAdminBookshopMap();
+
+  if (
+  b.latitude !== null &&
+  b.latitude !== undefined &&
+  b.latitude !== '' &&
+  b.longitude !== null &&
+  b.longitude !== undefined &&
+  b.longitude !== ''
+) {
+  setBookshopCoordinates(b.latitude, b.longitude, 16);
+} else {
+  const status = document.getElementById('bs-location-status');
+  status.textContent = '此書店暫未設定地圖位置，請搜尋地址或在地圖點選位置。';
+  status.className = 'text-[11px] text-amber-700 font-medium';
+}
+}, 100);
       document.getElementById('bs-desc').value = b.description || '';
       document.getElementById('bs-web').value = b.website_url || '';
       document.getElementById('bs-ig').value = b.instagram_url || '';
@@ -1070,11 +1338,29 @@
     }
 
     function resetBookshopForm() {
-      document.getElementById('bookshop-form').reset();
-      document.getElementById('bs-id').value = '';
-      document.getElementById('bookshop-form-title').innerText = "新增實體書店";
-      document.getElementById('bs-country-box').classList.add('hidden');
+  document.getElementById('bookshop-form').reset();
+  document.getElementById('bs-id').value = '';
+  document.getElementById('bs-lat').value = '';
+  document.getElementById('bs-lng').value = '';
+  document.getElementById('bookshop-form-title').innerText = '新增實體書店';
+  document.getElementById('bs-country-box').classList.add('hidden');
+
+  const status = document.getElementById('bs-location-status');
+  if (status) {
+    status.textContent = '尚未選擇地圖位置。';
+    status.className = 'text-[11px] text-slate-500';
+  }
+
+  if (adminBookshopMap) {
+    if (adminBookshopMarker) {
+      adminBookshopMap.removeLayer(adminBookshopMarker);
+      adminBookshopMarker = null;
     }
+
+    adminBookshopMap.setView(DEFAULT_BOOKSHOP_POSITION, 12);
+    setTimeout(() => adminBookshopMap.invalidateSize(), 100);
+  }
+}
 
     async function deleteBookshop(id) {
       if (!confirm("確定刪除此書店嗎？")) return;
