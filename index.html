@@ -514,15 +514,20 @@
 
     // --- Leaflet 地圖初始化 ---
     function initMap() {
-      map = L.map('bookstoreMap').setView([22.3193, 114.1694], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+  map = L.map('bookstoreMap').setView(
+    [22.3193, 114.1694],
+    12
+  );
 
-      // 預設無所事事小書店地標
-      L.marker([22.3193, 114.1694]).addTo(map)
-        .bindPopup("<b>無所事事小書店</b><br>社區文化紀錄、獨立出版與 Zine 交流空間");
+  L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      attribution: '&copy; OpenStreetMap contributors'
     }
+  ).addTo(map);
+
+  // 唔好喺呢度加入任何 L.marker
+}
 
     function updateMapMarkers(shops) {
       if (!map) return;
