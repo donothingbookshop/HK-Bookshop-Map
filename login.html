@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理員登入｜無所事事小書店</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4 text-slate-800">
+  <main class="w-full max-w-md">
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-lg p-7">
+      <div class="text-center mb-7">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-amber-900 text-amber-200 flex items-center justify-center text-2xl shadow">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+
+        <h1 class="text-xl font-bold text-amber-950">
+          無所事事小書店
+        </h1>
+
+        <p class="mt-1 text-sm text-slate-500">
+          後台管理員登入
+        </p>
+      </div>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label for="login-email" class="block text-xs font-bold text-slate-700 mb-1.5">
+            Email
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            autocomplete="email"
+            required
+            placeholder="name@example.com"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-800"
+          >
+        </div>
+
+        <div>
+          <label for="login-password" class="block text-xs font-bold text-slate-700 mb-1.5">
+            密碼
+          </label>
+          <input
+            id="login-password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="請輸入密碼"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-800"
+          >
+        </div>
+
+        <p id="login-message" class="hidden text-xs rounded-lg p-3"></p>
+
+        <button
+          id="login-button"
+          type="submit"
+          class="w-full bg-amber-900 hover:bg-amber-800 disabled:bg-slate-400 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm"
+        >
+          <i class="fa-solid fa-right-to-bracket mr-1.5"></i>
+          登入後台
+        </button>
+      </form>
+
+      <a
+        href="index.html"
+        class="mt-5 block text-center text-xs text-slate-500 hover:text-amber-800"
+      >
+        <i class="fa-solid fa-arrow-left mr-1"></i>
+        返回網站
+      </a>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
+
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdWIiOiJ5dGVlZWR5bGRmZW14bXZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const form = document.getElementById('login-form');
+    const button = document.getElementById('login-button');
+    const message = document.getElementById('login-message');
+
+    function showMessage(text, type = 'error') {
+      message.textContent = text;
+      message.className =
+        type === 'success'
+          ? 'text-xs rounded-lg p-3 bg-emerald-50 text-emerald-800 border border-emerald-200'
+          : 'text-xs rounded-lg p-3 bg-red-50 text-red-700 border border-red-200';
+    }
+
+    async function checkAlreadyLoggedIn() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: admin } = await supabase
+        .from('admin_users')
+        .select('user_id, display_name, role, active')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (admin) {
+        window.location.replace('admin.html');
+      } else {
+        await supabase.auth.signOut();
+      }
+    }
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showMessage('請輸入 Email 及密碼。');
+        return;
+      }
+
+      const oldHtml = button.innerHTML;
+
+      try {
+        button.disabled = true;
+        button.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i>登入中…';
+        message.className = 'hidden';
+
+        const { error: loginError } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+
+        if (loginError) {
+          throw new Error('Email 或密碼不正確。');
+        }
+
+        const { data: { user }, error: userError } =
+          await supabase.auth.getUser();
+
+        if (userError || !user) {
+          throw new Error('未能確認登入狀態，請再試一次。');
+        }
+
+        const { data: admin, error: adminError } =
+          await supabase
+            .from('admin_users')
+            .select('user_id, display_name, role, active')
+            .eq('user_id', user.id)
+            .eq('active', true)
+            .maybeSingle();
+
+        if (adminError || !admin) {
+          await supabase.auth.signOut();
+          throw new Error('此帳戶未獲授權進入後台。');
+        }
+
+        showMessage(
+          `歡迎，${admin.display_name}。正在進入後台…`,
+          'success'
+        );
+
+        window.setTimeout(function () {
+          window.location.replace('admin.html');
+        }, 500);
+      } catch (error) {
+        console.error(error);
+        showMessage(error.message || '登入失敗，請稍後再試。');
+      } finally {
+        button.disabled = false;
+        button.innerHTML = oldHtml;
+      }
+    });
+
+    checkAlreadyLoggedIn();
+  </script>
+</body>
+</html>
