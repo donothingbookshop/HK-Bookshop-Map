@@ -720,7 +720,8 @@
 // ===== 書店位置選擇地圖 =====
 let adminBookshopMap;
 let adminBookshopMarker;
-const DEFAULT_BOOKSHOP_POSITION = [22.3193, 114.1694]; // 香港中心
+
+const DEFAULT_BOOKSHOP_POSITION = [22.3193, 114.1694];
 
 function setBookshopCoordinates(lat, lng, zoom = 16) {
   const latitude = Number(lat);
@@ -730,29 +731,46 @@ function setBookshopCoordinates(lat, lng, zoom = 16) {
     return;
   }
 
-  document.getElementById('bs-lat').value = latitude;
-  document.getElementById('bs-lng').value = longitude;
-
+  const latInput = document.getElementById('bs-lat');
+  const lngInput = document.getElementById('bs-lng');
   const status = document.getElementById('bs-location-status');
-  status.textContent = '已選擇地圖位置。';
-  status.className = 'text-[11px] text-emerald-700 font-medium';
+
+  if (latInput) latInput.value = latitude;
+  if (lngInput) lngInput.value = longitude;
+
+  if (status) {
+    status.textContent = '已選擇地圖位置。';
+    status.className =
+      'text-[11px] text-emerald-700 font-medium';
+  }
 
   if (!adminBookshopMap) return;
 
   if (!adminBookshopMarker) {
-    adminBookshopMarker = L.marker([latitude, longitude], {
-      draggable: true
-    }).addTo(adminBookshopMap);
+    adminBookshopMarker = L.marker(
+      [latitude, longitude],
+      { draggable: true }
+    ).addTo(adminBookshopMap);
 
     adminBookshopMarker.on('dragend', function () {
       const point = adminBookshopMarker.getLatLng();
-      setBookshopCoordinates(point.lat, point.lng, adminBookshopMap.getZoom());
+
+      setBookshopCoordinates(
+        point.lat,
+        point.lng,
+        adminBookshopMap.getZoom()
+      );
     });
   } else {
-    adminBookshopMarker.setLatLng([latitude, longitude]);
+    adminBookshopMarker.setLatLng(
+      [latitude, longitude]
+    );
   }
 
-  adminBookshopMap.setView([latitude, longitude], zoom);
+  adminBookshopMap.setView(
+    [latitude, longitude],
+    zoom
+  );
 }
 
 function initAdminBookshopMap() {
@@ -760,10 +778,13 @@ function initAdminBookshopMap() {
     setTimeout(function () {
       adminBookshopMap.invalidateSize();
     }, 150);
+
     return;
   }
 
-  const mapElement = document.getElementById('admin-bookshop-map');
+  const mapElement =
+    document.getElementById('admin-bookshop-map');
+
   if (!mapElement) return;
 
   adminBookshopMap = L.map(mapElement).setView(
@@ -793,47 +814,10 @@ function initAdminBookshopMap() {
   }, 300);
 }
 
-// --- Leaflet 地圖初始化 ---
-function initMap() {
-    if (map) {
-        map.remove();
-        map = null;
-    }
-
-    map = L.map('bookstoreMap', {
-        center: [22.3193, 114.1694],
-        zoom: 12
-    });
-
-    const baseLayer = L.tileLayer(
-        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-        {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            maxZoom: 20,
-            crossOrigin: true
-        }
-    );
-
-    baseLayer.addTo(map);
-
-    setTimeout(function () {
-        map.invalidateSize();
-    }, 300);
-}
-
-  adminBookshopMap.on('click', function (event) {
-    setBookshopCoordinates(
-      event.latlng.lat,
-      event.latlng.lng,
-      adminBookshopMap.getZoom()
-    );
-  });
-
-  setTimeout(() => adminBookshopMap.invalidateSize(), 150);
-}
-
 async function searchBookshopAddress(event) {
-  const addressInput = document.getElementById('bs-address');
+  const addressInput =
+    document.getElementById('bs-address');
+
   const address = addressInput.value.trim();
 
   if (!address) {
@@ -847,9 +831,11 @@ async function searchBookshopAddress(event) {
 
   try {
     button.disabled = true;
-    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>搜尋中';
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin mr-1"></i>搜尋中';
 
     const query = encodeURIComponent(address);
+
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`,
       {
@@ -866,15 +852,26 @@ async function searchBookshopAddress(event) {
     const results = await response.json();
 
     if (!results.length) {
-      alert('未能找到這個地址。請將地址寫得更完整，或直接在地圖上點擊正確位置。');
+      alert(
+        '未能找到這個地址。請將地址寫得更完整，或直接在地圖上點擊正確位置。'
+      );
       return;
     }
 
     initAdminBookshopMap();
-    setBookshopCoordinates(results[0].lat, results[0].lon, 17);
+
+    setBookshopCoordinates(
+      results[0].lat,
+      results[0].lon,
+      17
+    );
   } catch (error) {
     console.error(error);
-    alert(error.message || '搜尋地址時發生錯誤，請直接在地圖上點擊位置。');
+
+    alert(
+      error.message ||
+      '搜尋地址時發生錯誤，請直接在地圖上點擊位置。'
+    );
   } finally {
     button.disabled = false;
     button.innerHTML = oldHtml;
