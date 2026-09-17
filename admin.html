@@ -757,17 +757,41 @@ function setBookshopCoordinates(lat, lng, zoom = 16) {
 
 function initAdminBookshopMap() {
   if (adminBookshopMap) {
-    setTimeout(() => adminBookshopMap.invalidateSize(), 150);
+    setTimeout(function () {
+      adminBookshopMap.invalidateSize();
+    }, 150);
     return;
   }
 
   const mapElement = document.getElementById('admin-bookshop-map');
   if (!mapElement) return;
 
-  adminBookshopMap = L.map('admin-bookshop-map').setView(
+  adminBookshopMap = L.map(mapElement).setView(
     DEFAULT_BOOKSHOP_POSITION,
     12
   );
+
+  L.tileLayer(
+    'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    {
+      attribution:
+        '&copy; OpenStreetMap contributors &copy; CARTO',
+      maxZoom: 20
+    }
+  ).addTo(adminBookshopMap);
+
+  adminBookshopMap.on('click', function (event) {
+    setBookshopCoordinates(
+      event.latlng.lat,
+      event.latlng.lng,
+      adminBookshopMap.getZoom()
+    );
+  });
+
+  setTimeout(function () {
+    adminBookshopMap.invalidateSize();
+  }, 300);
+}
 
 // --- Leaflet 地圖初始化 ---
 function initMap() {
