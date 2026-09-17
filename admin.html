@@ -903,21 +903,22 @@ async function searchBookshopAddress(event) {
 }
     
     async function protectAdminPage() {
-  const { data: { user }, error: userError } =
-    await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
     window.location.replace('login.html');
     return false;
   }
 
-  const { data: admin, error: adminError } =
-    await supabase
-      .from('admin_users')
-      .select('user_id, display_name, role, active')
-      .eq('user_id', user.id)
-      .eq('active', true)
-      .maybeSingle();
+  const { data: admin, error: adminError } = await supabase
+    .from('admin_users')
+    .select('user_id, display_name, role, active')
+    .eq('user_id', user.id)
+    .eq('active', true)
+    .maybeSingle();
 
   if (
     adminError ||
@@ -929,13 +930,14 @@ async function searchBookshopAddress(event) {
     return false;
   }
 
-  const nameElement =
-  document.getElementById('current-admin-name');
+  const nameElement = document.getElementById(
+    'current-admin-name'
+  );
 
-if (nameElement) {
-  nameElement.innerText =
-    `目前登入：${admin.display_name}`;
-}
+  if (nameElement) {
+    nameElement.innerText =
+      `目前登入：${admin.display_name}`;
+  }
 
   return true;
 }
