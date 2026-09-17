@@ -769,10 +769,19 @@ function initAdminBookshopMap() {
     12
   );
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(adminBookshopMap);
+ // --- Leaflet 地圖初始化 ---
+function initMap() {
+    map = L.map('bookstoreMap').setView([22.3193, 114.1694], 12);
+
+    L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }
+    ).addTo(map);
+}
 
   adminBookshopMap.on('click', function (event) {
     setBookshopCoordinates(
