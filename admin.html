@@ -947,11 +947,7 @@ async function logoutAdmin() {
   window.location.replace('login.html');
 }
 
-window.onload = async function () {
-  const allowed = await protectAdminPage();
-
-  if (!allowed) return;
-
+window.onload = function () {
   fetchOrders();
   fetchPaymentSettings();
   fetchBookshops();
