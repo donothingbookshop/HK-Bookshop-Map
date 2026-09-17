@@ -41,10 +41,20 @@
   <!-- 後台頂部導覽 -->
   <header class="bg-amber-950 text-amber-50 shadow-md sticky top-0 z-40">
     <div class="flex items-center gap-2">
-  <span
-    id="current-admin-name"
-    class="hidden sm:inline text-xs text-amber-100"
-  ></span>
+ <div class="flex items-center gap-2 min-w-0">
+  <i class="fa-solid fa-gears text-xl text-amber-400"></i>
+
+  <div class="min-w-0">
+    <h1 class="text-sm sm:text-lg font-bold text-amber-50 truncate">
+      無所事事小書店・後台管理系統
+    </h1>
+
+    <p
+      id="current-admin-name"
+      class="text-[11px] text-amber-200 truncate"
+    ></p>
+  </div>
+</div>
 
   <button
     type="button"
@@ -919,11 +929,13 @@ async function searchBookshopAddress(event) {
     return false;
   }
 
-  const nameElement = document.getElementById('current-admin-name');
+  const nameElement =
+  document.getElementById('current-admin-name');
 
-  if (nameElement) {
-    nameElement.textContent = `目前登入：${admin.display_name}`;
-  }
+if (nameElement) {
+  nameElement.innerText =
+    `目前登入：${admin.display_name}`;
+}
 
   return true;
 }
