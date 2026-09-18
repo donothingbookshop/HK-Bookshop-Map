@@ -1,10 +1,9 @@
-
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無所事事小書店 Donothing Bookshop | 香港獨立書店地圖 & 文化社區</title>
+  <title>無所事事小書店 Donothing Bookshop</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -41,6 +40,30 @@
       border-radius: 12px;
       z-index: 10;
     }
+
+    /* Mobile usability pass: layout and controls only. */
+    :where(button,[role="button"],a,input,select,textarea){-webkit-tap-highlight-color:transparent}
+    :where(button,[role="button"],a):focus-visible,:where(input,select,textarea):focus-visible{outline:2px solid #f59e0b;outline-offset:2px}
+    @media(max-width:767px){
+      body{font-size:16px;overflow-x:hidden} header>div{flex-wrap:wrap;padding:.625rem .75rem;gap:.5rem}
+      header h1{max-width:calc(100vw - 7.25rem);font-size:.875rem!important;line-height:1.25}
+      header nav{order:3;width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.25rem;padding-top:.375rem;border-top:1px solid rgb(253 230 138/.22)}
+      header nav .nav-btn{min-width:0;min-height:48px;padding:.375rem .125rem!important;flex-direction:column;justify-content:center;gap:.125rem!important;white-space:nowrap;font-size:.6875rem!important;line-height:1.1}
+      header nav .nav-btn i{font-size:.875rem} header [onclick="goToCartCheckout()"]{min-height:44px;padding:.5rem .625rem!important;margin-left:auto}
+      main{padding:1rem .75rem 2rem!important} h2.text-2xl{font-size:1.25rem!important;line-height:1.3} #bookstoreMap{height:min(56vh,360px);border-radius:.75rem}
+      button,a[class*="px-"],[onclick][class*="cursor-pointer"]{min-height:44px}
+      input:not([type="checkbox"]):not([type="radio"]),select,textarea{min-height:44px;font-size:16px!important} input[type="file"]{max-width:100%;min-height:44px}
+      #country-filter-bar button,#tab-map>div:nth-of-type(3) button,#tab-eco>div:nth-of-type(2) button,#tab-theatre>div:nth-of-type(2) button{min-height:44px;padding:.5rem .75rem!important}
+      #directory-content-grid>div,#tab-shop .bg-white.p-4,#checkout-sidebar{padding:1rem!important} #tab-shop>.grid{gap:1.25rem!important}
+      #checkout-sidebar{position:static!important;scroll-margin-top:9rem} #cart-items button{width:44px!important;height:44px!important;font-size:1rem!important}
+      #payment-modal,#book-modal,#directory-modal,#eco-modal,#theatre-modal{align-items:flex-end!important;padding:0!important}
+      #payment-modal>div,#book-modal>div,#directory-modal>div,#eco-modal>div,#theatre-modal>div{width:100%!important;max-width:none!important;max-height:92dvh!important;border-radius:1rem 1rem 0 0!important;padding:1.25rem!important;overscroll-behavior:contain}
+      #book-modal>div{padding:0!important} #book-modal>div>.p-6{padding:3.5rem 1.25rem 1.25rem!important;gap:1rem!important}
+      #book-modal button[onclick="closeBookModal()"],#payment-modal button[onclick="closePaymentModal()"],#directory-modal button[onclick="closeDirectoryModal()"],#eco-modal button[onclick="closeEcoModal()"],#theatre-modal button[onclick="closeTheatreModal()"]{width:44px!important;height:44px!important;top:.75rem!important;right:.75rem!important}
+      #book-modal #modal-add-btn{min-height:48px;padding-inline:1rem!important} #book-modal .pt-4.border-t{gap:.75rem;align-items:flex-end}
+      #directory-modal-links a,#eco-modal-links a,#theatre-modal-links a{min-height:44px;display:inline-flex;align-items:center;padding:.5rem .75rem;border-radius:.5rem;background:#f8fafc}
+    }
+    @media(max-width:390px){header [onclick="goToCartCheckout()"]>span:not(#cart-count){display:none}#tab-shop .flex.flex-wrap.items-center.gap-3>*{width:100%}#tab-shop select{width:100%}#book-modal .pt-4.border-t{flex-direction:column;align-items:stretch}#book-modal #modal-add-btn{justify-content:center}}
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen font-sans">
@@ -54,7 +77,7 @@
         <h1 class="text-lg font-bold tracking-wide">無所事事小書店 & 書店地圖</h1>
       </div>
 
-      <nav class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
+      <nav aria-label="主要導覽" class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
         <button onclick="switchTab('map')" class="nav-btn hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> 書店地圖</button>
         <button onclick="switchTab('directory')" class="nav-btn hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-book-open"></i> 文化檔案</button>
         <button onclick="switchTab('shop')" class="nav-btn hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-store"></i> 網上商店</button>
@@ -296,9 +319,9 @@
   </main>
 
   <!-- 付款 Modal -->
-  <div id="payment-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="payment-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <button onclick="closePaymentModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <button type="button" aria-label="關閉付款資料" onclick="closePaymentModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
@@ -337,9 +360,9 @@
   </div>
 
   <!-- 書籍 Modal -->
-  <div id="book-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="book-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative">
-      <button onclick="closeBookModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
+      <button type="button" aria-label="關閉書本詳情" onclick="closeBookModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
@@ -391,9 +414,9 @@
   </div>
 
   <!-- 文化檔案 Modal -->
-  <div id="directory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="directory-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button onclick="closeDirectoryModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <button type="button" aria-label="關閉文化檔案詳情" onclick="closeDirectoryModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
@@ -416,9 +439,9 @@
   </div>
 
   <!-- 環保 Modal -->
-  <div id="eco-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="eco-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button onclick="closeEcoModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <button type="button" aria-label="關閉農業環保詳情" onclick="closeEcoModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
@@ -447,9 +470,9 @@
   </div>
 
   <!-- 劇團 Modal -->
-  <div id="theatre-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="theatre-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button onclick="closeTheatreModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <button type="button" aria-label="關閉劇團詳情" onclick="closeTheatreModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
@@ -514,20 +537,20 @@
 
     // --- Leaflet 地圖初始化 ---
     function initMap() {
-  map = L.map('bookstoreMap').setView(
-    [22.3193, 114.1694],
-    12
-  );
+      map = L.map('bookstoreMap').setView(
+        [22.3193, 114.1694],
+        12
+      );
 
-  L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-      attribution: '&copy; OpenStreetMap contributors'
+      L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+          attribution: '&copy; OpenStreetMap contributors'
+        }
+      ).addTo(map);
+
+      // 唔好喺呢度加入任何 L.marker
     }
-  ).addTo(map);
-
-  // 唔好喺呢度加入任何 L.marker
-}
 
     function updateMapMarkers(shops) {
       if (!map) return;
