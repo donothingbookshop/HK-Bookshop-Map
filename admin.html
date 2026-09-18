@@ -34,6 +34,25 @@
     .admin-section.active { display: block; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Mobile usability pass: layout and controls only. */
+    :where(button,[role="button"],a,input,select,textarea){-webkit-tap-highlight-color:transparent}
+    :where(button,[role="button"],a):focus-visible,:where(input,select,textarea):focus-visible{outline:2px solid #d97706;outline-offset:2px}
+    @media(max-width:767px){
+      body{font-size:16px;overflow-x:hidden} header>div{padding:.625rem .75rem;display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:.5rem!important}
+      header>div>div:first-child{grid-column:1/-1} header h1{font-size:.9375rem!important} header button,header a{min-height:44px;justify-content:center;padding:.5rem .75rem!important}
+      main{padding:1rem .75rem 2rem!important} main>.bg-white.p-4{padding:.5rem!important;margin-bottom:1rem!important;overflow-x:auto}
+      main>.bg-white.p-4>div{display:flex!important;width:max-content;min-width:100%;gap:.5rem!important;scroll-snap-type:x proximity;padding-bottom:.125rem}
+      .admin-nav-btn{flex:0 0 auto;min-height:48px;min-width:8rem;padding:.625rem .75rem!important;font-size:.75rem!important;scroll-snap-align:start;white-space:nowrap}
+      .admin-section>.flex.justify-between{align-items:flex-start!important;gap:.75rem}.admin-section>.flex.justify-between button{flex:0 0 auto}h2.text-xl{font-size:1.125rem!important;line-height:1.35}.admin-section .bg-white.p-6{padding:1rem!important}
+      button,a[class*="px-"]{min-height:44px}input:not([type="checkbox"]):not([type="radio"]),select,textarea{min-height:44px;font-size:16px!important}input[type="file"]{width:100%;max-width:100%;min-height:44px}#admin-bookshop-map{height:min(52vh,340px)}
+      .manual-item-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(5rem,.65fr) 4.5rem 44px;gap:.5rem!important;align-items:center}.manual-item-row .m-item-name,.manual-item-row .m-item-price,.manual-item-row .m-item-qty{width:100%!important;min-width:0}.manual-item-row button{width:44px;height:44px;padding:0!important}
+      #orders-list>div{padding:1rem!important}#orders-list .pt-2.border-t{align-items:stretch!important;flex-direction:column}#orders-list .pt-2.border-t>div{width:100%}#orders-list .pt-2.border-t select{flex:1;min-width:0}#orders-list .pt-2.border-t>div:last-child{display:grid!important;grid-template-columns:1fr 1fr}#orders-list .pt-2.border-t button{width:100%;justify-content:center}#orders-list input[type="file"]+button{width:100%}
+      #admin-bookshop-list>div,#admin-author-list>div,#admin-publisher-list>div,#admin-product-list>div,#admin-eco-list>div,#admin-theatre-list>div{align-items:stretch!important;flex-direction:column;gap:.75rem}
+      #admin-bookshop-list>div>div:last-child,#admin-author-list>div>div:last-child,#admin-publisher-list>div>div:last-child,#admin-product-list>div>div:last-child,#admin-eco-list>div>div:last-child,#admin-theatre-list>div>div:last-child{display:grid!important;grid-template-columns:1fr 1fr;gap:.5rem!important}
+      #admin-bookshop-list button,#admin-author-list button,#admin-publisher-list button,#admin-product-list button,#admin-eco-list button,#admin-theatre-list button{width:100%}
+    }
+    @media(max-width:420px){.manual-item-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}.manual-item-row .m-item-name{grid-column:1/-1}.manual-item-row button{grid-column:3;grid-row:2}#manual-deposit-inputs{grid-template-columns:1fr!important}.admin-section form>.flex.gap-2.pt-2,.admin-section form>.flex.gap-3.pt-2{flex-wrap:wrap}}
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 flex flex-col min-h-screen font-sans">
@@ -902,23 +921,22 @@ async function searchBookshopAddress(event) {
   }
 }
     
-   async function protectAdminPage() {
-  const {
-    data: { user },
-    error: userError
-  } = await supabase.auth.getUser();
+    async function protectAdminPage() {
+  const { data: { user }, error: userError } =
+    await supabase.auth.getUser();
 
   if (userError || !user) {
     window.location.replace('login.html');
     return false;
   }
 
-  const { data: admin, error: adminError } = await supabase
-    .from('admin_users')
-    .select('user_id, display_name, role, active')
-    .eq('user_id', user.id)
-    .eq('active', true)
-    .maybeSingle();
+  const { data: admin, error: adminError } =
+    await supabase
+      .from('admin_users')
+      .select('user_id, display_name, role, active')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .maybeSingle();
 
   if (
     adminError ||
@@ -930,14 +948,13 @@ async function searchBookshopAddress(event) {
     return false;
   }
 
-  const nameElement = document.getElementById(
-    'current-admin-name'
-  );
+  const nameElement =
+  document.getElementById('current-admin-name');
 
-  if (nameElement) {
-    nameElement.innerText =
-      `目前登入：${admin.display_name}`;
-  }
+if (nameElement) {
+  nameElement.innerText =
+    `目前登入：${admin.display_name}`;
+}
 
   return true;
 }
