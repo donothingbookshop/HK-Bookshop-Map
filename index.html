@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無所事事小書店 Donothing Bookshop</title>
+  <title>無所事事小書店 Donothing Bookshop | 香港獨立書店地圖 & 文化社區</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -319,11 +319,19 @@
   </main>
 
   <!-- 付款 Modal -->
-  <div id="payment-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
-      <button type="button" aria-label="關閉付款資料" onclick="closePaymentModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+  <div id="payment-modal"
+     role="dialog"
+     aria-modal="true"
+     class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+
+    <button type="button"
+            aria-label="關閉付款資料"
+            onclick="closePaymentModal()"
+            class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
 
       <div class="text-center mb-4">
         <div class="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
@@ -360,11 +368,19 @@
   </div>
 
   <!-- 書籍 Modal -->
-  <div id="book-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative">
-      <button type="button" aria-label="關閉書本詳情" onclick="closeBookModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
+ <div id="book-modal"
+     role="dialog"
+     aria-modal="true"
+     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col relative">
+
+    <button type="button"
+            aria-label="關閉書本詳情"
+            onclick="closeBookModal()"
+            class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition z-10">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
 
       <div class="p-6 md:p-8 flex flex-col md:flex-row gap-6">
         <div class="w-full md:w-1/2 flex-shrink-0 bg-slate-50 rounded-xl p-4 flex items-center justify-center border border-slate-100">
@@ -414,11 +430,17 @@
   </div>
 
   <!-- 文化檔案 Modal -->
-  <div id="directory-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="directory-modal"
+     role="dialog"
+     aria-modal="true"
+     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button type="button" aria-label="關閉文化檔案詳情" onclick="closeDirectoryModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
+      <button type="button"
+        aria-label="關閉文化檔案詳情"
+        onclick="closeDirectoryModal()"
+        class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+  <i class="fa-solid fa-xmark text-lg"></i>
+</button>
 
       <div class="flex items-center space-x-4 mb-4 border-b pb-4">
         <div id="dir-modal-avatar" class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border"></div>
@@ -439,11 +461,17 @@
   </div>
 
   <!-- 環保 Modal -->
-  <div id="eco-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="eco-modal"
+     role="dialog"
+     aria-modal="true" 
+     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button type="button" aria-label="關閉農業環保詳情" onclick="closeEcoModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
+      <button type="button" 
+        aria-label="關閉農業環保詳情"
+        onclick="closeEcoModal()" 
+        class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+  <i class="fa-solid fa-xmark text-lg"></i>
+ </button>
 
       <div class="flex items-center space-x-3 mb-4 border-b pb-4">
         <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
@@ -470,9 +498,14 @@
   </div>
 
   <!-- 劇團 Modal -->
-  <div id="theatre-modal" role="dialog" aria-modal="true" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="theatre-modal" 
+     role="dialog" 
+     aria-modal="true" 
+     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 relative">
-      <button type="button" aria-label="關閉劇團詳情" onclick="closeTheatreModal()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
+      <button type="button" aria-label="關閉劇團詳情" 
+        onclick="closeTheatreModal()" 
+        class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center transition">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
@@ -536,24 +569,26 @@
     };
 
     // --- Leaflet 地圖初始化 ---
-    function initMap() {
-      map = L.map('bookstoreMap').setView(
-        [22.3193, 114.1694],
-        12
-      );
+function initMap() {
+  if (map) return;
 
-      L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        {
-          attribution: '&copy; OpenStreetMap contributors'
-        }
-      ).addTo(map);
+  map = L.map('bookstoreMap').setView(
+    [22.3193, 114.1694],
+    12
+  );
 
-      // 唔好喺呢度加入任何 L.marker
+  L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      attribution: '&copy; OpenStreetMap contributors'
     }
+  ).addTo(map);
 
-    function updateMapMarkers(shops) {
-      if (!map) return;
+  // 唔好喺呢度加入任何 L.marker
+}
+
+function updateMapMarkers(shops) {
+  if (!map) return;
       
       // 清除舊 Marker
       mapMarkers.forEach(m => map.removeLayer(m));
