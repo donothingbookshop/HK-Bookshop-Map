@@ -538,10 +538,10 @@
   </footer>
 
   <script>
-    const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
+    const _SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let map;
     let mapMarkers = [];
@@ -621,7 +621,7 @@ function updateMapMarkers(shops) {
     }
 
     async function fetchPaymentSettings() {
-      const { data } = await supabase.from('payment_settings').select('*').eq('id', 'default').single();
+      const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
       if (data) paymentSettings = data;
     }
 
@@ -654,7 +654,7 @@ function updateMapMarkers(shops) {
 
     // --- 書店 ---
     async function fetchBookshops() {
-      const { data } = await supabase.from('bookshops').select('*').order('id', { ascending: true });
+      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshops = data || [];
       applyBookshopFilters();
     }
@@ -730,8 +730,8 @@ function updateMapMarkers(shops) {
 
     // --- 作者 & 出版社 ---
     async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await supabase.from('authors').select('*').order('id', { ascending: false });
-      const { data: publishers } = await supabase.from('publishers').select('*').order('id', { ascending: false });
+      const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
+      const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
       
       allAuthors = authors || [];
       allPublishers = publishers || [];
@@ -961,7 +961,7 @@ function setAddButtonState(button, soldOut) {
 // ------------------------------
 
 async function fetchProducts() {
-  const { data, error } = await supabase
+  const { data, error } = await _supabase
     .from(PRODUCT_TABLE)
     .select('*')
     .order('id', { ascending: false });
@@ -1737,7 +1737,7 @@ async function submitOrder() {
     const {
       data: latestProducts,
       error: latestError
-    } = await supabase
+    } = await _supabase
       .from(PRODUCT_TABLE)
       .select('*');
 
@@ -1802,7 +1802,7 @@ async function submitOrder() {
     const {
       data: orderData,
       error: orderError
-    } = await supabase
+    } = await _supabase
       .from('shop_orders')
       .insert([{
         customer_name: customerName,
@@ -1872,7 +1872,7 @@ async function submitOrder() {
         訂單已建立但部分庫存更新失敗，
         標示畀後台管理員跟進。
       */
-      await supabase
+      await _supabase
         .from('shop_orders')
         .update({
           status: '庫存更新異常'
@@ -1971,13 +1971,13 @@ async function submitOrder() {
       btn.innerText = "上傳中...";
 
       try {
-        const { data, error } = await supabase.storage.from('images').upload(fileName, file);
+        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
         if (error) throw error;
 
         const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(fileName);
 
         if (currentOrderId) {
-          await supabase.from('shop_orders').update({
+          await _supabase.from('shop_orders').update({
             payment_proof_url: publicUrl,
             status: '已傳送憑證'
           }).eq('id', currentOrderId);
@@ -1999,7 +1999,7 @@ async function submitOrder() {
 
     // --- 農業 & 環保 ---
     async function fetchEco() {
-      const { data } = await supabase.from('eco_farms').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
       allEco = data || [];
       renderEco(allEco);
     }
@@ -2055,7 +2055,7 @@ async function submitOrder() {
 
     // --- 劇團 ---
     async function fetchTheatre() {
-      const { data } = await supabase.from('theatre_groups').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
       allTheatre = data || [];
       renderTheatre(allTheatre);
     }
