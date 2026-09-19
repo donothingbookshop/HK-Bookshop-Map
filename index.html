@@ -546,6 +546,8 @@
   SUPABASE_ANON_KEY
 );
 
+    console.log('SUPABASE TEST OK', SUPABASE_URL);
+    
     let map = null;
   let mapMarkers = [];
 
@@ -588,6 +590,7 @@
       fetchEco(),
       fetchTheatre(),
       fetchPaymentSettings()
+    
     ]);
   } catch (error) {
     console.error('網站初始化失敗：', error);
@@ -673,7 +676,7 @@ function updateMapMarkers(shops) {
 
     // --- 書店 ---
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
+      const { data } = await supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshops = data || [];
       applyBookshopFilters();
     }
