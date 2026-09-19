@@ -538,18 +538,37 @@
   </footer>
 
   <script>
-    const _SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
+    const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-    let map;
-    let mapMarkers = [];
-    let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
-    let currentSearchQuery = '', currentCategoryFilter = 'ALL';
-    let currentBookshopRegion = 'ALL', currentBookshopCountry = 'ALL_OVERSEAS', currentBookshopSearch = '';
-    let paymentSettings = null;
-    let currentOrderId = null;
+    let map = null;
+  let mapMarkers = [];
+
+  let allBookshops = [];
+  let allEco = [];
+  let allTheatre = [];
+  let allProducts = [];
+  let allAuthors = [];
+  let allPublishers = [];
+  let cart = [];
+
+  let currentBookshopRegion = 'ALL';
+  let currentBookshopCountry = 'ALL_OVERSEAS';
+  let currentBookshopSearch = '';
+
+  let currentSearchQuery = '';
+  let currentCategoryFilter = 'ALL';
+
+  let paymentSettings = null;
+  let currentOrderId = null;
+
+  const PRODUCT_TABLE = 'shop_products';
+  let isSubmittingOrder = false;
 
     function cleanCategory(str) {
       if (!str) return '其他';
@@ -961,7 +980,7 @@ function setAddButtonState(button, soldOut) {
 // ------------------------------
 
 async function fetchProducts() {
-  const { data, error } = await _supabase
+  const { data, error } = await supabase
     .from(PRODUCT_TABLE)
     .select('*')
     .order('id', { ascending: false });
@@ -1737,7 +1756,7 @@ async function submitOrder() {
     const {
       data: latestProducts,
       error: latestError
-    } = await _supabase
+    } = await supabase
       .from(PRODUCT_TABLE)
       .select('*');
 
@@ -1802,7 +1821,7 @@ async function submitOrder() {
     const {
       data: orderData,
       error: orderError
-    } = await _supabase
+    } = await supabase
       .from('shop_orders')
       .insert([{
         customer_name: customerName,
@@ -1872,7 +1891,7 @@ async function submitOrder() {
         訂單已建立但部分庫存更新失敗，
         標示畀後台管理員跟進。
       */
-      await _supabase
+      await supabase
         .from('shop_orders')
         .update({
           status: '庫存更新異常'
@@ -1977,7 +1996,7 @@ async function submitOrder() {
         const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(fileName);
 
         if (currentOrderId) {
-          await _supabase.from('shop_orders').update({
+          await supabase.from('shop_orders').update({
             payment_proof_url: publicUrl,
             status: '已傳送憑證'
           }).eq('id', currentOrderId);
@@ -2055,7 +2074,7 @@ async function submitOrder() {
 
     // --- 劇團 ---
     async function fetchTheatre() {
-      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('theatre_groups').select('*').order('id', { ascending: false });
       allTheatre = data || [];
       renderTheatre(allTheatre);
     }
