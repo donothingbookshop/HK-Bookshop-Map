@@ -643,9 +643,14 @@ function updateMapMarkers(shops) {
     }
 
     async function fetchPaymentSettings() {
-      const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
-      if (data) paymentSettings = data;
-    }
+  const { data } = await supabase
+    .from('payment_settings')
+    .select('*')
+    .eq('id', 'default')
+    .single();
+
+  if (data) paymentSettings = data;
+}
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -701,11 +706,10 @@ function updateMapMarkers(shops) {
           </div>
           <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
             <div class="flex space-x-3 text-slate-600 text-base">
-              ${shop.website_url ? `<a href="${shop.website_url}" target="_blank" title="官方網站" class="hover:text-amber-800 transition"><i class="fa-solid fa-globe"></i></a>` : ''}
-              ${shop.instagram_url ? `<a href="${shop.instagram_url}" target="_blank" title="Instagram" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-              ${shop.facebook_url ? `<a href="${shop.facebook_url}" target="_blank" title="Facebook" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
-            </div>
-            ${shop.google_map_url ? `<a href="${shop.google_map_url}" target="_blank" class="text-amber-900 font-bold hover:underline">Google Map ↗</a>` : ''}
+             ${shop.website_url ? `<a href="${shop.website_url}" target="_blank" rel="noopener noreferrer" title="官方網站" class="hover:text-amber-800 transition"><i class="fa-solid fa-globe"></i></a>` : ''}
+${shop.instagram_url ? `<a href="${shop.instagram_url}" target="_blank" rel="noopener noreferrer" title="Instagram" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
+${shop.facebook_url ? `<a href="${shop.facebook_url}" target="_blank" rel="noopener noreferrer" title="Facebook" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
+${shop.google_map_url ? `<a href="${shop.google_map_url}" target="_blank" rel="noopener noreferrer" class="text-amber-900 font-bold hover:underline">Google Map ↗</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -752,15 +756,22 @@ function updateMapMarkers(shops) {
 
     // --- 作者 & 出版社 ---
     async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
-      
-      allAuthors = authors || [];
-      allPublishers = publishers || [];
+  const { data: authors } = await supabase
+    .from('authors')
+    .select('*')
+    .order('id', { ascending: false });
 
-      renderAuthors(allAuthors);
-      renderPublishers(allPublishers);
-    }
+  const { data: publishers } = await supabase
+    .from('publishers')
+    .select('*')
+    .order('id', { ascending: false });
+
+  allAuthors = authors || [];
+  allPublishers = publishers || [];
+
+  renderAuthors(allAuthors);
+  renderPublishers(allPublishers);
+}
 
     function renderAuthors(data) {
       const el = document.getElementById('author-list');
@@ -1991,7 +2002,7 @@ async function submitOrder() {
       btn.innerText = "上傳中...";
 
       try {
-        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
+        const { data, error } = await supabase.storage.from('images').upload(fileName, file);
         if (error) throw error;
 
         const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(fileName);
@@ -2019,7 +2030,7 @@ async function submitOrder() {
 
     // --- 農業 & 環保 ---
     async function fetchEco() {
-      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('eco_farms').select('*').order('id', { ascending: false });
       allEco = data || [];
       renderEco(allEco);
     }
