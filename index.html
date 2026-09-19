@@ -558,15 +558,32 @@
       return clean;
     }
 
-    window.onload = function() {
-      initMap();
-      fetchBookshops();
-      fetchProducts();
-      fetchAuthorsAndPublishers();
-      fetchEco();
-      fetchTheatre();
-      fetchPaymentSettings();
-    };
+    window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    initMap();
+
+    await Promise.all([
+      fetchBookshops(),
+      fetchProducts(),
+      fetchAuthorsAndPublishers(),
+      fetchEco(),
+      fetchTheatre(),
+      fetchPaymentSettings()
+    ]);
+  } catch (error) {
+    console.error('網站初始化失敗：', error);
+
+    const list = document.getElementById('bookshop-list');
+
+    if (list) {
+      list.innerHTML = `
+        <p class="text-red-600 col-span-full">
+          資料載入失敗，請開啟瀏覽器 Console 查看錯誤。
+        </p>
+      `;
+    }
+  }
+});
 
     // --- Leaflet 地圖初始化 ---
 function initMap() {
