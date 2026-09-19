@@ -541,7 +541,7 @@
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let map;
     let mapMarkers = [];
@@ -604,7 +604,7 @@ function updateMapMarkers(shops) {
     }
 
     async function fetchPaymentSettings() {
-      const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
+      const { data } = await supabase.from('payment_settings').select('*').eq('id', 'default').single();
       if (data) paymentSettings = data;
     }
 
@@ -637,7 +637,7 @@ function updateMapMarkers(shops) {
 
     // --- 書店 ---
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
+      const { data } = await supabase.from('bookshops').select('*').order('id', { ascending: true });
       allBookshops = data || [];
       applyBookshopFilters();
     }
@@ -713,8 +713,8 @@ function updateMapMarkers(shops) {
 
     // --- 作者 & 出版社 ---
     async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
+      const { data: authors } = await supabase.from('authors').select('*').order('id', { ascending: false });
+      const { data: publishers } = await supabase.from('publishers').select('*').order('id', { ascending: false });
       
       allAuthors = authors || [];
       allPublishers = publishers || [];
@@ -791,235 +791,116 @@ function updateMapMarkers(shops) {
 
     function closeDirectoryModal() { document.getElementById('directory-modal').classList.add('hidden'); }
 
-    // --- 網店商品 ---
-    async function fetchProducts() {
-      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
-      allProducts = data || [];
-      renderProducts(allProducts);
-      applyProductFilters();
-refreshSoldOutButtons();
-    }
+    // =====================================================
+// 網店商品、庫存、購物車及訂單
+// 直接取代原本 fetchProducts() 至 submitOrder() 相關函式
+// =====================================================
 
-    function renderProducts(list) {
-  const container = document.getElementById('product-list');
-  if (list.length === 0) {
-    container.innerHTML = `<p class="text-slate-400 italic col-span-full">尚無商品上架。</p>`;
-    return;
-  }
+const PRODUCT_TABLE = 'shop_products';
+let isSubmittingOrder = false;
 
-  container.innerHTML = list.map(p => {
-    let stocks = p.branch_stocks || {};
-    if (typeof stocks === 'string') {
-      try { stocks = JSON.parse(stocks); } catch (e) { stocks = {}; }
-    }
 
-    const baseQty = Number(p.quantity || 0);
-    const branchQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
-    const totalQty = baseQty + branchQty;
+// ------------------------------
+// 共用工具
+// ------------------------------
 
-    const inCart = cart.find(x => x.id === p.id);
-    const cartQty = inCart ? Number(inCart.qty || 0) : 0;
-    const availableQty = Math.max(totalQty - cartQty, 0);
-
-    const isSoldOut = availableQty <= 0;
-
-    const stockLabel = isSoldOut
-  ? `<span data-product-id="${p.id}" data-role="stock-label" class="block text-[10px] text-red-600 font-semibold">已售罄</span>`
-  : `<span data-product-id="${p.id}" data-role="stock-label" class="block text-[10px] text-slate-400">現貨: ${availableQty} 本</span>`;
-
-    const addBtnClass = isSoldOut
-      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-70'
-      : 'bg-amber-900 hover:bg-amber-800 text-white';
-
-    const addBtnAttr = isSoldOut ? 'disabled aria-disabled="true"' : '';
-
-    return `
-      <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-        <div class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer" onclick="openBookModal(${p.id})">
-          ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
-        </div>
-        <div class="p-4 flex-grow flex flex-col justify-between">
-          <div>
-            <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
-            <h3 class="font-bold text-base text-slate-800 mt-1 cursor-pointer hover:text-amber-800" onclick="openBookModal(${p.id})">${p.name}</h3>
-            <p class="text-xs text-slate-500 mt-0.5">作者：${p.author || '未提供'}</p>
-            ${p.publisher ? `<p class="text-xs text-slate-500 mt-0.5">出版社：${p.publisher}</p>` : ''}
-          </div>
-          <div class="mt-3 border-t pt-3 flex justify-between items-center">
-            <div>
-              <span class="text-lg font-bold text-amber-900">HK$ ${p.price}</span>
-              ${stockLabel}
-            </div>
-            <div class="flex gap-1">
-              <button onclick="openBookModal(${p.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs">詳情</button>
-              <button onclick="addToCart(${p.id})"
-        data-product-id="${p.id}"
-        data-role="add-to-cart"
-        class="${addBtnClass} px-3 py-1.5 rounded text-xs flex items-center gap-1"
-        ${addBtnAttr}>
-  <i class="fa-solid fa-cart-plus"></i>
-</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  })[char]);
 }
 
-    function handleSearch(q) {
-      currentSearchQuery = q.toLowerCase();
-      applyProductFilters();
-    }
+function findProduct(productId, products = allProducts) {
+  if (!Array.isArray(products)) return null;
 
-    function filterProductCategory(cat) {
-      currentCategoryFilter = cat;
-      applyProductFilters();
-    }
-
-    function applyProductFilters() {
-      let filtered = allProducts;
-      if (currentCategoryFilter !== 'ALL') {
-        filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
-      }
-      if (currentSearchQuery) {
-        filtered = filtered.filter(p => 
-          (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
-          (p.author && p.author.toLowerCase().includes(currentSearchQuery)) ||
-          (p.translator && p.translator.toLowerCase().includes(currentSearchQuery)) ||
-          (p.publisher && p.publisher.toLowerCase().includes(currentSearchQuery)) ||
-          (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
-        );
-      }
-      renderProducts(filtered);
-    }
-
-    function openBookModal(id) {
-  const p = allProducts.find(x => x.id === id);
-  if (!p) return;
-
-  document.getElementById('modal-img').src = p.image_url || '';
-  document.getElementById('modal-category').innerText = cleanCategory(p.category);
-  document.getElementById('modal-stock-type').innerText = p.stock_type || '買斷';
-  document.getElementById('modal-title').innerText = p.name;
-  document.querySelector('#modal-author span').innerText = p.author || '未提供';
-  document.querySelector('#modal-translator span').innerText = p.translator || '未提供';
-  document.querySelector('#modal-publisher span').innerText = p.publisher || '未提供';
-  document.querySelector('#modal-weight span').innerText = p.weight ? `${p.weight} g` : '未提供';
-  document.querySelector('#modal-isbn span').innerText = p.isbn || '未提供';
-  document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
-  document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
-
-  let stocks = p.branch_stocks || {};
-  if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch (e) { stocks = {}; } }
-
-  const allowedBranches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
-  let branchEntries = Object.entries(stocks).filter(([b]) => allowedBranches.includes(b));
-
-  allowedBranches.forEach(b => {
-    if (!stocks.hasOwnProperty(b)) {
-      branchEntries.push([b, 0]);
-    }
-  });
-
-  const baseQty = Number(p.quantity || 0);
-  const branchQty = Object.values(stocks).reduce((a, b) => a + Number(b), 0);
-  const totalQty = baseQty + branchQty;
-
-  const inCart = cart.find(x => x.id === p.id);
-  const cartQty = inCart ? Number(inCart.qty || 0) : 0;
-  const availableQty = Math.max(totalQty - cartQty, 0);
-  const isSoldOut = availableQty <= 0;
-
-  const branchContainer = document.getElementById('modal-branches');
-  branchContainer.innerHTML = branchEntries.map(([b, q]) => `
-    <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">${b}: ${q}本</span>
-  `).join(' ');
-
-  const stockSummary = document.getElementById('modal-stock-summary');
-  if (stockSummary) {
-    stockSummary.textContent = isSoldOut
-      ? '目前已售罄'
-      : `總庫存：${totalQty} 本，尚可選購：${availableQty} 本`;
-  }
-
-  const btn = document.getElementById('modal-add-btn');
-btn.dataset.productId = p.id;
-btn.onclick = () => { addToCart(p.id); closeBookModal(); };
-btn.disabled = isSoldOut;
-btn.textContent = isSoldOut ? '售罄' : '加入購物車';
-btn.setAttribute('aria-disabled', isSoldOut ? 'true' : 'false');
-
-  document.getElementById('book-modal').classList.remove('hidden');
+  return products.find(product =>
+    String(product.id) === String(productId)
+  ) || null;
 }
 
-    function closeBookModal() { document.getElementById('book-modal').classList.add('hidden'); }
+function findCartItem(productId) {
+  if (!Array.isArray(cart)) return null;
 
-   function getTotalStock(product) {
-  return getProductTotalStock(product);
-}
-    
-    // --- 購物車與提交訂單 ---
-    function addToCart(id) {
-  const p = allProducts.find(x => x.id === id);
-  if (!p) return;
-
-  const totalQty = getTotalStock(p);
-
-  const item = cart.find(x => x.id === id);
-  const currentQty = item ? Number(item.qty || 0) : 0;
-
-  if (totalQty <= 0) {
-    alert("此書目前已售罄，不能加入購物車。");
-    return;
-  }
-
-  if (currentQty >= totalQty) {
-    alert(`此書庫存只剩 ${totalQty} 本，不能再增加。`);
-    return;
-  }
-
-  if (item) {
-    item.qty += 1;
-  } else {
-    cart.push({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      qty: 1
-    });
-  }
-
-  updateCartUI();
-  applyProductFilters();
-  refreshSoldOutButtons();
+  return cart.find(item =>
+    String(item.id) === String(productId)
+  ) || null;
 }
 
-   function getProductTotalStock(product) {
-  let stocks = product.branch_stocks || {};
+function parseBranchStocks(product) {
+  let stocks = product?.branch_stocks || {};
 
   if (typeof stocks === 'string') {
     try {
       stocks = JSON.parse(stocks);
-    } catch (e) {
+    } catch (error) {
+      console.warn('branch_stocks JSON 格式錯誤：', error);
       stocks = {};
     }
   }
 
-  const baseQty = Number(product.quantity || 0);
-  const branchQty = Object.values(stocks).reduce((a, b) => a + Number(b || 0), 0);
+  if (!stocks || typeof stocks !== 'object' || Array.isArray(stocks)) {
+    return {};
+  }
 
-  return baseQty + branchQty;
+  const normalizedStocks = {};
+
+  Object.entries(stocks).forEach(([branch, quantity]) => {
+    const number = Number(quantity);
+
+    normalizedStocks[branch] = Number.isFinite(number)
+      ? Math.max(Math.floor(number), 0)
+      : 0;
+  });
+
+  return normalizedStocks;
+}
+
+/*
+  後台設定：
+  quantity = branch_stocks 的總和
+
+  所以：
+  - 有 branch_stocks 時，以 branch_stocks 總和為準
+  - 舊商品沒有 branch_stocks 時，才使用 quantity
+*/
+function getProductTotalStock(product) {
+  if (!product) return 0;
+
+  const stocks = parseBranchStocks(product);
+  const branchNames = Object.keys(stocks);
+
+  if (branchNames.length > 0) {
+    return Object.values(stocks).reduce(
+      (total, quantity) => total + Number(quantity || 0),
+      0
+    );
+  }
+
+  const quantity = Number(product.quantity || 0);
+
+  return Number.isFinite(quantity)
+    ? Math.max(Math.floor(quantity), 0)
+    : 0;
+}
+
+// 保留你原本使用緊嘅函式名
+function getTotalStock(product) {
+  return getProductTotalStock(product);
 }
 
 function getCartQty(productId) {
-  const item = cart.find(x => String(x.id) === String(productId));
-  return item ? Number(item.qty || 0) : 0;
+  const item = findCartItem(productId);
+  return item ? Math.max(Number(item.qty || 0), 0) : 0;
 }
 
 function getRemainingStock(product) {
   const totalQty = getProductTotalStock(product);
   const cartQty = getCartQty(product.id);
+
   return Math.max(totalQty - cartQty, 0);
 }
 
@@ -1027,233 +908,995 @@ function isSoldOut(product) {
   return getRemainingStock(product) <= 0;
 }
 
+/*
+  兼容兩個 HTML id：
+  1. modal-stock-summary
+  2. modal-total-qty
+*/
+function getModalStockLabel() {
+  return document.getElementById('modal-stock-summary') ||
+    document.getElementById('modal-total-qty');
+}
+
+function setAddButtonState(button, soldOut) {
+  if (!button) return;
+
+  button.disabled = soldOut;
+  button.setAttribute('aria-disabled', soldOut ? 'true' : 'false');
+
+  button.innerHTML = soldOut
+    ? '<i class="fa-solid fa-ban"></i><span>售罄</span>'
+    : '<i class="fa-solid fa-cart-plus"></i><span>加入購物車</span>';
+
+  button.classList.toggle('opacity-70', soldOut);
+  button.classList.toggle('cursor-not-allowed', soldOut);
+  button.classList.toggle('bg-slate-300', soldOut);
+  button.classList.toggle('text-slate-500', soldOut);
+
+  button.classList.toggle('bg-amber-900', !soldOut);
+  button.classList.toggle('hover:bg-amber-800', !soldOut);
+  button.classList.toggle('text-white', !soldOut);
+}
+
+
+// ------------------------------
+// 讀取及顯示商品
+// ------------------------------
+
+async function fetchProducts() {
+  const { data, error } = await supabase
+    .from(PRODUCT_TABLE)
+    .select('*')
+    .order('id', { ascending: false });
+
+  if (error) {
+    console.error('讀取商品失敗：', error);
+    alert('讀取商品失敗：' + error.message);
+    return;
+  }
+
+  allProducts = Array.isArray(data) ? data : [];
+
+  applyProductFilters();
+}
+
+function renderProducts(list) {
+  const container = document.getElementById('product-list');
+  if (!container) return;
+
+  const products = Array.isArray(list) ? list : [];
+
+  if (products.length === 0) {
+    container.innerHTML = `
+      <p class="text-slate-400 italic col-span-full">
+        尚無符合條件的商品。
+      </p>
+    `;
+    return;
+  }
+
+  container.innerHTML = products.map(product => {
+    const totalQty = getProductTotalStock(product);
+    const cartQty = getCartQty(product.id);
+    const remainingQty = Math.max(totalQty - cartQty, 0);
+    const soldOut = remainingQty <= 0;
+
+    const safeId = escapeHtml(product.id);
+    const safeName = escapeHtml(product.name || '未命名商品');
+    const safeAuthor = escapeHtml(product.author || '未提供');
+    const safePublisher = escapeHtml(product.publisher || '');
+    const safeCategory = escapeHtml(cleanCategory(product.category));
+    const safePrice = escapeHtml(product.price ?? 0);
+    const safeImageUrl = escapeHtml(product.image_url || '');
+
+    const stockLabel = soldOut
+      ? `
+        <span
+          data-product-id="${safeId}"
+          data-role="stock-label"
+          class="block text-[10px] text-red-600 font-semibold"
+        >
+          已售罄
+        </span>
+      `
+      : `
+        <span
+          data-product-id="${safeId}"
+          data-role="stock-label"
+          class="block text-[10px] text-slate-400"
+        >
+          現貨：${remainingQty} 本
+        </span>
+      `;
+
+    const addButtonClass = soldOut
+      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-70'
+      : 'bg-amber-900 hover:bg-amber-800 text-white';
+
+    return `
+      <article class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+        <button
+          type="button"
+          data-product-id="${safeId}"
+          onclick="openBookModal(this.dataset.productId)"
+          class="h-48 w-full bg-slate-50 flex items-center justify-center p-3 cursor-pointer"
+          aria-label="查看 ${safeName} 詳情"
+        >
+          ${
+            safeImageUrl
+              ? `
+                <img
+                  src="${safeImageUrl}"
+                  alt="${safeName} 封面"
+                  class="max-h-full object-contain"
+                  loading="lazy"
+                  onerror="this.style.display='none'"
+                >
+              `
+              : `
+                <i
+                  class="fa-solid fa-book text-4xl text-slate-300"
+                  aria-hidden="true"
+                ></i>
+              `
+          }
+        </button>
+
+        <div class="p-4 flex-grow flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">
+              ${safeCategory}
+            </span>
+
+            <button
+              type="button"
+              data-product-id="${safeId}"
+              onclick="openBookModal(this.dataset.productId)"
+              class="block text-left font-bold text-base text-slate-800 mt-1 hover:text-amber-800"
+            >
+              ${safeName}
+            </button>
+
+            <p class="text-xs text-slate-500 mt-0.5">
+              作者：${safeAuthor}
+            </p>
+
+            ${
+              safePublisher
+                ? `
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    出版社：${safePublisher}
+                  </p>
+                `
+                : ''
+            }
+          </div>
+
+          <div class="mt-3 border-t pt-3 flex justify-between items-center gap-2">
+            <div>
+              <span class="text-lg font-bold text-amber-900">
+                HK$ ${safePrice}
+              </span>
+              ${stockLabel}
+            </div>
+
+            <div class="flex gap-1">
+              <button
+                type="button"
+                data-product-id="${safeId}"
+                onclick="openBookModal(this.dataset.productId)"
+                class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs"
+              >
+                詳情
+              </button>
+
+              <button
+                type="button"
+                data-product-id="${safeId}"
+                data-role="add-to-cart"
+                onclick="addToCart(this.dataset.productId)"
+                class="${addButtonClass} px-3 py-1.5 rounded text-xs flex items-center gap-1"
+                ${soldOut ? 'disabled aria-disabled="true"' : 'aria-disabled="false"'}
+              >
+                ${
+                  soldOut
+                    ? '<i class="fa-solid fa-ban"></i><span>售罄</span>'
+                    : '<i class="fa-solid fa-cart-plus"></i><span>加入購物車</span>'
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+
+// ------------------------------
+// 搜尋及分類
+// ------------------------------
+
+function handleSearch(query) {
+  currentSearchQuery = String(query || '').trim().toLowerCase();
+  applyProductFilters();
+}
+
+function filterProductCategory(category) {
+  currentCategoryFilter = category || 'ALL';
+  applyProductFilters();
+}
+
+function applyProductFilters() {
+  let filtered = Array.isArray(allProducts)
+    ? [...allProducts]
+    : [];
+
+  if (currentCategoryFilter !== 'ALL') {
+    filtered = filtered.filter(product =>
+      cleanCategory(product.category) ===
+      cleanCategory(currentCategoryFilter)
+    );
+  }
+
+  if (currentSearchQuery) {
+    filtered = filtered.filter(product => {
+      const searchableFields = [
+        product.name,
+        product.author,
+        product.translator,
+        product.publisher,
+        product.isbn
+      ];
+
+      return searchableFields.some(value =>
+        String(value || '')
+          .toLowerCase()
+          .includes(currentSearchQuery)
+      );
+    });
+  }
+
+  renderProducts(filtered);
+  refreshSoldOutButtons();
+}
+
+
+// ------------------------------
+// 商品 Modal
+// ------------------------------
+
+function openBookModal(productId) {
+  const product = findProduct(productId);
+  if (!product) return;
+
+  const modal = document.getElementById('book-modal');
+  const modalImage = document.getElementById('modal-img');
+  const modalButton = document.getElementById('modal-add-btn');
+
+  if (!modal || !modalButton) return;
+
+  if (modalImage) {
+    if (product.image_url) {
+      modalImage.src = product.image_url;
+      modalImage.alt = `${product.name || '商品'} 封面`;
+      modalImage.classList.remove('hidden');
+    } else {
+      modalImage.removeAttribute('src');
+      modalImage.alt = '未提供封面';
+      modalImage.classList.add('hidden');
+    }
+  }
+
+  const categoryElement = document.getElementById('modal-category');
+  const stockTypeElement = document.getElementById('modal-stock-type');
+  const titleElement = document.getElementById('modal-title');
+  const descriptionElement = document.getElementById('modal-description');
+  const priceElement = document.getElementById('modal-price');
+
+  if (categoryElement) {
+    categoryElement.textContent = cleanCategory(product.category);
+  }
+
+  if (stockTypeElement) {
+    stockTypeElement.textContent = product.stock_type || '買斷';
+  }
+
+  if (titleElement) {
+    titleElement.textContent = product.name || '未命名商品';
+  }
+
+  if (descriptionElement) {
+    descriptionElement.textContent =
+      product.description || '暫無簡介描述';
+  }
+
+  if (priceElement) {
+    priceElement.textContent = `HK$ ${product.price ?? 0}`;
+  }
+
+  const authorElement = document.querySelector('#modal-author span');
+  const translatorElement = document.querySelector('#modal-translator span');
+  const publisherElement = document.querySelector('#modal-publisher span');
+  const weightElement = document.querySelector('#modal-weight span');
+  const isbnElement = document.querySelector('#modal-isbn span');
+
+  if (authorElement) {
+    authorElement.textContent = product.author || '未提供';
+  }
+
+  if (translatorElement) {
+    translatorElement.textContent = product.translator || '未提供';
+  }
+
+  if (publisherElement) {
+    publisherElement.textContent = product.publisher || '未提供';
+  }
+
+  if (weightElement) {
+    weightElement.textContent = product.weight
+      ? `${product.weight} g`
+      : '未提供';
+  }
+
+  if (isbnElement) {
+    isbnElement.textContent = product.isbn || '未提供';
+  }
+
+  const stocks = parseBranchStocks(product);
+  const allowedBranches = [
+    '網店',
+    '觀塘店',
+    '西營盤店',
+    '荃灣店'
+  ];
+
+  const branchEntries = allowedBranches.map(branch => [
+    branch,
+    Number(stocks[branch] || 0)
+  ]);
+
+  // 顯示資料庫內其他未列入 allowedBranches 嘅分店
+  Object.entries(stocks).forEach(([branch, quantity]) => {
+    if (!allowedBranches.includes(branch)) {
+      branchEntries.push([branch, quantity]);
+    }
+  });
+
+  const branchContainer = document.getElementById('modal-branches');
+
+  if (branchContainer) {
+    branchContainer.innerHTML = branchEntries.map(([branch, quantity]) => `
+      <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">
+        ${escapeHtml(branch)}：${Number(quantity || 0)} 本
+      </span>
+    `).join('');
+  }
+
+  const totalQty = getProductTotalStock(product);
+  const cartQty = getCartQty(product.id);
+  const remainingQty = Math.max(totalQty - cartQty, 0);
+  const soldOut = remainingQty <= 0;
+
+  const stockSummary = getModalStockLabel();
+
+  if (stockSummary) {
+    stockSummary.textContent = soldOut
+      ? '目前已售罄'
+      : `總庫存：${totalQty} 本，購物車已有：${cartQty} 本，尚可選購：${remainingQty} 本`;
+  }
+
+  /*
+    dataset.productId 只可以喺打開 modal 時設定。
+    refreshSoldOutButtons() 不可以在每件商品迴圈內重設。
+  */
+  modalButton.dataset.productId = product.id;
+  setAddButtonState(modalButton, soldOut);
+
+  modalButton.onclick = soldOut
+    ? null
+    : () => {
+        const added = addToCart(product.id);
+
+        if (added) {
+          closeBookModal();
+        }
+      };
+
+  modal.classList.remove('hidden');
+}
+
+function closeBookModal() {
+  const modal = document.getElementById('book-modal');
+
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+
+// ------------------------------
+// 刷新售罄狀態
+// ------------------------------
+
 function refreshSoldOutButtons() {
   if (!Array.isArray(allProducts)) return;
 
+  // 更新所有目前顯示緊嘅商品卡
   allProducts.forEach(product => {
     const totalQty = getProductTotalStock(product);
     const cartQty = getCartQty(product.id);
     const remainingQty = Math.max(totalQty - cartQty, 0);
     const soldOut = remainingQty <= 0;
 
-    // 商品卡按鈕
-    document.querySelectorAll(`[data-product-id="${product.id}"][data-role="add-to-cart"]`).forEach(btn => {
-      btn.disabled = soldOut;
-      btn.innerHTML = soldOut
-        ? `<i class="fa-solid fa-ban"></i> 售罄`
-        : `<i class="fa-solid fa-cart-plus"></i> 加入購物車`;
+    const productId = String(product.id).replace(/"/g, '\\"');
 
-      btn.classList.toggle('opacity-50', soldOut);
-      btn.classList.toggle('cursor-not-allowed', soldOut);
-      btn.classList.toggle('bg-slate-300', soldOut);
-      btn.classList.toggle('text-slate-500', soldOut);
+    document
+      .querySelectorAll(
+        `[data-product-id="${productId}"][data-role="add-to-cart"]`
+      )
+      .forEach(button => {
+        setAddButtonState(button, soldOut);
+      });
 
-      btn.classList.toggle('bg-amber-900', !soldOut);
-      btn.classList.toggle('hover:bg-amber-800', !soldOut);
-      btn.classList.toggle('text-white', !soldOut);
-    });
+    document
+      .querySelectorAll(
+        `[data-product-id="${productId}"][data-role="stock-label"]`
+      )
+      .forEach(label => {
+        label.textContent = soldOut
+          ? '已售罄'
+          : `現貨：${remainingQty} 本`;
 
-    // 商品卡庫存文字
-    document.querySelectorAll(`[data-product-id="${product.id}"][data-role="stock-label"]`).forEach(label => {
-      label.textContent = soldOut ? '已售罄' : `現貨: ${remainingQty} 本`;
-      label.classList.toggle('text-red-600', soldOut);
-      label.classList.toggle('font-semibold', soldOut);
-      label.classList.toggle('text-slate-400', !soldOut);
-    });
-
-    // modal 按鈕
-    const modalBtn = document.getElementById('modal-add-btn');
-    if (modalBtn && Number(modalBtn.dataset.productId) === Number(product.id)) {
-      modalBtn.disabled = soldOut;
-      modalBtn.textContent = soldOut ? '售罄' : '加入購物車';
-      modalBtn.setAttribute('aria-disabled', soldOut ? 'true' : 'false');
-      modalBtn.classList.toggle('opacity-50', soldOut);
-      modalBtn.classList.toggle('cursor-not-allowed', soldOut);
-    }
-
-    // modal 庫存文字
-    const modalStockLabel = document.getElementById('modal-stock-summary');
-    if (modalStockLabel && modalBtn && Number(modalBtn.dataset.productId) === Number(product.id)) {
-      modalStockLabel.textContent = soldOut
-        ? '目前已售罄'
-        : `總庫存：${totalQty} 本，尚可選購：${remainingQty} 本`;
-    }
+        label.classList.toggle('text-red-600', soldOut);
+        label.classList.toggle('font-semibold', soldOut);
+        label.classList.toggle('text-slate-400', !soldOut);
+      });
   });
+
+  /*
+    Modal 必須放喺 allProducts.forEach 外面，
+    只更新目前 modal 對應嘅商品。
+  */
+  const modalButton = document.getElementById('modal-add-btn');
+  const modalStockLabel = getModalStockLabel();
+
+  if (!modalButton?.dataset.productId) return;
+
+  const modalProduct = findProduct(modalButton.dataset.productId);
+  if (!modalProduct) return;
+
+  const totalQty = getProductTotalStock(modalProduct);
+  const cartQty = getCartQty(modalProduct.id);
+  const remainingQty = Math.max(totalQty - cartQty, 0);
+  const soldOut = remainingQty <= 0;
+
+  setAddButtonState(modalButton, soldOut);
+
+  modalButton.onclick = soldOut
+    ? null
+    : () => {
+        const added = addToCart(modalProduct.id);
+
+        if (added) {
+          closeBookModal();
+        }
+      };
+
+  if (modalStockLabel) {
+    modalStockLabel.textContent = soldOut
+      ? '目前已售罄'
+      : `總庫存：${totalQty} 本，購物車已有：${cartQty} 本，尚可選購：${remainingQty} 本`;
+  }
 }
 
-function changeQty(index, delta) {
-  const item = cart[index];
-  if (!item) return;
 
-  const p = allProducts.find(x => x.id === item.id);
-  if (!p) return;
+// ------------------------------
+// 加入購物車
+// ------------------------------
 
-  const totalQty = getProductTotalStock(p);
+function addToCart(productId) {
+  const product = findProduct(productId);
+
+  if (!product) {
+    alert('找不到此商品。');
+    return false;
+  }
+
+  const totalQty = getProductTotalStock(product);
+  const item = findCartItem(product.id);
+  const currentQty = item ? Number(item.qty || 0) : 0;
 
   if (totalQty <= 0) {
-    if (delta > 0) {
-      alert("此書已售罄，不能再增加。");
-      return;
-    } else {
-      cart.splice(index, 1);
-      updateCartUI();
-      applyProductFilters();
-      refreshSoldOutButtons();
-      return;
-    }
+    alert('此書目前已售罄，不能加入購物車。');
+    refreshSoldOutButtons();
+    return false;
   }
 
-  if (delta > 0 && item.qty >= totalQty) {
-    alert("此書已達庫存上限，不能再增加。");
-    return;
+  if (currentQty >= totalQty) {
+    alert(`此書庫存只有 ${totalQty} 本，不能再增加。`);
+    refreshSoldOutButtons();
+    return false;
   }
 
-  item.qty += delta;
-
-  if (item.qty <= 0) {
-    cart.splice(index, 1);
-  } else if (item.qty > totalQty) {
-    item.qty = totalQty;
+  if (item) {
+    item.qty = currentQty + 1;
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price || 0),
+      qty: 1
+    });
   }
 
   updateCartUI();
   applyProductFilters();
-  refreshSoldOutButtons();
+
+  return true;
 }
-    
-    async function submitOrder() {
+
+    function updateCartUI() {
+  const cartItemsElement = document.getElementById('cart-items');
+  const headerCountElement = document.getElementById('cart-count');
+  const sidebarCountElement =
+    document.getElementById('sidebar-cart-count');
+  const totalElement = document.getElementById('cart-total');
+
+  const totalQuantity = cart.reduce(
+    (total, item) => total + Number(item.qty || 0),
+    0
+  );
+
+  const totalPrice = cart.reduce(
+    (total, item) =>
+      total +
+      Number(item.price || 0) *
+      Number(item.qty || 0),
+    0
+  );
+
+  if (headerCountElement) {
+    headerCountElement.textContent = totalQuantity;
+  }
+
+  if (sidebarCountElement) {
+    sidebarCountElement.textContent = totalQuantity;
+  }
+
+  if (totalElement) {
+    totalElement.textContent =
+      `HK$ ${totalPrice.toFixed(2)}`;
+  }
+
+  if (!cartItemsElement) return;
+
   if (cart.length === 0) {
-    return alert("購物車目前沒有任何商品！");
+    cartItemsElement.innerHTML = `
+      <p class="text-slate-400 italic text-center py-4">
+        購物車目前沒有商品
+      </p>
+    `;
+    return;
   }
 
-  const name = document.getElementById('cust-name').value.trim();
-  const phone = document.getElementById('cust-phone').value.trim();
-  const payMethod = document.getElementById('payment-method').value;
+  cartItemsElement.innerHTML = cart.map((item, index) => {
+    const name = escapeHtml(item.name || '未命名商品');
+    const quantity = Math.max(Number(item.qty || 0), 0);
+    const price = Number(item.price || 0);
+    const subtotal = price * quantity;
 
-  if (!name || !phone) {
-    return alert("請填寫訂購人姓名與電話！");
+    return `
+      <div class="border-b border-slate-100 pb-3">
+        <div class="flex justify-between gap-3 mb-2">
+          <div class="min-w-0">
+            <p class="font-semibold text-slate-800 break-words">
+              ${name}
+            </p>
+
+            <p class="text-[11px] text-slate-500">
+              HK$ ${price.toFixed(2)} × ${quantity}
+            </p>
+          </div>
+
+          <span class="font-semibold text-amber-900 whitespace-nowrap">
+            HK$ ${subtotal.toFixed(2)}
+          </span>
+        </div>
+
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onclick="changeQty(${index}, -1)"
+            class="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+            aria-label="減少 ${name} 數量"
+          >
+            <i class="fa-solid fa-minus"></i>
+          </button>
+
+          <span class="min-w-6 text-center font-semibold">
+            ${quantity}
+          </span>
+
+          <button
+            type="button"
+            onclick="changeQty(${index}, 1)"
+            class="w-8 h-8 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 flex items-center justify-center"
+            aria-label="增加 ${name} 數量"
+          >
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ------------------------------
+// 修改購物車數量
+// ------------------------------
+
+function changeQty(index, delta) {
+  const item = cart[index];
+
+  if (!item || !Number.isFinite(Number(delta)) || Number(delta) === 0) {
+    return;
   }
+
+  const change = Number(delta);
+  const currentQty = Math.max(Number(item.qty || 0), 0);
+
+  /*
+    減少數量時，即使商品已刪除或售罄，
+    仍然要容許顧客移除購物車商品。
+  */
+  if (change < 0) {
+    item.qty = currentQty + change;
+
+    if (item.qty <= 0) {
+      cart.splice(index, 1);
+    }
+
+    updateCartUI();
+    applyProductFilters();
+    return;
+  }
+
+  const product = findProduct(item.id);
+
+  if (!product) {
+    alert('此商品已不存在，請從購物車移除。');
+    return;
+  }
+
+  const totalQty = getProductTotalStock(product);
+  const nextQty = currentQty + change;
+
+  if (totalQty <= 0) {
+    alert('此書已售罄，不能再增加。');
+    refreshSoldOutButtons();
+    return;
+  }
+
+  if (nextQty > totalQty) {
+    alert(`此書庫存只有 ${totalQty} 本，不能再增加。`);
+    refreshSoldOutButtons();
+    return;
+  }
+
+  item.qty = nextQty;
+
+  updateCartUI();
+  applyProductFilters();
+}
+
+
+// ------------------------------
+// 訂單扣減分店庫存
+// ------------------------------
+
+function buildStockAfterDeduction(product, requestedQuantity) {
+  const deductQty = Math.max(
+    Math.floor(Number(requestedQuantity || 0)),
+    0
+  );
+
+  const stocks = parseBranchStocks(product);
+  const stockKeys = Object.keys(stocks);
+
+  /*
+    舊商品如果沒有 branch_stocks，
+    就只扣 quantity。
+  */
+  if (stockKeys.length === 0) {
+    return {
+      quantity: Math.max(
+        getProductTotalStock(product) - deductQty,
+        0
+      )
+    };
+  }
+
+  const updatedStocks = { ...stocks };
+  let remainingToDeduct = deductQty;
+
+  /*
+    扣貨次序：
+    1. 網店
+    2. 觀塘店
+    3. 西營盤店
+    4. 荃灣店
+    5. 其他分店
+
+    如你只想出售網店庫存，可再改成只扣「網店」。
+  */
+  const preferredOrder = [
+    '網店',
+    '觀塘店',
+    '西營盤店',
+    '荃灣店'
+  ];
+
+  const deductionOrder = [
+    ...preferredOrder.filter(branch =>
+      Object.prototype.hasOwnProperty.call(updatedStocks, branch)
+    ),
+    ...stockKeys.filter(branch =>
+      !preferredOrder.includes(branch)
+    )
+  ];
+
+  for (const branch of deductionOrder) {
+    if (remainingToDeduct <= 0) break;
+
+    const branchQty = Math.max(
+      Number(updatedStocks[branch] || 0),
+      0
+    );
+
+    const deduction = Math.min(branchQty, remainingToDeduct);
+
+    updatedStocks[branch] = branchQty - deduction;
+    remainingToDeduct -= deduction;
+  }
+
+  if (remainingToDeduct > 0) {
+    throw new Error(
+      `${product.name || '商品'} 可扣減庫存不足`
+    );
+  }
+
+  const newTotalQty = Object.values(updatedStocks).reduce(
+    (total, quantity) => total + Number(quantity || 0),
+    0
+  );
+
+  return {
+    branch_stocks: updatedStocks,
+    quantity: newTotalQty
+  };
+}
+
+
+// ------------------------------
+// 提交訂單
+// ------------------------------
+
+async function submitOrder() {
+  if (isSubmittingOrder) return;
+
+  if (!Array.isArray(cart) || cart.length === 0) {
+    alert('購物車目前沒有任何商品！');
+    return;
+  }
+
+  const nameInput = document.getElementById('cust-name');
+  const phoneInput = document.getElementById('cust-phone');
+  const paymentInput = document.getElementById('payment-method');
+
+  const customerName = nameInput?.value.trim() || '';
+  const customerPhone = phoneInput?.value.trim() || '';
+  const paymentMethod = paymentInput?.value || '';
+
+  if (!customerName || !customerPhone) {
+    alert('請填寫訂購人姓名與電話！');
+    return;
+  }
+
+  isSubmittingOrder = true;
+
+  /*
+    先複製購物車，避免提交期間畫面操作影響資料。
+  */
+  const orderCart = cart.map(item => ({
+    id: item.id,
+    name: item.name,
+    price: Number(item.price || 0),
+    qty: Math.max(Math.floor(Number(item.qty || 0)), 0)
+  }));
 
   try {
-    // 重新拉最新商品資料，提交前再次核對庫存
-    const { data: latestProducts, error: latestError } = await _supabase
-      .from('products')
+    // 重新讀取最新商品及庫存
+    const {
+      data: latestProducts,
+      error: latestError
+    } = await supabase
+      .from(PRODUCT_TABLE)
       .select('*');
 
     if (latestError) {
-      console.error("讀取最新庫存失敗：", latestError);
-      alert("提交前無法讀取最新庫存：" + latestError.message);
-      return;
+      throw new Error(
+        '提交前無法讀取最新庫存：' + latestError.message
+      );
     }
 
-    // 建立最新商品對照表
-    const latestMap = {};
-    (latestProducts || []).forEach(p => {
-      latestMap[p.id] = p;
+    const latestProductMap = new Map();
+
+    (latestProducts || []).forEach(product => {
+      latestProductMap.set(String(product.id), product);
     });
 
     const problems = [];
 
-    for (const item of cart) {
-      const p = latestMap[item.id];
-      if (!p) {
+    for (const item of orderCart) {
+      const product = latestProductMap.get(String(item.id));
+
+      if (!product) {
         problems.push(`${item.name}：找不到商品資料`);
         continue;
       }
 
-      let stocks = p.branch_stocks || {};
-      if (typeof stocks === 'string') {
-        try {
-          stocks = JSON.parse(stocks);
-        } catch (e) {
-          stocks = {};
-        }
+      if (item.qty <= 0) {
+        problems.push(`${item.name}：購買數量不正確`);
+        continue;
       }
 
-      const baseQty = Number(p.quantity || 0);
-      const branchQty = Object.values(stocks).reduce((a, b) => a + Number(b || 0), 0);
-      const totalQty = baseQty + branchQty;
+      const latestTotalQty = getProductTotalStock(product);
 
-      if (Number(item.qty) > totalQty) {
-        problems.push(`${item.name}：想買 ${item.qty} 本，但庫存只有 ${totalQty} 本`);
+      if (latestTotalQty <= 0) {
+        problems.push(`${item.name}：目前已售罄`);
+        continue;
+      }
+
+      if (item.qty > latestTotalQty) {
+        problems.push(
+          `${item.name}：想買 ${item.qty} 本，但最新庫存只有 ${latestTotalQty} 本`
+        );
       }
     }
 
     if (problems.length > 0) {
-      alert("以下商品庫存不足，請先調整購物車：\n\n" + problems.join("\n"));
+      alert(
+        '以下商品庫存不足，請先調整購物車：\n\n' +
+        problems.join('\n')
+      );
+
+      await fetchProducts();
       return;
     }
 
-    const totalPrice = cart.reduce((a, b) => a + (Number(b.price) * Number(b.qty)), 0);
+    const totalPrice = orderCart.reduce(
+      (total, item) =>
+        total + Number(item.price) * Number(item.qty),
+      0
+    );
 
-    const cleanItems = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: Number(item.price),
-      qty: Number(item.qty)
-    }));
-
-    // 先寫入訂單
-    const { data, error } = await _supabase
+    // 先建立訂單
+    const {
+      data: orderData,
+      error: orderError
+    } = await supabase
       .from('shop_orders')
       .insert([{
-        customer_name: name,
-        customer_phone: phone,
-        payment_method: payMethod,
-        items: cleanItems,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        items: orderCart,
         total_amount: totalPrice,
         status: '待確認'
       }])
       .select();
 
-    if (error) {
-      console.error("Supabase 訂單寫入失敗原因：", error);
-      alert("提交訂單時發生錯誤：" + error.message);
+    if (orderError) {
+      throw new Error(
+        '提交訂單失敗：' + orderError.message
+      );
+    }
+
+    const newOrder = orderData?.[0];
+
+    if (!newOrder) {
+      throw new Error('訂單已送出，但無法取得訂單編號。');
+    }
+
+    currentOrderId = newOrder.id;
+
+    const stockUpdateErrors = [];
+
+    // 扣減 quantity 及 branch_stocks
+    for (const item of orderCart) {
+      const product = latestProductMap.get(String(item.id));
+      if (!product) continue;
+
+      try {
+        const stockPayload = buildStockAfterDeduction(
+          product,
+          item.qty
+        );
+
+        const { error: updateError } = await supabase
+          .from(PRODUCT_TABLE)
+          .update(stockPayload)
+          .eq('id', item.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        /*
+          更新最新資料映射，避免同一次訂單內
+          出現相同商品時使用舊庫存。
+        */
+        Object.assign(product, stockPayload);
+      } catch (error) {
+        console.error(
+          `扣減庫存失敗（${item.name}）：`,
+          error
+        );
+
+        stockUpdateErrors.push(
+          `${item.name}：${error.message}`
+        );
+      }
+    }
+
+    if (stockUpdateErrors.length > 0) {
+      /*
+        訂單已建立但部分庫存更新失敗，
+        標示畀後台管理員跟進。
+      */
+      await supabase
+        .from('shop_orders')
+        .update({
+          status: '庫存更新異常'
+        })
+        .eq('id', currentOrderId);
+
+      cart = [];
+      updateCartUI();
+      await fetchProducts();
+
+      alert(
+        `訂單 #${currentOrderId} 已建立，但部分庫存更新失敗。\n` +
+        '請勿重複提交，請聯絡店家跟進：\n\n' +
+        stockUpdateErrors.join('\n')
+      );
+
       return;
     }
 
-    if (data && data[0]) {
-      currentOrderId = data[0].id;
-    }
-
-    // 再扣減主庫存 quantity
-    for (const item of cart) {
-      const p = latestMap[item.id];
-      if (!p) continue;
-
-      const oldQty = Number(p.quantity || 0);
-      const deductQty = Number(item.qty || 0);
-      const newQty = Math.max(oldQty - deductQty, 0);
-
-      const { error: updateError } = await _supabase
-        .from('products')
-        .update({ quantity: newQty })
-        .eq('id', item.id);
-
-      if (updateError) {
-        console.error(`扣減庫存失敗（${item.name}）：`, updateError);
-      }
-    }
-
-    // 更新前端 allProducts 庫存，令售罄／現貨即時刷新
-    cart.forEach(item => {
-      const p = allProducts.find(x => x.id === item.id);
-      if (p) {
-        p.quantity = Math.max(Number(p.quantity || 0) - Number(item.qty || 0), 0);
-      }
-    });
-
-    showPaymentModal(payMethod, totalPrice);
-
+    // 清空購物車及表格
     cart = [];
-    document.getElementById('cust-name').value = '';
-    document.getElementById('cust-phone').value = '';
-    updateCartUI();
-    applyProductFilters();
 
-  } catch (err) {
-    console.error("提交異常：", err);
-    alert("提交訂單時發生系統錯誤，請檢查網路連線或資料庫權限。");
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+
+    updateCartUI();
+
+    // 重新讀取資料庫最新庫存
+    await fetchProducts();
+
+    showPaymentModal(paymentMethod, totalPrice);
+
+  } catch (error) {
+    console.error('提交訂單異常：', error);
+
+    alert(
+      error?.message ||
+      '提交訂單時發生系統錯誤，請檢查網路連線或資料庫權限。'
+    );
+  } finally {
+    isSubmittingOrder = false;
   }
 }
 
@@ -1272,7 +1915,7 @@ function changeQty(index, delta) {
       } else if (method === 'PayMe') {
         html += `
           <p><span class="font-bold text-slate-700">付款方式：</span>PayMe</p>
-          ${paymentSettings.payme_link ? `<p><span class="font-bold text-slate-700">PayMe 連結：</span><a href="${paymentSettings.payme_link}" target="_blank" class="text-blue-600 underline break-all">${paymentSettings.payme_link}</a></p>` : ''}
+          ${paymentSettings.payme_link ? `<p><span class="font-bold text-slate-700">PayMe 連結：</span><a href="${paymentSettings.payme_link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline break-all">${paymentSettings.payme_link}</a></p>` : ''}
           ${paymentSettings.payme_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">PayMe QR Code 掃瞄付款：</p><img src="${paymentSettings.payme_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm"></div>` : ''}
         `;
       } else if (method === 'BankTransfer') {
@@ -1311,13 +1954,13 @@ function changeQty(index, delta) {
       btn.innerText = "上傳中...";
 
       try {
-        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
+        const { data, error } = await supabase.storage.from('images').upload(fileName, file);
         if (error) throw error;
 
-        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(fileName);
 
         if (currentOrderId) {
-          await _supabase.from('shop_orders').update({
+          await supabase.from('shop_orders').update({
             payment_proof_url: publicUrl,
             status: '已傳送憑證'
           }).eq('id', currentOrderId);
@@ -1339,7 +1982,7 @@ function changeQty(index, delta) {
 
     // --- 農業 & 環保 ---
     async function fetchEco() {
-      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('eco_farms').select('*').order('id', { ascending: false });
       allEco = data || [];
       renderEco(allEco);
     }
@@ -1395,7 +2038,7 @@ function changeQty(index, delta) {
 
     // --- 劇團 ---
     async function fetchTheatre() {
-      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('theatre_groups').select('*').order('id', { ascending: false });
       allTheatre = data || [];
       renderTheatre(allTheatre);
     }
@@ -1451,3 +2094,4 @@ function changeQty(index, delta) {
 </script>
 </body>
 </html>
+
