@@ -482,660 +482,1508 @@
   </footer>
 
   <script>
-    const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
-    
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
 
-    let map;
-    let mapMarkers = [];
-    let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
-    let currentSearchQuery = '', currentCategoryFilter = 'ALL';
-    let currentBookshopRegion = 'ALL', currentBookshopCountry = 'ALL_OVERSEAS', currentBookshopSearch = '';
-    let paymentSettings = null;
-    let currentOrderId = null;
-
-    function cleanCategory(str) {
-      if (!str) return '其他';
-      let clean = str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-      if (clean === '文學小說') return '小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）';
-      return clean;
-    }
-
-    window.onload = function() {
-      initMap();
-      fetchBookshops();
-      fetchProducts();
-      fetchAuthorsAndPublishers();
-      fetchEco();
-      fetchTheatre();
-      fetchPaymentSettings();
-    };
-
-    // --- Leaflet 地圖初始化 ---
-    function initMap() {
-  map = L.map('bookstoreMap').setView(
-    [22.3193, 114.1694],
-    12
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   );
 
-  L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-      attribution: '&copy; OpenStreetMap contributors'
-    }
-  ).addTo(map);
+  const PRODUCT_TABLE = 'shop_products';
+  let isSubmittingOrder = false;
 
-  // 唔好喺呢度加入任何 L.marker
-}
+  let map = null;
+  let mapMarkers = [];
 
-    function updateMapMarkers(shops) {
-      if (!map) return;
-      
-      // 清除舊 Marker
-      mapMarkers.forEach(m => map.removeLayer(m));
-      mapMarkers = [];
+  let allBookshops = [];
+  let allEco = [];
+  let allTheatre = [];
+  let allProducts = [];
+  let allAuthors = [];
+  let allPublishers = [];
+  let cart = [];
 
-      shops.forEach(shop => {
-        if (shop.latitude && shop.longitude) {
-          const marker = L.marker([shop.latitude, shop.longitude]).addTo(map)
-            .bindPopup(`<b>${shop.name}</b><br>${shop.address || '獨立書店'}`);
-          mapMarkers.push(marker);
-        }
-      });
-    }
+  let currentSearchQuery = '';
+  let currentCategoryFilter = 'ALL';
 
-    async function fetchPaymentSettings() {
-      const { data } = await _supabase.from('payment_settings').select('*').eq('id', 'default').single();
-      if (data) paymentSettings = data;
-    }
+  let currentBookshopRegion = 'ALL';
+  let currentBookshopCountry = 'ALL_OVERSEAS';
+  let currentBookshopSearch = '';
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      
-      const targetMap = {
-        'map': 'tab-map',
-        'directory': 'tab-directory',
-        'shop': 'tab-shop',
-        'eco': 'tab-eco',
-        'theatre': 'tab-theatre'
-      };
+  let paymentSettings = null;
+  let currentOrderId = null;
 
-      const realTabId = targetMap[tabId] || `tab-${tabId}`;
-      const targetEl = document.getElementById(realTabId);
-      if (targetEl) targetEl.classList.add('active');
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    })[char]);
+  }
 
-      if (tabId === 'map') {
-        setTimeout(() => { if(map) map.invalidateSize(); }, 200);
-      }
+  function cleanCategory(str) {
+    if (!str) return '其他';
+    const clean = str
+      .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+      .trim();
+
+    if (clean === '文學小說') {
+      return '小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）';
     }
 
-    function goToCartCheckout() {
-      switchTab('shop');
-      setTimeout(() => {
-        document.getElementById('checkout-sidebar').scrollIntoView({ behavior: 'smooth' });
-      }, 50);
-    }
+    return clean;
+  }
 
-    // --- 書店 ---
-    async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
-      allBookshops = data || [];
-      applyBookshopFilters();
-    }
+  function externalLink(url, label, className = '') {
+    if (!url) return '';
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="${className}">${label}</a>`;
+  }
 
-    function renderBookshops(list) {
-      const container = document.getElementById('bookshop-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
-      container.innerHTML = list.map(shop => `
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-          ${shop.image_url ? `<div class="h-44 bg-slate-50 flex items-center justify-center overflow-hidden"><img src="${shop.image_url}" class="w-full h-full object-contain p-2"></div>` : ''}
-          <div class="p-5 flex-grow">
-            <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-lg text-slate-800">${shop.name}</h3>
-              <span class="bg-amber-100 text-amber-900 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-                ${shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region}
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-amber-800"></i>${shop.address || '無地址'}</p>
-            ${shop.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-amber-800"></i>${shop.phone}</p>` : ''}
-            <p class="text-xs text-slate-400 mb-3"><i class="fa-regular fa-clock mr-1"></i>${shop.opening_hours || '未提供營業時間'}</p>
-            <p class="text-sm text-slate-600 mb-4 whitespace-pre-line">${shop.description || ''}</p>
-          </div>
-          <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
-            <div class="flex space-x-3 text-slate-600 text-base">
-              ${shop.website_url ? `<a href="${shop.website_url}" target="_blank" title="官方網站" class="hover:text-amber-800 transition"><i class="fa-solid fa-globe"></i></a>` : ''}
-              ${shop.instagram_url ? `<a href="${shop.instagram_url}" target="_blank" title="Instagram" class="hover:text-pink-600 transition"><i class="fa-brands fa-instagram"></i></a>` : ''}
-              ${shop.facebook_url ? `<a href="${shop.facebook_url}" target="_blank" title="Facebook" class="hover:text-blue-600 transition"><i class="fa-brands fa-facebook"></i></a>` : ''}
-            </div>
-            ${shop.google_map_url ? `<a href="${shop.google_map_url}" target="_blank" class="text-amber-900 font-bold hover:underline">Google Map ↗</a>` : ''}
-          </div>
-        </div>
-      `).join('');
-    }
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      initMap();
 
-    function filterRegion(region) {
-      currentBookshopRegion = region;
-      document.getElementById('country-filter-bar').classList.toggle('hidden', region !== '外國香港書店/圖書館');
-      applyBookshopFilters();
-    }
-
-    function filterCountry(country) {
-      currentBookshopCountry = country;
-      applyBookshopFilters();
-    }
-
-    function handleBookshopSearch(q) {
-      currentBookshopSearch = q.toLowerCase();
-      applyBookshopFilters();
-    }
-
-    function applyBookshopFilters() {
-      let filtered = allBookshops;
-
-      if (currentBookshopRegion !== 'ALL') {
-        filtered = filtered.filter(b => b.region === currentBookshopRegion);
-      }
-
-      if (currentBookshopRegion === '外國香港書店/圖書館' && currentBookshopCountry !== 'ALL_OVERSEAS') {
-        filtered = filtered.filter(b => b.country === currentBookshopCountry);
-      }
-
-      if (currentBookshopSearch) {
-        filtered = filtered.filter(b => 
-          (b.name && b.name.toLowerCase().includes(currentBookshopSearch)) ||
-          (b.address && b.address.toLowerCase().includes(currentBookshopSearch)) ||
-          (b.description && b.description.toLowerCase().includes(currentBookshopSearch))
-        );
-      }
-
-      renderBookshops(filtered);
-      updateMapMarkers(filtered);
-    }
-
-    // --- 作者 & 出版社 ---
-    async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
-      
-      allAuthors = authors || [];
-      allPublishers = publishers || [];
-
-      renderAuthors(allAuthors);
-      renderPublishers(allPublishers);
-    }
-
-    function renderAuthors(data) {
-      const el = document.getElementById('author-list');
-      if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無作者資料</p>`; return; }
-      el.innerHTML = data.map(a => `
-        <div onclick="openDirectoryModal('author', ${a.id})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-            ${a.image_url ? `<img src="${a.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-slate-400"></i>`}
-          </div>
-          <div>
-            <h4 class="font-bold text-slate-800">${a.name}</h4>
-            <p class="text-xs text-slate-500 line-clamp-1">${a.bio || '點擊查看詳細簡介'}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderPublishers(data) {
-      const el = document.getElementById('publisher-list');
-      if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無出版社資料</p>`; return; }
-      el.innerHTML = data.map(p => `
-        <div onclick="openDirectoryModal('publisher', ${p.id})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-            ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-building text-slate-400"></i>`}
-          </div>
-          <div>
-            <h4 class="font-bold text-slate-800">${p.name}</h4>
-            <p class="text-xs text-slate-500 line-clamp-1">${p.description || '點擊查看詳細簡介'}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function switchDirectorySubTab(type, btn) {
-      document.querySelectorAll('.dir-sub-btn').forEach(b => b.classList.remove('bg-white', 'text-slate-800', 'shadow-sm'));
-      btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
-
-      const authorSec = document.getElementById('dir-section-authors');
-      const pubSec = document.getElementById('dir-section-publishers');
-
-      if (type === 'all') { authorSec.classList.remove('hidden'); pubSec.classList.remove('hidden'); }
-      else if (type === 'authors') { authorSec.classList.remove('hidden'); pubSec.classList.add('hidden'); }
-      else if (type === 'publishers') { authorSec.classList.add('hidden'); pubSec.classList.remove('hidden'); }
-    }
-
-    function openDirectoryModal(type, id) {
-      const item = (type === 'author' ? allAuthors : allPublishers).find(x => x.id === id);
-      if (!item) return;
-
-      document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 本地作者' : '🏛️ 本地出版社';
-      document.getElementById('dir-modal-title').innerText = item.name;
-      document.getElementById('dir-modal-phone').innerText = item.phone ? `電話：${item.phone}` : '';
-      document.getElementById('dir-modal-desc').innerText = (type === 'author' ? item.bio : item.description) || '暫無簡介';
-
-      const avatar = document.getElementById('dir-modal-avatar');
-      avatar.innerHTML = item.image_url ? `<img src="${item.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-${type==='author'?'user':'building'} text-2xl text-slate-400"></i>`;
-
-      const links = document.getElementById('dir-modal-links');
-      links.innerHTML = `
-        ${item.website_url ? `<a href="${item.website_url}" target="_blank" class="text-amber-800 hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站</a>` : ''}
-        ${item.instagram_url ? `<a href="${item.instagram_url}" target="_blank" class="text-pink-600 hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram</a>` : ''}
-        ${item.facebook_url ? `<a href="${item.facebook_url}" target="_blank" class="text-blue-600 hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook</a>` : ''}
-      `;
-
-      document.getElementById('directory-modal').classList.remove('hidden');
-    }
-
-    function closeDirectoryModal() { document.getElementById('directory-modal').classList.add('hidden'); }
-
-    // --- 網店商品 ---
-    async function fetchProducts() {
-      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
-      allProducts = data || [];
-      renderProducts(allProducts);
-    }
-
-    function renderProducts(list) {
-      const container = document.getElementById('product-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">尚無商品上架。</p>`; return; }
-
-      container.innerHTML = list.map(p => {
-        let stocks = p.branch_stocks || {};
-        if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-        const totalQty = p.quantity || Object.values(stocks).reduce((a,b)=>a+Number(b),0);
-
-        return `
-          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-            <div class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer" onclick="openBookModal(${p.id})">
-              ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
-            </div>
-            <div class="p-4 flex-grow flex flex-col justify-between">
-              <div>
-                <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
-                <h3 class="font-bold text-base text-slate-800 mt-1 cursor-pointer hover:text-amber-800" onclick="openBookModal(${p.id})">${p.name}</h3>
-                <p class="text-xs text-slate-500 mt-0.5">作者：${p.author || '未提供'}</p>
-                ${p.publisher ? `<p class="text-xs text-slate-500 mt-0.5">出版社：${p.publisher}</p>` : ''}
-              </div>
-              <div class="mt-3 border-t pt-3 flex justify-between items-center">
-                <div>
-                  <span class="text-lg font-bold text-amber-900">HK$ ${p.price}</span>
-                  <span class="block text-[10px] text-slate-400">現貨: ${totalQty} 本</span>
-                </div>
-                <div class="flex gap-1">
-                  <button onclick="openBookModal(${p.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs">詳情</button>
-                  <button onclick="addToCart(${p.id})" class="bg-amber-900 hover:bg-amber-800 text-white px-3 py-1.5 rounded text-xs flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function handleSearch(q) {
-      currentSearchQuery = q.toLowerCase();
-      applyProductFilters();
-    }
-
-    function filterProductCategory(cat) {
-      currentCategoryFilter = cat;
-      applyProductFilters();
-    }
-
-    function applyProductFilters() {
-      let filtered = allProducts;
-      if (currentCategoryFilter !== 'ALL') {
-        filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
-      }
-      if (currentSearchQuery) {
-        filtered = filtered.filter(p => 
-          (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
-          (p.author && p.author.toLowerCase().includes(currentSearchQuery)) ||
-          (p.translator && p.translator.toLowerCase().includes(currentSearchQuery)) ||
-          (p.publisher && p.publisher.toLowerCase().includes(currentSearchQuery)) ||
-          (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
-        );
-      }
-      renderProducts(filtered);
-    }
-
-    function openBookModal(id) {
-      const p = allProducts.find(x => x.id === id);
-      if (!p) return;
-
-      document.getElementById('modal-img').src = p.image_url || '';
-      document.getElementById('modal-category').innerText = cleanCategory(p.category);
-      document.getElementById('modal-stock-type').innerText = p.stock_type || '買斷';
-      document.getElementById('modal-title').innerText = p.name;
-      document.querySelector('#modal-author span').innerText = p.author || '未提供';
-      document.querySelector('#modal-translator span').innerText = p.translator || '未提供';
-      document.querySelector('#modal-publisher span').innerText = p.publisher || '未提供';
-      document.querySelector('#modal-weight span').innerText = p.weight ? `${p.weight} g` : '未提供';
-      document.querySelector('#modal-isbn span').innerText = p.isbn || '未提供';
-      document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
-      document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
-
-      let stocks = p.branch_stocks || {};
-      if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-      
-      const allowedBranches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
-      let branchEntries = Object.entries(stocks).filter(([b]) => allowedBranches.includes(b));
-      
-      allowedBranches.forEach(b => {
-        if (!stocks.hasOwnProperty(b)) {
-          branchEntries.push([b, 0]);
-        }
-      });
-
-      const branchContainer = document.getElementById('modal-branches');
-      branchContainer.innerHTML = branchEntries.map(([b, q]) => `
-        <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">${b}: ${q}本</span>
-      `).join(' ');
-
-      const btn = document.getElementById('modal-add-btn');
-      btn.onclick = () => { addToCart(p.id); closeBookModal(); };
-
-      document.getElementById('book-modal').classList.remove('hidden');
-    }
-
-    function closeBookModal() { document.getElementById('book-modal').classList.add('hidden'); }
-
-    // --- 購物車與提交訂單 ---
-    function addToCart(id) {
-      const p = allProducts.find(x => x.id === id);
-      if (!p) return;
-
-      const item = cart.find(x => x.id === id);
-      if (item) item.qty += 1;
-      else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+      await Promise.all([
+        fetchBookshops(),
+        fetchProducts(),
+        fetchAuthorsAndPublishers(),
+        fetchEco(),
+        fetchTheatre(),
+        fetchPaymentSettings()
+      ]);
 
       updateCartUI();
+    } catch (error) {
+      console.error('網站初始化失敗：', error);
+
+      const list = document.getElementById('bookshop-list');
+      if (list) {
+        list.innerHTML = `
+          <p class="text-red-600 col-span-full">
+            資料載入失敗，請開啟瀏覽器 Console 查看錯誤。
+          </p>
+        `;
+      }
+    }
+  });
+
+  // =========================
+  // Leaflet 地圖
+  // =========================
+  function initMap() {
+  if (!document.getElementById('bookstoreMap')) return;
+
+  map = L.map('bookstoreMap').setView([22.3193, 114.1694], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+}
+
+function updateMapMarkers(shops) {
+  if (!map) return;
+
+  mapMarkers.forEach(marker => map.removeLayer(marker));
+  mapMarkers = [];
+
+  shops.forEach(shop => {
+    if (shop.latitude && shop.longitude) {
+      const marker = L.marker([shop.latitude, shop.longitude])
+        .addTo(map)
+        .bindPopup(`
+          <b>${escapeHtml(shop.name || '')}</b><br>
+          ${escapeHtml(shop.address || '獨立書店')}
+        `);
+
+      mapMarkers.push(marker);
+    }
+  });
+}
+
+async function fetchBookshops() {
+  const { data, error } = await supabase
+    .from('bookshops')
+    .select('*')
+    .order('id', { ascending: true });
+
+  if (error) {
+    console.error('讀取書店資料失敗：', error);
+    return;
+  }
+
+  allBookshops = data || [];
+  applyBookshopFilters();
+}
+
+function renderBookshops(list) {
+  const container = document.getElementById('bookshop-list');
+  if (!container) return;
+
+  if (!list || list.length === 0) {
+    container.innerHTML = `
+      <p class="text-slate-400 italic col-span-full">暫無紀錄。</p>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(shop => `
+    <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+      ${shop.image_url ? `
+        <div class="h-44 bg-slate-50 flex items-center justify-center overflow-hidden">
+          <img src="${escapeHtml(shop.image_url)}" class="w-full h-full object-contain p-2" alt="${escapeHtml(shop.name || '書店')}">
+        </div>
+      ` : ''}
+
+      <div class="p-5 flex-grow">
+        <div class="flex justify-between items-start mb-2 gap-3">
+          <h3 class="font-bold text-lg text-slate-800">${escapeHtml(shop.name || '')}</h3>
+          <span class="bg-amber-100 text-amber-900 text-xs px-2.5 py-0.5 rounded-full font-semibold shrink-0">
+            ${escapeHtml(shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : (shop.region || '其他'))}
+          </span>
+        </div>
+
+        <p class="text-xs text-slate-500 mb-1">
+          <i class="fa-solid fa-location-dot mr-1 text-amber-800"></i>
+          ${escapeHtml(shop.address || '無地址')}
+        </p>
+
+        ${shop.phone ? `
+          <p class="text-xs text-slate-500 mb-2">
+            <i class="fa-solid fa-phone mr-1 text-amber-800"></i>
+            ${escapeHtml(shop.phone)}
+          </p>
+        ` : ''}
+
+        <p class="text-xs text-slate-400 mb-3">
+          <i class="fa-regular fa-clock mr-1"></i>
+          ${escapeHtml(shop.opening_hours || '未提供營業時間')}
+        </p>
+
+        <p class="text-sm text-slate-600 mb-4 whitespace-pre-line">
+          ${escapeHtml(shop.description || '')}
+        </p>
+      </div>
+
+      <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
+        <div class="flex space-x-3 text-slate-600 text-base">
+          ${shop.website_url ? externalLink(shop.website_url, '<i class="fa-solid fa-globe"></i>', 'hover:text-amber-800 transition') : ''}
+          ${shop.instagram_url ? externalLink(shop.instagram_url, '<i class="fa-brands fa-instagram"></i>', 'hover:text-pink-600 transition') : ''}
+          ${shop.facebook_url ? externalLink(shop.facebook_url, '<i class="fa-brands fa-facebook"></i>', 'hover:text-blue-600 transition') : ''}
+        </div>
+
+        ${shop.google_map_url
+          ? externalLink(shop.google_map_url, 'Google Map ↗', 'text-amber-900 font-bold hover:underline')
+          : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterRegion(region) {
+  currentBookshopRegion = region;
+
+  const countryBar = document.getElementById('country-filter-bar');
+  if (countryBar) {
+    countryBar.classList.toggle(
+      'hidden',
+      region !== '外國香港書店/圖書館'
+    );
+  }
+
+  applyBookshopFilters();
+}
+
+function filterOverseasCountry(country) {
+  currentBookshopCountry = country;
+  applyBookshopFilters();
+}
+
+function handleBookshopSearch(query) {
+  currentBookshopSearch = String(query || '').toLowerCase();
+  applyBookshopFilters();
+}
+
+function applyBookshopFilters() {
+  let filtered = Array.isArray(allBookshops) ? [...allBookshops] : [];
+
+  if (currentBookshopRegion !== 'ALL') {
+    filtered = filtered.filter(shop =>
+      shop.region === currentBookshopRegion
+    );
+  }
+
+  if (
+    currentBookshopRegion === '外國香港書店/圖書館' &&
+    currentBookshopCountry !== 'ALL_OVERSEAS'
+  ) {
+    filtered = filtered.filter(shop =>
+      shop.country === currentBookshopCountry
+    );
+  }
+
+  if (currentBookshopSearch) {
+    filtered = filtered.filter(shop =>
+      String(shop.name || '').toLowerCase().includes(currentBookshopSearch) ||
+      String(shop.address || '').toLowerCase().includes(currentBookshopSearch) ||
+      String(shop.description || '').toLowerCase().includes(currentBookshopSearch)
+    );
+  }
+
+  renderBookshops(filtered);
+  updateMapMarkers(filtered);
+}
+
+  // =========================
+  // 作者 & 出版社
+  // =========================
+  async function fetchAuthorsAndPublishers() {
+    const [authorsRes, publishersRes] = await Promise.all([
+      supabase.from('authors').select('*').order('id', { ascending: false }),
+      supabase.from('publishers').select('*').order('id', { ascending: false })
+    ]);
+
+    if (authorsRes.error) {
+      console.error('讀取作者資料失敗：', authorsRes.error);
     }
 
-    function updateCartUI() {
-      const countEl = document.getElementById('cart-count');
-      const sideCount = document.getElementById('sidebar-cart-count');
-      const itemsContainer = document.getElementById('cart-items');
-      const totalEl = document.getElementById('cart-total');
+    if (publishersRes.error) {
+      console.error('讀取出版社資料失敗：', publishersRes.error);
+    }
 
-      const totalItems = cart.reduce((a, b) => a + b.qty, 0);
-      const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+    allAuthors = authorsRes.data || [];
+    allPublishers = publishersRes.data || [];
 
-      countEl.innerText = totalItems;
-      sideCount.innerText = `${totalItems} 件商品`;
-      totalEl.innerText = `HK$ ${totalPrice}`;
+    renderAuthors(allAuthors);
+    renderPublishers(allPublishers);
+  }
 
-      if (cart.length === 0) {
-        itemsContainer.innerHTML = `<p class="text-slate-400 italic text-center py-4">購物車目前是空的</p>`;
+  function renderAuthors(data) {
+    const el = document.getElementById('author-list');
+    if (!el) return;
+
+    if (!data || data.length === 0) {
+      el.innerHTML = `<p class="text-slate-400 italic">暫無作者資料</p>`;
+      return;
+    }
+
+    el.innerHTML = data.map(author => `
+      <div onclick="openDirectoryModal('author', ${Number(author.id)})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          ${author.image_url
+            ? `<img src="${escapeHtml(author.image_url)}" class="w-full h-full object-cover" alt="${escapeHtml(author.name || '作者')}">`
+            : `<i class="fa-solid fa-user text-slate-400"></i>`
+          }
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-800">${escapeHtml(author.name || '')}</h4>
+          <p class="text-xs text-slate-500 line-clamp-1">${escapeHtml(author.bio || '點擊查看詳細簡介')}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderPublishers(data) {
+    const el = document.getElementById('publisher-list');
+    if (!el) return;
+
+    if (!data || data.length === 0) {
+      el.innerHTML = `<p class="text-slate-400 italic">暫無出版社資料</p>`;
+      return;
+    }
+
+    el.innerHTML = data.map(publisher => `
+      <div onclick="openDirectoryModal('publisher', ${Number(publisher.id)})" class="p-3 border rounded-lg hover:bg-amber-50 cursor-pointer transition flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+          ${publisher.image_url
+            ? `<img src="${escapeHtml(publisher.image_url)}" class="w-full h-full object-cover" alt="${escapeHtml(publisher.name || '出版社')}">`
+            : `<i class="fa-solid fa-building text-slate-400"></i>`
+          }
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-800">${escapeHtml(publisher.name || '')}</h4>
+          <p class="text-xs text-slate-500 line-clamp-1">${escapeHtml(publisher.description || '點擊查看詳細簡介')}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function switchDirectorySubTab(type, btn) {
+    document.querySelectorAll('.dir-sub-btn').forEach(button => {
+      button.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
+    });
+
+    if (btn) {
+      btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+    }
+
+    const authorSec = document.getElementById('dir-section-authors');
+    const pubSec = document.getElementById('dir-section-publishers');
+
+    if (!authorSec || !pubSec) return;
+
+    if (type === 'all') {
+      authorSec.classList.remove('hidden');
+      pubSec.classList.remove('hidden');
+    } else if (type === 'authors') {
+      authorSec.classList.remove('hidden');
+      pubSec.classList.add('hidden');
+    } else if (type === 'publishers') {
+      authorSec.classList.add('hidden');
+      pubSec.classList.remove('hidden');
+    }
+  }
+
+  function openDirectoryModal(type, id) {
+    const item = (type === 'author' ? allAuthors : allPublishers).find(x => Number(x.id) === Number(id));
+    if (!item) return;
+
+    const tag = document.getElementById('dir-modal-tag');
+    const title = document.getElementById('dir-modal-title');
+    const phone = document.getElementById('dir-modal-phone');
+    const desc = document.getElementById('dir-modal-desc');
+    const avatar = document.getElementById('dir-modal-avatar');
+    const links = document.getElementById('dir-modal-links');
+
+    if (tag) tag.innerText = type === 'author' ? '✍️ 本地作者' : '🏛️ 本地出版社';
+    if (title) title.innerText = item.name || '';
+    if (phone) phone.innerText = item.phone ? `電話：${item.phone}` : '';
+    if (desc) desc.innerText = (type === 'author' ? item.bio : item.description) || '暫無簡介';
+
+    if (avatar) {
+      avatar.innerHTML = item.image_url
+        ? `<img src="${escapeHtml(item.image_url)}" class="w-full h-full object-cover" alt="${escapeHtml(item.name || '')}">`
+        : `<i class="fa-solid fa-${type === 'author' ? 'user' : 'building'} text-2xl text-slate-400"></i>`;
+    }
+
+    if (links) {
+      links.innerHTML = `
+        ${item.website_url ? externalLink(item.website_url, '<i class="fa-solid fa-globe mr-1"></i>官方網站', 'text-amber-800 hover:underline') : ''}
+        ${item.instagram_url ? externalLink(item.instagram_url, '<i class="fa-brands fa-instagram mr-1"></i>Instagram', 'text-pink-600 hover:underline') : ''}
+        ${item.facebook_url ? externalLink(item.facebook_url, '<i class="fa-brands fa-facebook mr-1"></i>Facebook', 'text-blue-600 hover:underline') : ''}
+      `;
+    }
+
+    const modal = document.getElementById('directory-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeDirectoryModal() {
+    const modal = document.getElementById('directory-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // =========================
+  // 網店商品 & 庫存
+  // =========================
+  function findProduct(productId, products = allProducts) {
+    if (!Array.isArray(products)) return null;
+
+    return products.find(product =>
+      String(product.id) === String(productId)
+    ) || null;
+  }
+
+  function findCartItem(productId) {
+    if (!Array.isArray(cart)) return null;
+
+    return cart.find(item =>
+      String(item.id) === String(productId)
+    ) || null;
+  }
+
+  function parseBranchStocks(product) {
+    let stocks = product?.branch_stocks || {};
+
+    if (typeof stocks === 'string') {
+      try {
+        stocks = JSON.parse(stocks);
+      } catch (error) {
+        console.warn('branch_stocks JSON 格式錯誤：', error);
+        stocks = {};
+      }
+    }
+
+    if (!stocks || typeof stocks !== 'object' || Array.isArray(stocks)) {
+      return {};
+    }
+
+    const normalized = {};
+
+    Object.entries(stocks).forEach(([branch, qty]) => {
+      const num = Number(qty);
+      normalized[branch] = Number.isFinite(num)
+        ? Math.max(Math.floor(num), 0)
+        : 0;
+    });
+
+    return normalized;
+  }
+
+  function getProductTotalStock(product) {
+    if (!product) return 0;
+
+    const stocks = parseBranchStocks(product);
+    const branches = Object.keys(stocks);
+
+    if (branches.length > 0) {
+      return Object.values(stocks).reduce((sum, qty) => sum + Number(qty || 0), 0);
+    }
+
+    const quantity = Number(product.quantity || 0);
+    return Number.isFinite(quantity) ? Math.max(Math.floor(quantity), 0) : 0;
+  }
+
+  function getTotalStock(product) {
+    return getProductTotalStock(product);
+  }
+
+  function getCartQty(productId) {
+    const item = findCartItem(productId);
+    return item ? Math.max(Number(item.qty || 0), 0) : 0;
+  }
+
+  function getRemainingStock(product) {
+    return Math.max(
+      getProductTotalStock(product) - getCartQty(product.id),
+      0
+    );
+  }
+
+  function isSoldOut(product) {
+    return getRemainingStock(product) <= 0;
+  }
+
+  function getModalStockLabel() {
+    return document.getElementById('modal-stock-summary') ||
+      document.getElementById('modal-total-qty');
+  }
+
+  function setAddButtonState(button, soldOut) {
+    if (!button) return;
+
+    button.disabled = soldOut;
+    button.setAttribute('aria-disabled', soldOut ? 'true' : 'false');
+
+    button.innerHTML = soldOut
+      ? '<i class="fa-solid fa-ban"></i><span>售罄</span>'
+      : '<i class="fa-solid fa-cart-plus"></i><span>加入購物車</span>';
+
+    button.classList.toggle('opacity-70', soldOut);
+    button.classList.toggle('cursor-not-allowed', soldOut);
+    button.classList.toggle('bg-slate-300', soldOut);
+    button.classList.toggle('text-slate-500', soldOut);
+
+    button.classList.toggle('bg-amber-900', !soldOut);
+    button.classList.toggle('hover:bg-amber-800', !soldOut);
+    button.classList.toggle('text-white', !soldOut);
+  }
+
+  async function fetchProducts() {
+    const { data, error } = await supabase
+      .from(PRODUCT_TABLE)
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('讀取商品失敗：', error);
+      return;
+    }
+
+    allProducts = data || [];
+    applyProductFilters();
+  }
+
+  function renderProducts(list) {
+    const container = document.getElementById('product-list');
+    if (!container) return;
+
+    if (!list || list.length === 0) {
+      container.innerHTML = `
+        <p class="text-slate-400 italic col-span-full">尚無商品上架。</p>
+      `;
+      return;
+    }
+
+    container.innerHTML = list.map(product => {
+      const totalQty = getProductTotalStock(product);
+      const cartQty = getCartQty(product.id);
+      const remainingQty = Math.max(totalQty - cartQty, 0);
+      const soldOut = remainingQty <= 0;
+
+      const stockLabel = soldOut
+        ? `
+          <span
+            data-product-id="${escapeHtml(product.id)}"
+            data-role="stock-label"
+            class="block text-[10px] text-red-600 font-semibold"
+          >
+            已售罄
+          </span>
+        `
+        : `
+          <span
+            data-product-id="${escapeHtml(product.id)}"
+            data-role="stock-label"
+            class="block text-[10px] text-slate-400"
+          >
+            現貨：${remainingQty} 本
+          </span>
+        `;
+
+      const addButtonClass = soldOut
+        ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-70'
+        : 'bg-amber-900 hover:bg-amber-800 text-white';
+
+      return `
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+          <button
+            type="button"
+            data-product-id="${escapeHtml(product.id)}"
+            onclick="openBookModal(this.dataset.productId)"
+            class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer"
+            aria-label="查看 ${escapeHtml(product.name || '商品')} 詳情"
+          >
+            ${product.image_url
+              ? `<img src="${escapeHtml(product.image_url)}" class="max-h-full object-contain" alt="${escapeHtml(product.name || '商品')}">`
+              : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`
+            }
+          </button>
+
+          <div class="p-4 flex-grow flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">
+                ${escapeHtml(cleanCategory(product.category))}
+              </span>
+
+              <h3
+                class="font-bold text-base text-slate-800 mt-1 cursor-pointer hover:text-amber-800"
+                onclick="openBookModal(${Number(product.id)})"
+              >
+                ${escapeHtml(product.name || '')}
+              </h3>
+
+              <p class="text-xs text-slate-500 mt-0.5">
+                作者：${escapeHtml(product.author || '未提供')}
+              </p>
+
+              ${product.publisher ? `
+                <p class="text-xs text-slate-500 mt-0.5">
+                  出版社：${escapeHtml(product.publisher)}
+                </p>
+              ` : ''}
+            </div>
+
+            <div class="mt-3 border-t pt-3 flex justify-between items-center">
+              <div>
+                <span class="text-lg font-bold text-amber-900">
+                  HK$ ${escapeHtml(product.price ?? 0)}
+                </span>
+                ${stockLabel}
+              </div>
+
+              <div class="flex gap-1">
+                <button
+                  type="button"
+                  onclick="openBookModal(${Number(product.id)})"
+                  class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs"
+                >
+                  詳情
+                </button>
+
+                <button
+                  type="button"
+                  data-product-id="${escapeHtml(product.id)}"
+                  data-role="add-to-cart"
+                  onclick="addToCart(this.dataset.productId)"
+                  class="${addButtonClass} px-3 py-1.5 rounded text-xs flex items-center gap-1"
+                  ${soldOut ? 'disabled aria-disabled="true"' : 'aria-disabled="false"'}
+                >
+                  ${soldOut
+                    ? '<i class="fa-solid fa-ban"></i><span>售罄</span>'
+                    : '<i class="fa-solid fa-cart-plus"></i><span>加入購物車</span>'
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function handleSearch(query) {
+    currentSearchQuery = String(query || '').toLowerCase();
+    applyProductFilters();
+  }
+
+  function filterProductCategory(category) {
+    currentCategoryFilter = category || 'ALL';
+    applyProductFilters();
+  }
+
+  function applyProductFilters() {
+    let filtered = Array.isArray(allProducts) ? [...allProducts] : [];
+
+    if (currentCategoryFilter !== 'ALL') {
+      filtered = filtered.filter(product =>
+        cleanCategory(product.category) === cleanCategory(currentCategoryFilter)
+      );
+    }
+
+    if (currentSearchQuery) {
+      filtered = filtered.filter(product =>
+        String(product.name || '').toLowerCase().includes(currentSearchQuery) ||
+        String(product.author || '').toLowerCase().includes(currentSearchQuery) ||
+        String(product.translator || '').toLowerCase().includes(currentSearchQuery) ||
+        String(product.publisher || '').toLowerCase().includes(currentSearchQuery) ||
+        String(product.isbn || '').toLowerCase().includes(currentSearchQuery)
+      );
+    }
+
+    renderProducts(filtered);
+    refreshSoldOutButtons();
+  }
+
+  function openBookModal(productId) {
+    const product = findProduct(productId);
+    if (!product) return;
+
+    const modal = document.getElementById('book-modal');
+    const modalImg = document.getElementById('modal-img');
+    const modalBtn = document.getElementById('modal-add-btn');
+
+    if (!modal || !modalBtn) return;
+
+    if (modalImg) {
+      if (product.image_url) {
+        modalImg.src = product.image_url;
+        modalImg.alt = `${product.name || '商品'} 封面`;
+      } else {
+        modalImg.removeAttribute('src');
+        modalImg.alt = '未提供封面';
+      }
+    }
+
+    const setText = (selector, text) => {
+      const el = document.querySelector(selector);
+      if (el) el.textContent = text;
+    };
+
+    setText('#modal-category', cleanCategory(product.category));
+    setText('#modal-stock-type', product.stock_type || '買斷');
+    setText('#modal-title', product.name || '未命名商品');
+    setText('#modal-description', product.description || '暫無簡介描述');
+    setText('#modal-price', `HK$ ${product.price ?? 0}`);
+    setText('#modal-author span', product.author || '未提供');
+    setText('#modal-translator span', product.translator || '未提供');
+    setText('#modal-publisher span', product.publisher || '未提供');
+    setText('#modal-weight span', product.weight ? `${product.weight} g` : '未提供');
+    setText('#modal-isbn span', product.isbn || '未提供');
+
+    const stocks = parseBranchStocks(product);
+    const branches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
+    const branchContainer = document.getElementById('modal-branches');
+
+    if (branchContainer) {
+      const entries = branches.map(branch => [branch, Number(stocks[branch] || 0)]);
+      Object.entries(stocks).forEach(([branch, qty]) => {
+        if (!branches.includes(branch)) entries.push([branch, qty]);
+      });
+
+      branchContainer.innerHTML = entries.map(([branch, qty]) => `
+        <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">
+          ${escapeHtml(branch)}：${Number(qty || 0)} 本
+        </span>
+      `).join('');
+    }
+
+    const totalQty = getProductTotalStock(product);
+    const cartQty = getCartQty(product.id);
+    const remainingQty = Math.max(totalQty - cartQty, 0);
+    const soldOut = remainingQty <= 0;
+    const stockSummary = getModalStockLabel();
+
+    if (stockSummary) {
+      stockSummary.textContent = soldOut
+        ? '目前已售罄'
+        : `總庫存：${totalQty} 本，購物車已有：${cartQty} 本，尚可選購：${remainingQty} 本`;
+    }
+
+    modalBtn.dataset.productId = product.id;
+    setAddButtonState(modalBtn, soldOut);
+
+    modalBtn.onclick = soldOut
+      ? null
+      : () => {
+          const added = addToCart(product.id);
+          if (added) closeBookModal();
+        };
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeBookModal() {
+    const modal = document.getElementById('book-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function refreshSoldOutButtons() {
+    if (!Array.isArray(allProducts)) return;
+
+    allProducts.forEach(product => {
+      const totalQty = getProductTotalStock(product);
+      const cartQty = getCartQty(product.id);
+      const remainingQty = Math.max(totalQty - cartQty, 0);
+      const soldOut = remainingQty <= 0;
+      const productId = String(product.id).replace(/"/g, '\\"');
+
+      document
+        .querySelectorAll(`[data-product-id="${productId}"][data-role="add-to-cart"]`)
+        .forEach(button => setAddButtonState(button, soldOut));
+
+      document
+        .querySelectorAll(`[data-product-id="${productId}"][data-role="stock-label"]`)
+        .forEach(label => {
+          label.textContent = soldOut ? '已售罄' : `現貨：${remainingQty} 本`;
+          label.classList.toggle('text-red-600', soldOut);
+          label.classList.toggle('font-semibold', soldOut);
+          label.classList.toggle('text-slate-400', !soldOut);
+        });
+    });
+
+    const modalButton = document.getElementById('modal-add-btn');
+    const modalStockLabel = getModalStockLabel();
+
+    if (!modalButton?.dataset.productId) return;
+
+    const modalProduct = findProduct(modalButton.dataset.productId);
+    if (!modalProduct) return;
+
+    const totalQty = getProductTotalStock(modalProduct);
+    const cartQty = getCartQty(modalProduct.id);
+    const remainingQty = Math.max(totalQty - cartQty, 0);
+    const soldOut = remainingQty <= 0;
+
+    setAddButtonState(modalButton, soldOut);
+
+    modalButton.onclick = soldOut
+      ? null
+      : () => {
+          const added = addToCart(modalProduct.id);
+          if (added) closeBookModal();
+        };
+
+    if (modalStockLabel) {
+      modalStockLabel.textContent = soldOut
+        ? '目前已售罄'
+        : `總庫存：${totalQty} 本，購物車已有：${cartQty} 本，尚可選購：${remainingQty} 本`;
+    }
+  }
+
+  // =========================
+  // 購物車
+  // =========================
+  function addToCart(productId) {
+    const product = findProduct(productId);
+
+    if (!product) {
+      alert('找不到此商品。');
+      return false;
+    }
+
+    const totalQty = getProductTotalStock(product);
+    const item = findCartItem(product.id);
+    const currentQty = item ? Number(item.qty || 0) : 0;
+
+    if (totalQty <= 0) {
+      alert('此書目前已售罄，不能加入購物車。');
+      refreshSoldOutButtons();
+      return false;
+    }
+
+    if (currentQty >= totalQty) {
+      alert(`此書庫存只有 ${totalQty} 本，不能再增加。`);
+      refreshSoldOutButtons();
+      return false;
+    }
+
+    if (item) {
+      item.qty = currentQty + 1;
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: Number(product.price || 0),
+        qty: 1
+      });
+    }
+
+    updateCartUI();
+    applyProductFilters();
+    return true;
+  }
+
+  function updateCartUI() {
+    const cartItemsElement = document.getElementById('cart-items');
+    const headerCountElement = document.getElementById('cart-count');
+    const sidebarCountElement = document.getElementById('sidebar-cart-count');
+    const totalElement = document.getElementById('cart-total');
+
+    const totalQuantity = cart.reduce(
+      (total, item) => total + Number(item.qty || 0),
+      0
+    );
+
+    const totalPrice = cart.reduce(
+      (total, item) =>
+        total + Number(item.price || 0) * Number(item.qty || 0),
+      0
+    );
+
+    if (headerCountElement) {
+      headerCountElement.textContent = totalQuantity;
+    }
+
+    if (sidebarCountElement) {
+      sidebarCountElement.textContent = totalQuantity;
+    }
+
+    if (totalElement) {
+      totalElement.textContent = `HK$ ${totalPrice.toFixed(2)}`;
+    }
+
+    if (!cartItemsElement) return;
+
+    if (cart.length === 0) {
+      cartItemsElement.innerHTML = `
+        <p class="text-slate-400 italic text-center py-4">
+          購物車目前沒有商品
+        </p>
+      `;
+      return;
+    }
+
+    cartItemsElement.innerHTML = cart.map((item, index) => {
+      const name = escapeHtml(item.name || '未命名商品');
+      const quantity = Math.max(Number(item.qty || 0), 0);
+      const price = Number(item.price || 0);
+      const subtotal = price * quantity;
+
+      return `
+        <div class="border-b border-slate-100 pb-3">
+          <div class="flex justify-between gap-3 mb-2">
+            <div class="min-w-0">
+              <p class="font-semibold text-slate-800 break-words">${name}</p>
+              <p class="text-[11px] text-slate-500">HK$ ${price.toFixed(2)} × ${quantity}</p>
+            </div>
+
+            <span class="font-semibold text-amber-900 whitespace-nowrap">
+              HK$ ${subtotal.toFixed(2)}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onclick="changeQty(${index}, -1)"
+              class="w-8 h-8 rounded bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+              aria-label="減少 ${name} 數量"
+            >
+              <i class="fa-solid fa-minus"></i>
+            </button>
+
+            <span class="min-w-6 text-center font-semibold">${quantity}</span>
+
+            <button
+              type="button"
+              onclick="changeQty(${index}, 1)"
+              class="w-8 h-8 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 flex items-center justify-center"
+              aria-label="增加 ${name} 數量"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function changeQty(index, delta) {
+    const item = cart[index];
+    if (!item || !Number.isFinite(Number(delta)) || Number(delta) === 0) return;
+
+    const change = Number(delta);
+    const currentQty = Math.max(Number(item.qty || 0), 0);
+
+    if (change < 0) {
+      item.qty = currentQty + change;
+
+      if (item.qty <= 0) {
+        cart.splice(index, 1);
+      }
+
+      updateCartUI();
+      applyProductFilters();
+      return;
+    }
+
+    const product = findProduct(item.id);
+
+    if (!product) {
+      alert('此商品已不存在，請從購物車移除。');
+      return;
+    }
+
+    const totalQty = getProductTotalStock(product);
+    const nextQty = currentQty + change;
+
+    if (totalQty <= 0) {
+      alert('此書已售罄，不能再增加。');
+      refreshSoldOutButtons();
+      return;
+    }
+
+    if (nextQty > totalQty) {
+      alert(`此書庫存只有 ${totalQty} 本，不能再增加。`);
+      refreshSoldOutButtons();
+      return;
+    }
+
+    item.qty = nextQty;
+
+    updateCartUI();
+    applyProductFilters();
+  }
+
+  function buildStockAfterDeduction(product, requestedQuantity) {
+    const deductQty = Math.max(Math.floor(Number(requestedQuantity || 0)), 0);
+    const stocks = parseBranchStocks(product);
+    const stockKeys = Object.keys(stocks);
+
+    if (stockKeys.length === 0) {
+      return {
+        quantity: Math.max(getProductTotalStock(product) - deductQty, 0)
+      };
+    }
+
+    const updatedStocks = { ...stocks };
+    let remainingToDeduct = deductQty;
+
+    const preferredOrder = ['網店', '觀塘店', '西營盤店', '荃灣店'];
+    const deductionOrder = [
+      ...preferredOrder.filter(branch => Object.prototype.hasOwnProperty.call(updatedStocks, branch)),
+      ...stockKeys.filter(branch => !preferredOrder.includes(branch))
+    ];
+
+    for (const branch of deductionOrder) {
+      if (remainingToDeduct <= 0) break;
+
+      const branchQty = Math.max(Number(updatedStocks[branch] || 0), 0);
+      const deduction = Math.min(branchQty, remainingToDeduct);
+
+      updatedStocks[branch] = branchQty - deduction;
+      remainingToDeduct -= deduction;
+    }
+
+    if (remainingToDeduct > 0) {
+      throw new Error(`${product.name || '商品'} 可扣減庫存不足`);
+    }
+
+    const newTotalQty = Object.values(updatedStocks).reduce(
+      (sum, qty) => sum + Number(qty || 0),
+      0
+    );
+
+    return {
+      branch_stocks: updatedStocks,
+      quantity: newTotalQty
+    };
+  }
+
+  async function submitOrder() {
+    if (isSubmittingOrder) return;
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      alert('購物車目前沒有任何商品！');
+      return;
+    }
+
+    const nameInput = document.getElementById('cust-name');
+    const phoneInput = document.getElementById('cust-phone');
+    const paymentInput = document.getElementById('payment-method');
+
+    const customerName = nameInput?.value.trim() || '';
+    const customerPhone = phoneInput?.value.trim() || '';
+    const paymentMethod = paymentInput?.value || '';
+
+    if (!customerName || !customerPhone) {
+      alert('請填寫訂購人姓名與電話！');
+      return;
+    }
+
+    isSubmittingOrder = true;
+
+    const orderCart = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price || 0),
+      qty: Math.max(Math.floor(Number(item.qty || 0)), 0)
+    }));
+
+    try {
+      const { data: latestProducts, error: latestError } = await supabase
+        .from(PRODUCT_TABLE)
+        .select('*');
+
+      if (latestError) {
+        throw new Error('提交前無法讀取最新庫存：' + latestError.message);
+      }
+
+      const latestMap = new Map();
+      (latestProducts || []).forEach(product => {
+        latestMap.set(String(product.id), product);
+      });
+
+      const problems = [];
+
+      for (const item of orderCart) {
+        const product = latestMap.get(String(item.id));
+
+        if (!product) {
+          problems.push(`${item.name}：找不到商品資料`);
+          continue;
+        }
+
+        if (item.qty <= 0) {
+          problems.push(`${item.name}：購買數量不正確`);
+          continue;
+        }
+
+        const latestTotalQty = getProductTotalStock(product);
+
+        if (latestTotalQty <= 0) {
+          problems.push(`${item.name}：目前已售罄`);
+          continue;
+        }
+
+        if (item.qty > latestTotalQty) {
+          problems.push(`${item.name}：想買 ${item.qty} 本，但最新庫存只有 ${latestTotalQty} 本`);
+        }
+      }
+
+      if (problems.length > 0) {
+        alert('以下商品庫存不足，請先調整購物車：\n\n' + problems.join('\n'));
+        await fetchProducts();
         return;
       }
 
-      itemsContainer.innerHTML = cart.map((item, i) => `
-        <div class="flex justify-between items-center border-b pb-2">
-          <div>
-            <p class="font-bold text-xs text-slate-800">${item.name}</p>
-            <p class="text-[11px] text-slate-500">HK$ ${item.price} x ${item.qty}</p>
-          </div>
-          <div class="flex items-center space-x-1">
-            <button onclick="changeQty(${i}, -1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">-</button>
-            <span class="text-xs px-1">${item.qty}</span>
-            <button onclick="changeQty(${i}, 1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">+</button>
-          </div>
-        </div>
-      `).join('');
-    }
+      const totalPrice = orderCart.reduce(
+        (sum, item) => sum + Number(item.price) * Number(item.qty),
+        0
+      );
 
-    function changeQty(index, delta) {
-      cart[index].qty += delta;
-      if (cart[index].qty <= 0) cart.splice(index, 1);
-      updateCartUI();
-    }
-
-    async function submitOrder() {
-      if (cart.length === 0) return alert("購物車目前沒有任何商品！");
-      const name = document.getElementById('cust-name').value.trim();
-      const phone = document.getElementById('cust-phone').value.trim();
-      const payMethod = document.getElementById('payment-method').value;
-
-      if (!name || !phone) return alert("請填寫訂購人姓名與電話！");
-
-      const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
-
-      const cleanItems = cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: Number(item.price),
-        qty: Number(item.qty)
-      }));
-
-      try {
-        const { data, error } = await _supabase.from('shop_orders').insert([{
-          customer_name: name,
-          customer_phone: phone,
-          payment_method: payMethod,
-          items: cleanItems,
+      const { data: orderData, error: orderError } = await supabase
+        .from('shop_orders')
+        .insert([{
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          payment_method: paymentMethod,
+          items: orderCart,
           total_amount: totalPrice,
           status: '待確認'
-        }]).select();
+        }])
+        .select();
 
-        if (error) {
-          console.error("Supabase 訂單寫入失敗原因：", error);
-          alert("提交訂單時發生錯誤：" + error.message);
-          return;
+      if (orderError) {
+        throw new Error('提交訂單失敗：' + orderError.message);
+      }
+
+      const newOrder = orderData?.[0];
+      if (!newOrder) {
+        throw new Error('訂單已送出，但無法取得訂單編號。');
+      }
+
+      currentOrderId = newOrder.id;
+
+      const stockUpdateErrors = [];
+
+      for (const item of orderCart) {
+        const product = latestMap.get(String(item.id));
+        if (!product) continue;
+
+        try {
+          const stockPayload = buildStockAfterDeduction(product, item.qty);
+
+          const { error: updateError } = await supabase
+            .from(PRODUCT_TABLE)
+            .update(stockPayload)
+            .eq('id', item.id);
+
+          if (updateError) throw updateError;
+
+          Object.assign(product, stockPayload);
+        } catch (error) {
+          console.error(`扣減庫存失敗（${item.name}）：`, error);
+          stockUpdateErrors.push(`${item.name}：${error.message}`);
         }
+      }
 
-        if (data && data[0]) {
-          currentOrderId = data[0].id;
-        }
-
-        showPaymentModal(payMethod, totalPrice);
+      if (stockUpdateErrors.length > 0) {
+        await supabase
+          .from('shop_orders')
+          .update({ status: '庫存更新異常' })
+          .eq('id', currentOrderId);
 
         cart = [];
-        document.getElementById('cust-name').value = '';
-        document.getElementById('cust-phone').value = '';
         updateCartUI();
-      } catch (err) {
-        console.error("提交異常：", err);
-        alert("提交訂單時發生系統錯誤，請檢查網路連線或資料庫權限。");
+        await fetchProducts();
+
+        alert(
+          `訂單 #${currentOrderId} 已建立，但部分庫存更新失敗。\n` +
+          '請勿重複提交，請聯絡店家跟進：\n\n' +
+          stockUpdateErrors.join('\n')
+        );
+        return;
       }
+
+      cart = [];
+
+      if (nameInput) nameInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+
+      updateCartUI();
+      await fetchProducts();
+
+      showPaymentModal(paymentMethod, totalPrice);
+    } catch (error) {
+      console.error('提交訂單異常：', error);
+      alert(error?.message || '提交訂單時發生系統錯誤，請檢查網路連線或資料庫權限。');
+    } finally {
+      isSubmittingOrder = false;
+    }
+  }
+
+  // =========================
+  // 付款 modal
+  // =========================
+  function showPaymentModal(method, amount) {
+    const box = document.getElementById('payment-details-box');
+    if (!box) return;
+
+    let html = `
+      <p class="font-bold text-slate-800 text-sm mb-2 border-b pb-1">
+        應付總金額：
+        <span class="text-amber-900 font-extrabold text-base">HK$ ${amount}</span>
+      </p>
+    `;
+
+    if (!paymentSettings) {
+      html += `<p class="text-slate-500">暫未設定詳細收款資料，請等待店家專人聯絡。</p>`;
+    } else if (method === 'FPS') {
+      html += `
+        <p><span class="font-bold text-slate-700">付款方式：</span>轉數快 (FPS)</p>
+        <p><span class="font-bold text-slate-700">FPS 識別碼 / 電話：</span><span class="font-mono text-amber-900 font-bold bg-amber-100 px-1.5 py-0.5 rounded">${escapeHtml(paymentSettings.fps_number || '未提供')}</span></p>
+        ${paymentSettings.fps_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">FPS QR Code 掃瞄付款：</p><img src="${escapeHtml(paymentSettings.fps_qr_url)}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm" alt="FPS QR Code"></div>` : ''}
+      `;
+    } else if (method === 'PayMe') {
+      html += `
+        <p><span class="font-bold text-slate-700">付款方式：</span>PayMe</p>
+        ${paymentSettings.payme_link ? `<p><span class="font-bold text-slate-700">PayMe 連結：</span><a href="${escapeHtml(paymentSettings.payme_link)}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline break-all">${escapeHtml(paymentSettings.payme_link)}</a></p>` : ''}
+        ${paymentSettings.payme_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">PayMe QR Code 掃瞄付款：</p><img src="${escapeHtml(paymentSettings.payme_qr_url)}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm" alt="PayMe QR Code"></div>` : ''}
+      `;
+    } else if (method === 'BankTransfer') {
+      html += `
+        <p><span class="font-bold text-slate-700">付款方式：</span>銀行轉帳</p>
+        <p><span class="font-bold text-slate-700">銀行名稱：</span>${escapeHtml(paymentSettings.bank_name || '未提供')}</p>
+        <p><span class="font-bold text-slate-700">戶口號碼：</span><span class="font-mono text-amber-900 font-bold">${escapeHtml(paymentSettings.bank_account || '未提供')}</span></p>
+        <p><span class="font-bold text-slate-700">戶口持有人：</span>${escapeHtml(paymentSettings.bank_holder || '未提供')}</p>
+      `;
     }
 
-    function showPaymentModal(method, amount) {
-      const box = document.getElementById('payment-details-box');
-      let html = `<p class="font-bold text-slate-800 text-sm mb-2 border-b pb-1">應付總金額：<span class="text-amber-900 font-extrabold text-base">HK$ ${amount}</span></p>`;
-
-      if (!paymentSettings) {
-        html += `<p class="text-slate-500">暫未設定詳細收款資料，請等待店家專人聯絡。</p>`;
-      } else if (method === 'FPS') {
-        html += `
-          <p><span class="font-bold text-slate-700">付款方式：</span>轉數快 (FPS)</p>
-          <p><span class="font-bold text-slate-700">FPS 識別碼 / 電話：</span><span class="font-mono text-amber-900 font-bold bg-amber-100 px-1.5 py-0.5 rounded">${paymentSettings.fps_number || '未提供'}</span></p>
-          ${paymentSettings.fps_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">FPS QR Code 掃瞄付款：</p><img src="${paymentSettings.fps_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm"></div>` : ''}
-        `;
-      } else if (method === 'PayMe') {
-        html += `
-          <p><span class="font-bold text-slate-700">付款方式：</span>PayMe</p>
-          ${paymentSettings.payme_link ? `<p><span class="font-bold text-slate-700">PayMe 連結：</span><a href="${paymentSettings.payme_link}" target="_blank" class="text-blue-600 underline break-all">${paymentSettings.payme_link}</a></p>` : ''}
-          ${paymentSettings.payme_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-slate-500 mb-1">PayMe QR Code 掃瞄付款：</p><img src="${paymentSettings.payme_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-white rounded shadow-sm"></div>` : ''}
-        `;
-      } else if (method === 'BankTransfer') {
-        html += `
-          <p><span class="font-bold text-slate-700">付款方式：</span>銀行轉帳</p>
-          <p><span class="font-bold text-slate-700">銀行名稱：</span>${paymentSettings.bank_name || '未提供'}</p>
-          <p><span class="font-bold text-slate-700">戶口號碼：</span><span class="font-mono text-amber-900 font-bold">${paymentSettings.bank_account || '未提供'}</span></p>
-          <p><span class="font-bold text-slate-700">戶口持有人：</span>${paymentSettings.bank_holder || '未提供'}</p>
-        `;
-      }
-
-      if (paymentSettings && paymentSettings.instructions) {
-        html += `<div class="border-t pt-2 mt-2 text-[11px] text-slate-600">${paymentSettings.instructions}</div>`;
-      }
-
-      box.innerHTML = html;
-      document.getElementById('proof-upload-status').classList.add('hidden');
-      document.getElementById('customer-proof-file').value = '';
-      document.getElementById('payment-modal').classList.remove('hidden');
+    if (paymentSettings && paymentSettings.instructions) {
+      html += `<div class="border-t pt-2 mt-2 text-[11px] text-slate-600">${escapeHtml(paymentSettings.instructions)}</div>`;
     }
 
-    async function uploadPaymentProof() {
-      const fileInput = document.getElementById('customer-proof-file');
-      const statusEl = document.getElementById('proof-upload-status');
-      const btn = document.getElementById('upload-proof-btn');
+    box.innerHTML = html;
 
-      if (!fileInput.files || fileInput.files.length === 0) {
-        return alert("請選擇要上傳的付款憑證相片！");
-      }
+    const status = document.getElementById('proof-upload-status');
+    const fileInput = document.getElementById('customer-proof-file');
+    const modal = document.getElementById('payment-modal');
 
-      const file = fileInput.files[0];
-      const ext = file.name.split('.').pop();
-      const fileName = `proof_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
+    if (status) status.classList.add('hidden');
+    if (fileInput) fileInput.value = '';
+    if (modal) modal.classList.remove('hidden');
+  }
 
+  async function uploadPaymentProof() {
+    const fileInput = document.getElementById('customer-proof-file');
+    const statusEl = document.getElementById('proof-upload-status');
+    const btn = document.getElementById('upload-proof-btn');
+
+    if (!fileInput?.files || fileInput.files.length === 0) {
+      alert('請選擇要上傳的付款憑證相片！');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const ext = file.name.split('.').pop();
+    const fileName = `proof_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+    if (btn) {
       btn.disabled = true;
-      btn.innerText = "上傳中...";
+      btn.innerText = '上傳中...';
+    }
 
-      try {
-        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
-        if (error) throw error;
+    try {
+      const { error } = await supabase.storage
+        .from('images')
+        .upload(fileName, file);
 
-        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
+      if (error) throw error;
 
-        if (currentOrderId) {
-          await _supabase.from('shop_orders').update({
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+
+      if (currentOrderId) {
+        await supabase
+          .from('shop_orders')
+          .update({
             payment_proof_url: publicUrl,
             status: '已傳送憑證'
-          }).eq('id', currentOrderId);
-        }
+          })
+          .eq('id', currentOrderId);
+      }
 
-        statusEl.innerText = "✓ 付款相片已成功上傳！店家將儘快對帳。";
+      if (statusEl) {
+        statusEl.innerText = '✓ 付款相片已成功上傳！店家將儘快對帳。';
         statusEl.classList.remove('hidden');
-      } catch (err) {
-        alert("相片上傳失敗：" + err.message);
-      } finally {
+      }
+    } catch (err) {
+      alert('相片上傳失敗：' + err.message);
+    } finally {
+      if (btn) {
         btn.disabled = false;
-        btn.innerText = "上傳付款相片";
+        btn.innerText = '上傳付款相片';
       }
     }
+  }
 
-    function closePaymentModal() {
-      document.getElementById('payment-modal').classList.add('hidden');
+  function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // =========================
+  // 農業 / 環保
+  // =========================
+  async function fetchEco() {
+    const { data, error } = await supabase
+      .from('eco_farms')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('讀取農業/環保資料失敗：', error);
+      return;
     }
 
-    // --- 農業 & 環保 ---
-    async function fetchEco() {
-      const { data } = await _supabase.from('eco_farms').select('*').order('id', { ascending: false });
-      allEco = data || [];
+    allEco = data || [];
+    renderEco(allEco);
+  }
+
+  function renderEco(list) {
+    const el = document.getElementById('eco-list');
+    if (!el) return;
+
+    if (!list || list.length === 0) {
+      el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`;
+      return;
+    }
+
+    el.innerHTML = list.map(item => `
+      <div onclick="openEcoModal(${Number(item.id)})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-bold text-base text-slate-800 group-hover:text-emerald-800 transition">${escapeHtml(item.name || '')}</h3>
+            <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-bold">
+              ${escapeHtml(item.category || '農業/環保')}
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-500 mb-1">
+            <i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>
+            ${escapeHtml(item.address || '無地址')}
+          </p>
+
+          ${item.phone ? `
+            <p class="text-xs text-slate-500 mb-2">
+              <i class="fa-solid fa-phone mr-1 text-emerald-700"></i>
+              ${escapeHtml(item.phone)}
+            </p>
+          ` : ''}
+
+          <p class="text-xs text-slate-600 line-clamp-2 mt-2">
+            ${escapeHtml(item.description || '點擊查看詳細資料...')}
+          </p>
+        </div>
+
+        <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
+          <span class="text-emerald-800 font-bold group-hover:underline">查看詳情 ↗</span>
+          ${item.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterEco(category) {
+    if (category === 'ALL') {
       renderEco(allEco);
+    } else {
+      renderEco(allEco.filter(item => item.category === category));
     }
+  }
 
-    function renderEco(list) {
-      const el = document.getElementById('eco-list');
-      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
-      el.innerHTML = list.map(e => `
-        <div onclick="openEcoModal(${e.id})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
-          <div>
-            <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-base text-slate-800 group-hover:text-emerald-800 transition">${e.name}</h3>
-              <span class="bg-emerald-100 text-emerald-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${e.category || '農業/環保'}</span>
-            </div>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-emerald-700"></i>${e.address || '無地址'}</p>
-            ${e.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-emerald-700"></i>${e.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 line-clamp-2 mt-2">${e.description || '點擊查看詳細資料...'}</p>
-          </div>
-          <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
-            <span class="text-emerald-800 font-bold group-hover:underline">查看詳情 ↗</span>
-            ${e.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
-          </div>
-        </div>
-      `).join('');
-    }
+  function openEcoModal(id) {
+    const item = allEco.find(x => Number(x.id) === Number(id));
+    if (!item) return;
 
-    function filterEco(cat) {
-      if (cat === 'ALL') renderEco(allEco);
-      else renderEco(allEco.filter(e => e.category === cat));
-    }
+    const setText = (selector, value) => {
+      const el = document.querySelector(selector);
+      if (el) el.textContent = value;
+    };
 
-    function openEcoModal(id) {
-      const e = allEco.find(x => x.id === id);
-      if (!e) return;
+    setText('#eco-modal-tag', item.category || '農業/環保');
+    setText('#eco-modal-title', item.name || '');
+    setText('#eco-modal-address span', item.address || '暫未提供地址');
+    setText('#eco-modal-phone span', item.phone || '暫未提供電話');
+    setText('#eco-modal-desc', item.description || '暫無詳細介紹資料');
 
-      document.getElementById('eco-modal-tag').innerText = e.category || '農業/環保';
-      document.getElementById('eco-modal-title').innerText = e.name;
-      document.querySelector('#eco-modal-address span').innerText = e.address || '暫未提供地址';
-      document.querySelector('#eco-modal-phone span').innerText = e.phone || '暫未提供電話';
-      document.getElementById('eco-modal-desc').innerText = e.description || '暫無詳細介紹資料';
-
-      const links = document.getElementById('eco-modal-links');
+    const links = document.getElementById('eco-modal-links');
+    if (links) {
       links.innerHTML = `
-        ${e.website_url ? `<a href="${e.website_url}" target="_blank" class="text-emerald-800 font-bold hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站 ↗</a>` : ''}
-        ${e.facebook_url ? `<a href="${e.facebook_url}" target="_blank" class="text-blue-600 font-bold hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook ↗</a>` : ''}
-        ${e.instagram_url ? `<a href="${e.instagram_url}" target="_blank" class="text-pink-600 font-bold hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram ↗</a>` : ''}
+        ${item.website_url ? externalLink(item.website_url, '<i class="fa-solid fa-globe mr-1"></i>官方網站 ↗', 'text-emerald-800 font-bold hover:underline') : ''}
+        ${item.facebook_url ? externalLink(item.facebook_url, '<i class="fa-brands fa-facebook mr-1"></i>Facebook ↗', 'text-blue-600 font-bold hover:underline') : ''}
+        ${item.instagram_url ? externalLink(item.instagram_url, '<i class="fa-brands fa-instagram mr-1"></i>Instagram ↗', 'text-pink-600 font-bold hover:underline') : ''}
       `;
-
-      document.getElementById('eco-modal').classList.remove('hidden');
     }
 
-    function closeEcoModal() { document.getElementById('eco-modal').classList.add('hidden'); }
+    const modal = document.getElementById('eco-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
 
-    // --- 劇團 ---
-    async function fetchTheatre() {
-      const { data } = await _supabase.from('theatre_groups').select('*').order('id', { ascending: false });
-      allTheatre = data || [];
+  function closeEcoModal() {
+    const modal = document.getElementById('eco-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // =========================
+  // 劇團
+  // =========================
+  async function fetchTheatre() {
+    const { data, error } = await supabase
+      .from('theatre_groups')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('讀取劇團資料失敗：', error);
+      return;
+    }
+
+    allTheatre = data || [];
+    renderTheatre(allTheatre);
+  }
+
+  function renderTheatre(list) {
+    const el = document.getElementById('theatre-list');
+    if (!el) return;
+
+    if (!list || list.length === 0) {
+      el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`;
+      return;
+    }
+
+    el.innerHTML = list.map(item => `
+      <div onclick="openTheatreModal(${Number(item.id)})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-bold text-base text-slate-800 group-hover:text-purple-800 transition">${escapeHtml(item.name || '')}</h3>
+            ${item.region ? `
+              <span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                ${escapeHtml(item.region)}
+              </span>
+            ` : ''}
+          </div>
+
+          <p class="text-xs text-slate-500 mb-1">
+            <i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>
+            ${escapeHtml(item.address || '無地址')}
+          </p>
+
+          ${item.phone ? `
+            <p class="text-xs text-slate-500 mb-2">
+              <i class="fa-solid fa-phone mr-1 text-purple-700"></i>
+              ${escapeHtml(item.phone)}
+            </p>
+          ` : ''}
+
+          <p class="text-xs text-slate-600 line-clamp-2 mt-2">
+            ${escapeHtml(item.description || '點擊查看詳細資料...')}
+          </p>
+        </div>
+
+        <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
+          <span class="text-purple-800 font-bold group-hover:underline">查看詳情 ↗</span>
+          ${item.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterTheatre(region) {
+    if (region === 'ALL') {
       renderTheatre(allTheatre);
+    } else {
+      renderTheatre(allTheatre.filter(item => item.region === region));
     }
+  }
 
-    function renderTheatre(list) {
-      const el = document.getElementById('theatre-list');
-      if (list.length === 0) { el.innerHTML = `<p class="text-slate-400 italic col-span-full">暫無紀錄。</p>`; return; }
-      el.innerHTML = list.map(t => `
-        <div onclick="openTheatreModal(${t.id})" class="bg-white rounded-xl shadow-sm border p-5 flex flex-col justify-between hover:shadow-md transition cursor-pointer group">
-          <div>
-            <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-base text-slate-800 group-hover:text-purple-800 transition">${t.name}</h3>
-              ${t.region ? `<span class="bg-purple-100 text-purple-900 text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
-            </div>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-purple-700"></i>${t.address || '無地址'}</p>
-            ${t.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-purple-700"></i>${t.phone}</p>` : ''}
-            <p class="text-xs text-slate-600 line-clamp-2 mt-2">${t.description || '點擊查看詳細資料...'}</p>
-          </div>
-          <div class="pt-4 border-t mt-3 flex justify-between items-center text-xs">
-            <span class="text-purple-800 font-bold group-hover:underline">查看詳情 ↗</span>
-            ${t.website_url ? `<span class="text-slate-400"><i class="fa-solid fa-globe"></i></span>` : ''}
-          </div>
-        </div>
-      `).join('');
-    }
+  function openTheatreModal(id) {
+    const item = allTheatre.find(x => Number(x.id) === Number(id));
+    if (!item) return;
 
-    function filterTheatre(reg) {
-      if (reg === 'ALL') renderTheatre(allTheatre);
-      else renderTheatre(allTheatre.filter(t => t.region === reg));
-    }
+    const setText = (selector, value) => {
+      const el = document.querySelector(selector);
+      if (el) el.textContent = value;
+    };
 
-    function openTheatreModal(id) {
-      const t = allTheatre.find(x => x.id === id);
-      if (!t) return;
+    setText('#theatre-modal-tag', item.region || '劇團');
+    setText('#theatre-modal-title', item.name || '');
+    setText('#theatre-modal-address span', item.address || '暫未提供地址');
+    setText('#theatre-modal-phone span', item.phone || '暫未提供電話');
+    setText('#theatre-modal-desc', item.description || '暫無詳細介紹資料');
 
-      document.getElementById('theatre-modal-tag').innerText = t.region || '劇團';
-      document.getElementById('theatre-modal-title').innerText = t.name;
-      document.querySelector('#theatre-modal-address span').innerText = t.address || '暫未提供地址';
-      document.querySelector('#theatre-modal-phone span').innerText = t.phone || '暫未提供電話';
-      document.getElementById('theatre-modal-desc').innerText = t.description || '暫無詳細介紹資料';
-
-      const links = document.getElementById('theatre-modal-links');
+    const links = document.getElementById('theatre-modal-links');
+    if (links) {
       links.innerHTML = `
-        ${t.website_url ? `<a href="${t.website_url}" target="_blank" class="text-purple-800 font-bold hover:underline"><i class="fa-solid fa-globe mr-1"></i>官方網站 ↗</a>` : ''}
-        ${t.facebook_url ? `<a href="${t.facebook_url}" target="_blank" class="text-blue-600 font-bold hover:underline"><i class="fa-brands fa-facebook mr-1"></i>Facebook ↗</a>` : ''}
-        ${t.instagram_url ? `<a href="${t.instagram_url}" target="_blank" class="text-pink-600 font-bold hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram ↗</a>` : ''}
+        ${item.website_url ? externalLink(item.website_url, '<i class="fa-solid fa-globe mr-1"></i>官方網站 ↗', 'text-purple-800 font-bold hover:underline') : ''}
+        ${item.facebook_url ? externalLink(item.facebook_url, '<i class="fa-brands fa-facebook mr-1"></i>Facebook ↗', 'text-blue-600 font-bold hover:underline') : ''}
+        ${item.instagram_url ? externalLink(item.instagram_url, '<i class="fa-brands fa-instagram mr-1"></i>Instagram ↗', 'text-pink-600 font-bold hover:underline') : ''}
       `;
-
-      document.getElementById('theatre-modal').classList.remove('hidden');
     }
 
-    function closeTheatreModal() { document.getElementById('theatre-modal').classList.add('hidden'); }
-  </script>
+    const modal = document.getElementById('theatre-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeTheatreModal() {
+    const modal = document.getElementById('theatre-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+</script>
 </body>
 </html>
