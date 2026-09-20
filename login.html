@@ -46,9 +46,18 @@
         </div>
 
         <div>
-          <label for="login-password" class="block text-xs font-bold text-slate-700 mb-1.5">
-            密碼
-          </label>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="login-password" class="text-xs font-bold text-slate-700">
+              密碼
+            </label>
+            <button
+              id="forgot-toggle"
+              type="button"
+              class="text-xs text-amber-800 hover:text-amber-900 underline underline-offset-2"
+            >
+              忘記密碼？
+            </button>
+          </div>
           <input
             id="login-password"
             type="password"
@@ -71,6 +80,36 @@
         </button>
       </form>
 
+      <form id="forgot-form" class="hidden mt-5 pt-5 border-t border-slate-200 space-y-4">
+        <p class="text-xs text-slate-500">
+          輸入你嘅管理員 Email，我哋會寄一封重設密碼電郵俾你。
+        </p>
+
+        <div>
+          <label for="forgot-email" class="block text-xs font-bold text-slate-700 mb-1.5">
+            Email
+          </label>
+          <input
+            id="forgot-email"
+            type="email"
+            autocomplete="email"
+            placeholder="name@example.com"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-800"
+          >
+        </div>
+
+        <p id="forgot-message" class="hidden text-xs rounded-lg p-3"></p>
+
+        <button
+          id="forgot-button"
+          type="submit"
+          class="w-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-400 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm"
+        >
+          <i class="fa-solid fa-envelope mr-1.5"></i>
+          寄出重設密碼電郵
+        </button>
+      </form>
+
       <a
         href="index.html"
         class="mt-5 block text-center text-xs text-slate-500 hover:text-amber-800"
@@ -85,7 +124,7 @@
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
 
     const SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdWIiOiJ5dGVlZWR5bGRmZW14bXZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
 
     const _supabase = window.supabase.createClient(
       SUPABASE_URL,
@@ -186,6 +225,73 @@
       } finally {
         button.disabled = false;
         button.innerHTML = oldHtml;
+      }
+    });
+
+    // 忘記密碼
+    const forgotToggle = document.getElementById('forgot-toggle');
+    const forgotForm = document.getElementById('forgot-form');
+    const forgotButton = document.getElementById('forgot-button');
+    const forgotMessage = document.getElementById('forgot-message');
+
+    function showForgotMessage(text, type = 'error') {
+      forgotMessage.textContent = text;
+      forgotMessage.className =
+        type === 'success'
+          ? 'text-xs rounded-lg p-3 bg-emerald-50 text-emerald-800 border border-emerald-200'
+          : 'text-xs rounded-lg p-3 bg-red-50 text-red-700 border border-red-200';
+    }
+
+    forgotToggle.addEventListener('click', function () {
+      const isHidden = forgotForm.classList.toggle('hidden');
+      if (!isHidden) {
+        document.getElementById('forgot-email').value =
+          document.getElementById('login-email').value;
+        document.getElementById('forgot-email').focus();
+      }
+    });
+
+    forgotForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const email = document.getElementById('forgot-email').value.trim();
+
+      if (!email) {
+        showForgotMessage('請輸入 Email。');
+        return;
+      }
+
+      const oldHtml = forgotButton.innerHTML;
+
+      try {
+        forgotButton.disabled = true;
+        forgotButton.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i>寄出中…';
+        forgotMessage.className = 'hidden';
+
+        const redirectTo = new URL(
+          'reset-password.html',
+          window.location.href
+        ).href;
+
+        const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+          redirectTo
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        showForgotMessage(
+          '重設密碼電郵已寄出，請檢查你嘅收件箱（同垃圾郵件匣）。',
+          'success'
+        );
+      } catch (error) {
+        console.error(error);
+        showForgotMessage('寄出失敗，請稍後再試。');
+      } finally {
+        forgotButton.disabled = false;
+        forgotButton.innerHTML = oldHtml;
       }
     });
 
