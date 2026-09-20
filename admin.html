@@ -923,7 +923,7 @@ async function searchBookshopAddress(event) {
     
     async function protectAdminPage() {
   const { data: { user }, error: userError } =
-    await supabase.auth.getUser();
+    await _supabase.auth.getUser();
 
   if (userError || !user) {
     window.location.replace('login.html');
@@ -931,7 +931,7 @@ async function searchBookshopAddress(event) {
   }
 
   const { data: admin, error: adminError } =
-    await supabase
+    await _supabase
       .from('admin_users')
       .select('user_id, display_name, role, active')
       .eq('user_id', user.id)
@@ -943,7 +943,7 @@ async function searchBookshopAddress(event) {
     !admin ||
     !['owner', 'admin'].includes(admin.role)
   ) {
-    await supabase.auth.signOut();
+    await _supabase.auth.signOut();
     window.location.replace('login.html');
     return false;
   }
@@ -960,11 +960,14 @@ if (nameElement) {
 }
 
 async function logoutAdmin() {
-  await supabase.auth.signOut();
+  await _supabase.auth.signOut();
   window.location.replace('login.html');
 }
 
-window.onload = function () {
+window.onload = async function () {
+  const allowed = await protectAdminPage();
+  if (!allowed) return;
+
   fetchOrders();
   fetchPaymentSettings();
   fetchBookshops();
