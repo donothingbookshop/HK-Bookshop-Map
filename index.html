@@ -62,11 +62,23 @@
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-amber-300 bg-amber-950/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
       </nav>
 
-      <div class="relative cursor-pointer bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-full transition flex items-center gap-2" onclick="goToCartCheckout()">
-        <i class="fa-solid fa-cart-shopping text-base text-amber-300"></i>
-        <span class="text-xs font-semibold">購物車</span>
-        <span id="cart-count" class="bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
+      <div class="flex items-center gap-2">
+        <div class="relative cursor-pointer bg-amber-800 hover:bg-amber-700 px-3 py-1.5 rounded-full transition flex items-center gap-2" onclick="goToCartCheckout()">
+          <i class="fa-solid fa-cart-shopping text-base text-amber-300"></i>
+          <span class="text-xs font-semibold">購物車</span>
+          <span id="cart-count" class="bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
+        </div>
+
+        <a
+          id="admin-login-link"
+          href="login.html"
+          class="bg-amber-950/60 hover:bg-amber-950 border border-amber-700 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 text-xs font-semibold"
+        >
+          <i class="fa-solid fa-right-to-bracket text-amber-300"></i>
+          <span id="admin-login-label">管理員登入</span>
+        </a>
       </div>
+
 
     </div>
   </header>
@@ -502,6 +514,50 @@
       return clean;
     }
 
+    // --- 分店庫存輔助函數 ---
+    let lastRenderedProducts = [];
+    let modalSelectedBranch = null;
+
+    function getStocks(p) {
+      let stocks = p && p.branch_stocks || {};
+      if (typeof stocks === 'string') {
+        try { stocks = JSON.parse(stocks); } catch (e) { stocks = {}; }
+      }
+      return stocks || {};
+    }
+
+    function getBranchStock(id, branch) {
+      const p = allProducts.find(x => x.id === id);
+      if (!p) return 0;
+      return Number(getStocks(p)[branch] || 0);
+    }
+
+    // --- 管理員登入按鈕狀態 ---
+    async function refreshAdminLink() {
+      const link = document.getElementById('admin-login-link');
+      const label = document.getElementById('admin-login-label');
+      if (!link || !label) return;
+
+      try {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: admin } = await _supabase
+          .from('admin_users')
+          .select('display_name, active')
+          .eq('user_id', user.id)
+          .eq('active', true)
+          .maybeSingle();
+
+        if (admin) {
+          link.href = 'admin.html';
+          label.innerText = '進入後台';
+        }
+      } catch (e) {
+        console.warn('未能確認登入狀態', e);
+      }
+    }
+
     window.onload = function() {
       initMap();
       fetchBookshops();
@@ -510,6 +566,7 @@
       fetchEco();
       fetchTheatre();
       fetchPaymentSettings();
+      refreshAdminLink();
     };
 
     // --- Leaflet 地圖初始化 ---
@@ -741,18 +798,22 @@
     }
 
     function renderProducts(list) {
+      lastRenderedProducts = list;
       const container = document.getElementById('product-list');
       if (list.length === 0) { container.innerHTML = `<p class="text-slate-400 italic col-span-full">尚無商品上架。</p>`; return; }
 
       container.innerHTML = list.map(p => {
-        let stocks = p.branch_stocks || {};
-        if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-        const totalQty = p.quantity || Object.values(stocks).reduce((a,b)=>a+Number(b),0);
+        const stocks = getStocks(p);
+        const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b || 0), 0);
+        const inCart = cart.filter(x => x.id === p.id).reduce((a, b) => a + b.qty, 0);
+        const soldOut = totalQty <= 0;
+        const allTaken = !soldOut && inCart >= totalQty;
 
         return `
-          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-            <div class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer" onclick="openBookModal(${p.id})">
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition ${soldOut ? 'opacity-75' : ''}">
+            <div class="h-48 bg-slate-50 flex items-center justify-center p-3 cursor-pointer relative" onclick="openBookModal(${p.id})">
               ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-slate-300"></i>`}
+              ${soldOut ? `<span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">售罄</span>` : ''}
             </div>
             <div class="p-4 flex-grow flex flex-col justify-between">
               <div>
@@ -764,11 +825,13 @@
               <div class="mt-3 border-t pt-3 flex justify-between items-center">
                 <div>
                   <span class="text-lg font-bold text-amber-900">HK$ ${p.price}</span>
-                  <span class="block text-[10px] text-slate-400">現貨: ${totalQty} 本</span>
+                  <span class="block text-[10px] ${soldOut ? 'text-red-600 font-bold' : 'text-slate-400'}">${soldOut ? '已售罄' : `現貨: ${totalQty} 本`}</span>
                 </div>
                 <div class="flex gap-1">
                   <button onclick="openBookModal(${p.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-xs">詳情</button>
-                  <button onclick="addToCart(${p.id})" class="bg-amber-900 hover:bg-amber-800 text-white px-3 py-1.5 rounded text-xs flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i></button>
+                  ${soldOut || allTaken
+                    ? `<button disabled class="bg-slate-200 text-slate-400 px-3 py-1.5 rounded text-xs cursor-not-allowed">${soldOut ? '售罄' : '已加滿'}</button>`
+                    : `<button onclick="addToCart(${p.id})" class="bg-amber-900 hover:bg-amber-800 text-white px-3 py-1.5 rounded text-xs flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i></button>`}
                 </div>
               </div>
             </div>
@@ -820,41 +883,91 @@
       document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
       document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
 
-      let stocks = p.branch_stocks || {};
-      if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
-      
+      const stocks = getStocks(p);
       const allowedBranches = ['網店', '觀塘店', '西營盤店', '荃灣店'];
-      let branchEntries = Object.entries(stocks).filter(([b]) => allowedBranches.includes(b));
-      
-      allowedBranches.forEach(b => {
-        if (!stocks.hasOwnProperty(b)) {
-          branchEntries.push([b, 0]);
-        }
-      });
+      const branchEntries = allowedBranches.map(b => [b, Number(stocks[b] || 0)]);
+
+      const totalQty = branchEntries.reduce((a, [, q]) => a + q, 0);
+      const available = branchEntries.filter(([, q]) => q > 0);
+
+      modalSelectedBranch =
+        available.find(([b]) => b === modalSelectedBranch)?.[0] ||
+        (available.sort((a, b) => b[1] - a[1])[0]?.[0] || null);
 
       const branchContainer = document.getElementById('modal-branches');
-      branchContainer.innerHTML = branchEntries.map(([b, q]) => `
-        <span class="bg-blue-50 text-blue-800 text-[11px] border px-2 py-0.5 rounded">${b}: ${q}本</span>
-      `).join(' ');
+      branchContainer.innerHTML = branchEntries.map(([b, q]) => {
+        const inCart = cart.find(x => x.id === p.id && x.branch === b)?.qty || 0;
+        const left = q - inCart;
+        if (q <= 0) {
+          return `<span class="bg-slate-100 text-slate-400 text-[11px] border px-2 py-0.5 rounded line-through">${b}: 售罄</span>`;
+        }
+        const selected = modalSelectedBranch === b;
+        return `<button type="button" onclick="selectModalBranch(${p.id}, '${b}')" class="${selected ? 'bg-amber-900 text-white border-amber-900' : 'bg-blue-50 text-blue-800'} text-[11px] border px-2 py-0.5 rounded transition">${b}: ${q}本${left <= 0 ? '（已加滿）' : ''}</button>`;
+      }).join(' ');
+
+      const totalQtyEl = document.getElementById('modal-total-qty');
+      const soldOut = totalQty <= 0;
+      const branchLeft = modalSelectedBranch
+        ? getBranchStock(p.id, modalSelectedBranch) - (cart.find(x => x.id === p.id && x.branch === modalSelectedBranch)?.qty || 0)
+        : 0;
+
+      totalQtyEl.className = `block text-[11px] font-semibold ${soldOut ? 'text-red-600' : 'text-slate-500'}`;
+      totalQtyEl.innerText = soldOut
+        ? '已售罄'
+        : `${modalSelectedBranch}：可加 ${Math.max(branchLeft, 0)} 本（共 ${totalQty} 本）`;
 
       const btn = document.getElementById('modal-add-btn');
-      btn.onclick = () => { addToCart(p.id); closeBookModal(); };
+      const disabled = soldOut || branchLeft <= 0;
+      btn.disabled = disabled;
+      btn.className = `${disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-amber-900 hover:bg-amber-800'} text-white font-bold px-5 py-2.5 rounded-xl transition text-xs shadow flex items-center gap-2`;
+      btn.innerHTML = soldOut
+        ? '<i class="fa-solid fa-ban"></i> 已售罄'
+        : (branchLeft <= 0
+            ? '<i class="fa-solid fa-ban"></i> 已達庫存上限'
+            : '<i class="fa-solid fa-cart-plus"></i> 加入購物車');
+      btn.onclick = () => { if (!disabled) { addToCart(p.id, modalSelectedBranch); closeBookModal(); } };
 
       document.getElementById('book-modal').classList.remove('hidden');
+    }
+
+    function selectModalBranch(id, branch) {
+      modalSelectedBranch = branch;
+      openBookModal(id);
     }
 
     function closeBookModal() { document.getElementById('book-modal').classList.add('hidden'); }
 
     // --- 購物車與提交訂單 ---
-    function addToCart(id) {
+    function addToCart(id, branch) {
       const p = allProducts.find(x => x.id === id);
       if (!p) return;
 
-      const item = cart.find(x => x.id === id);
-      if (item) item.qty += 1;
-      else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+      // 未指定分店時，自動揀現貨最多嘅分店
+      if (!branch) {
+        const stocks = getStocks(p);
+        const best = Object.entries(stocks)
+          .filter(([, q]) => Number(q) > 0)
+          .sort((a, b) => Number(b[1]) - Number(a[1]))[0];
+        if (!best) { alert(`「${p.name}」目前已售罄。`); return; }
+        branch = best[0];
+      }
+
+      const limit = getBranchStock(id, branch);
+      if (limit <= 0) { alert(`「${p.name}」${branch} 已售罄。`); return; }
+
+      const item = cart.find(x => x.id === id && x.branch === branch);
+      if (item) {
+        if (item.qty >= limit) {
+          alert(`「${p.name}」${branch} 只剩 ${limit} 本，已達庫存上限。`);
+          return;
+        }
+        item.qty += 1;
+      } else {
+        cart.push({ id: p.id, name: p.name, price: p.price, qty: 1, branch });
+      }
 
       updateCartUI();
+      renderProducts(lastRenderedProducts);
     }
 
     function updateCartUI() {
@@ -875,25 +988,41 @@
         return;
       }
 
-      itemsContainer.innerHTML = cart.map((item, i) => `
+      itemsContainer.innerHTML = cart.map((item, i) => {
+        const limit = getBranchStock(item.id, item.branch);
+        const atMax = item.qty >= limit;
+        return `
         <div class="flex justify-between items-center border-b pb-2">
           <div>
             <p class="font-bold text-xs text-slate-800">${item.name}</p>
-            <p class="text-[11px] text-slate-500">HK$ ${item.price} x ${item.qty}</p>
+            <p class="text-[11px] text-slate-500">${item.branch} · HK$ ${item.price} x ${item.qty}</p>
+            ${atMax ? `<p class="text-[10px] font-bold text-red-600">已達庫存上限（${limit} 本）</p>` : ''}
           </div>
           <div class="flex items-center space-x-1">
             <button onclick="changeQty(${i}, -1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">-</button>
             <span class="text-xs px-1">${item.qty}</span>
-            <button onclick="changeQty(${i}, 1)" class="w-5 h-5 bg-slate-200 rounded flex items-center justify-center text-xs font-bold">+</button>
+            <button onclick="changeQty(${i}, 1)" ${atMax ? 'disabled' : ''} class="w-5 h-5 ${atMax ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-200'} rounded flex items-center justify-center text-xs font-bold">+</button>
           </div>
         </div>
-      `).join('');
+      `;}).join('');
     }
 
     function changeQty(index, delta) {
-      cart[index].qty += delta;
-      if (cart[index].qty <= 0) cart.splice(index, 1);
+      const item = cart[index];
+      if (!item) return;
+
+      if (delta > 0) {
+        const limit = getBranchStock(item.id, item.branch);
+        if (item.qty + delta > limit) {
+          alert(`「${item.name}」${item.branch} 只剩 ${limit} 本，已達庫存上限。`);
+          return;
+        }
+      }
+
+      item.qty += delta;
+      if (item.qty <= 0) cart.splice(index, 1);
       updateCartUI();
+      renderProducts(lastRenderedProducts);
     }
 
     async function submitOrder() {
@@ -910,7 +1039,8 @@
         id: item.id,
         name: item.name,
         price: Number(item.price),
-        qty: Number(item.qty)
+        qty: Number(item.qty),
+        branch: item.branch || '網店'
       }));
 
       try {
@@ -936,6 +1066,7 @@
         showPaymentModal(payMethod, totalPrice);
 
         cart = [];
+        renderProducts(lastRenderedProducts);
         document.getElementById('cust-name').value = '';
         document.getElementById('cust-phone').value = '';
         updateCartUI();
