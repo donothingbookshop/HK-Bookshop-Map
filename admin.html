@@ -542,7 +542,7 @@
                 <button type="button" id="isbn-stop-btn" onclick="stopIsbnScan()" class="hidden bg-slate-300 text-slate-700 px-3 py-1.5 rounded text-sm font-bold">停止掃描</button>
               </div>
               <div id="isbn-scanner-box" class="hidden">
-                <video id="isbn-video" class="w-full max-w-sm rounded bg-black" playsinline muted></video>
+                <video id="isbn-video" class="w-full max-w-sm rounded bg-black block" style="aspect-ratio:4/3;object-fit:cover" autoplay playsinline muted></video>
               </div>
               <p id="isbn-status" class="text-xs text-slate-600">可用手機相機對準書背條碼，或手動輸入 ISBN 後按「自動填資料」（資料來源：Google Books／Open Library，中文書可能查唔到，需手動填）。</p>
               <div id="isbn-cover-box" class="hidden items-center gap-2 flex">
@@ -550,6 +550,31 @@
                 <span class="text-xs text-slate-600">已自動帶入封面（如自行上傳圖片會優先用你上傳嘅）</span>
               </div>
               <input type="hidden" id="p-image-url">
+            </div>
+
+            <!-- AI 封面辨識 -->
+            <div class="bg-sky-50 border border-sky-200 rounded p-3 space-y-2">
+              <div class="font-bold text-sky-900 text-sm">🤖 上載封面相片，用 AI 辨識書籍資料</div>
+              <div class="flex flex-wrap items-center gap-2">
+                <input type="file" id="ai-cover-file" accept="image/*" capture="environment" class="border rounded p-1 text-sm bg-white">
+                <button type="button" id="ai-cover-btn" onclick="identifyCoverWithAI()" class="bg-sky-700 text-white px-3 py-1.5 rounded text-sm font-bold">辨識書籍資料</button>
+              </div>
+              <img id="ai-cover-preview" alt="相片預覽" class="hidden h-28 rounded border">
+              <p id="ai-cover-status" class="text-xs text-slate-600">揀一張書封或書背相片，AI 會讀出書名、作者、出版社同 ISBN 俾你核對，你確認後才會填入表單。</p>
+              <div id="ai-result-box" class="hidden bg-white border border-sky-200 rounded p-3 space-y-2">
+                <div class="text-xs font-bold text-sky-900">請核對以下辨識結果（可直接修改）：</div>
+                <div class="grid grid-cols-1 gap-2">
+                  <label class="text-xs text-slate-600">書名<input type="text" id="ai-r-title" class="w-full border rounded px-2 py-1 text-sm"></label>
+                  <label class="text-xs text-slate-600">作者<input type="text" id="ai-r-author" class="w-full border rounded px-2 py-1 text-sm"></label>
+                  <label class="text-xs text-slate-600">出版社<input type="text" id="ai-r-publisher" class="w-full border rounded px-2 py-1 text-sm"></label>
+                  <label class="text-xs text-slate-600">ISBN<input type="text" id="ai-r-isbn" class="w-full border rounded px-2 py-1 text-sm"></label>
+                </div>
+                <p id="ai-r-note" class="text-xs text-amber-700"></p>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" onclick="applyAiResult()" class="bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-bold">✔ 確認填入表單</button>
+                  <button type="button" onclick="clearAiResult()" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-sm font-bold">取消</button>
+                </div>
+              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
@@ -1692,7 +1717,7 @@ longitude: longitude,
     }
 
     // --- ISBN 掃描 + 自動填資料 ---
-    let _isbnStream = null, _isbnLoop = null, _isbnQuagga = false;
+    let _isbnStream = null, _isbnLoop = null, _isbnZxing = null;
 
     function setIsbnStatus(msg) {
       document.getElementById('isbn-status').innerText = msg;
@@ -1701,7 +1726,7 @@ longitude: longitude,
     function stopIsbnScan() {
       if (_isbnLoop) { clearInterval(_isbnLoop); _isbnLoop = null; }
       if (_isbnStream) { _isbnStream.getTracks().forEach(t => t.stop()); _isbnStream = null; }
-      if (_isbnQuagga && window.Quagga) { try { Quagga.stop(); } catch (e) {} _isbnQuagga = false; }
+      if (_isbnZxing) { try { _isbnZxing.reset(); } catch (e) {} _isbnZxing = null; }
       document.getElementById('isbn-scanner-box').classList.add('hidden');
       document.getElementById('isbn-stop-btn').classList.add('hidden');
     }
@@ -1718,6 +1743,7 @@ longitude: longitude,
       const box = document.getElementById('isbn-scanner-box');
       const video = document.getElementById('isbn-video');
       box.classList.remove('hidden');
+      video.classList.remove('hidden');
       document.getElementById('isbn-stop-btn').classList.remove('hidden');
       setIsbnStatus('正在開啟相機…');
 
@@ -1745,30 +1771,23 @@ longitude: longitude,
         return;
       }
 
-      // 後備方案：QuaggaJS
+      // 後備方案：ZXing（iOS Safari 等唔支援 BarcodeDetector 嘅瀏覽器，繼續用同一個鏡頭畫面）
       try {
-        if (!window.Quagga) await loadScript('https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js');
-        stopVideoOnly();
-        Quagga.init({
-          inputStream: { type: 'LiveStream', target: document.getElementById('isbn-scanner-box'), constraints: { facingMode: 'environment' } },
-          decoder: { readers: ['ean_reader'] }
-        }, err => {
-          if (err) { setIsbnStatus('掃描器啟動失敗，請手動輸入 ISBN。'); return; }
-          _isbnQuagga = true;
-          Quagga.start();
-          Quagga.onDetected(res => {
-            const code = res && res.codeResult && res.codeResult.code;
-            if (code) onIsbnDetected(code);
-          });
+        if (!window.ZXing) await loadScript('https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js');
+        const hints = new Map();
+        hints.set(2 /* POSSIBLE_FORMATS */, [
+          window.ZXing.BarcodeFormat.EAN_13,
+          window.ZXing.BarcodeFormat.EAN_8,
+          window.ZXing.BarcodeFormat.UPC_A,
+        ]);
+        const reader = new window.ZXing.BrowserMultiFormatReader(hints, 300);
+        _isbnZxing = reader;
+        reader.decodeFromStream(_isbnStream, video, (result) => {
+          if (result && result.getText) onIsbnDetected(result.getText());
         });
       } catch (e) {
-        setIsbnStatus('此瀏覽器唔支援掃描，請手動輸入 ISBN。');
+        setIsbnStatus('此瀏覽器唔支援自動掃描，請對準條碼後手動輸入 ISBN。');
       }
-    }
-
-    function stopVideoOnly() {
-      if (_isbnStream) { _isbnStream.getTracks().forEach(t => t.stop()); _isbnStream = null; }
-      document.getElementById('isbn-video').classList.add('hidden');
     }
 
     function onIsbnDetected(code) {
@@ -1854,6 +1873,119 @@ longitude: longitude,
     }
 
 
+    // --- AI 封面辨識 ---
+    const AI_API_BASES = [
+      'https://project--5bb896e7-4cff-4da2-a9ae-d8aa5a9c2392.lovable.app',
+      'https://project--5bb896e7-4cff-4da2-a9ae-d8aa5a9c2392-dev.lovable.app'
+    ];
+
+    async function postIdentify(dataUrl) {
+      let lastErr = null;
+      for (const base of AI_API_BASES) {
+        try {
+          const r = await fetch(base + '/api/public/identify-book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageDataUrl: dataUrl })
+          });
+          if (r.status === 404) { lastErr = new Error('AI 服務未上線'); continue; }
+          return r;
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('無法連接 AI 服務');
+    }
+
+    function setAiStatus(msg) {
+      document.getElementById('ai-cover-status').innerText = msg;
+    }
+
+    function fileToDataUrl(file, maxSide) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('讀取相片失敗'));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => resolve(reader.result);
+          img.onload = () => {
+            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+            const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            try { resolve(canvas.toDataURL('image/jpeg', 0.85)); }
+            catch (e) { resolve(reader.result); }
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function identifyCoverWithAI() {
+      const input = document.getElementById('ai-cover-file');
+      const file = input.files && input.files[0];
+      if (!file) { setAiStatus('請先揀一張封面相片。'); return; }
+
+      const btn = document.getElementById('ai-cover-btn');
+      btn.disabled = true;
+      btn.classList.add('opacity-60');
+      clearAiResult();
+      setAiStatus('正在辨識中，請稍等…');
+
+      try {
+        const dataUrl = await fileToDataUrl(file, 1280);
+        const preview = document.getElementById('ai-cover-preview');
+        preview.src = dataUrl;
+        preview.classList.remove('hidden');
+
+        const r = await fetch(AI_API_BASE + '/api/public/identify-book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageDataUrl: dataUrl })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { setAiStatus(j.error || ('辨識失敗（' + r.status + '）。')); return; }
+
+        const b = j.book || {};
+        document.getElementById('ai-r-title').value = b.title || '';
+        document.getElementById('ai-r-author').value = b.author || '';
+        document.getElementById('ai-r-publisher').value = b.publisher || '';
+        document.getElementById('ai-r-isbn').value = b.isbn || '';
+        const noteParts = [];
+        if (b.confidence) noteParts.push('辨識信心：' + b.confidence);
+        if (b.note) noteParts.push(b.note);
+        document.getElementById('ai-r-note').innerText = noteParts.join('　·　');
+        document.getElementById('ai-result-box').classList.remove('hidden');
+        setAiStatus('辨識完成，請核對下面資料（AI 有機會出錯），確認後才會填入表單。');
+      } catch (e) {
+        setAiStatus('辨識失敗：' + (e && e.message ? e.message : '未知錯誤'));
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-60');
+      }
+    }
+
+    function applyAiResult() {
+      const title = document.getElementById('ai-r-title').value.trim();
+      const author = document.getElementById('ai-r-author').value.trim();
+      const publisher = document.getElementById('ai-r-publisher').value.trim();
+      const isbn = document.getElementById('ai-r-isbn').value.trim();
+      if (title) document.getElementById('p-name').value = title;
+      if (author) document.getElementById('p-author').value = author;
+      if (publisher) document.getElementById('p-publisher').value = publisher;
+      if (isbn) document.getElementById('p-isbn').value = isbn;
+      setAiStatus('已填入表單，記住補上價格同庫存。');
+      document.getElementById('ai-result-box').classList.add('hidden');
+    }
+
+    function clearAiResult() {
+      document.getElementById('ai-result-box').classList.add('hidden');
+      document.getElementById('ai-r-note').innerText = '';
+      ['ai-r-title', 'ai-r-author', 'ai-r-publisher', 'ai-r-isbn'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('p-id').value;
@@ -1930,6 +2062,8 @@ longitude: longitude,
     function resetProductForm() {
       stopIsbnScan();
       clearIsbnCover();
+      clearAiResult();
+      document.getElementById('ai-cover-preview').classList.add('hidden');
 
       document.getElementById('product-form').reset();
       document.getElementById('p-id').value = '';
