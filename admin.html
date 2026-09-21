@@ -535,6 +535,23 @@
                 <input type="text" id="p-isbn" class="w-full border rounded px-3 py-2">
               </div>
             </div>
+            <div class="bg-amber-50 border border-amber-200 rounded p-3 space-y-2">
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="startIsbnScan()" class="bg-slate-800 text-white px-3 py-1.5 rounded text-sm font-bold">📷 掃描 ISBN 條碼</button>
+                <button type="button" onclick="lookupIsbn()" class="bg-amber-600 text-white px-3 py-1.5 rounded text-sm font-bold">🔍 用 ISBN 自動填資料</button>
+                <button type="button" id="isbn-stop-btn" onclick="stopIsbnScan()" class="hidden bg-slate-300 text-slate-700 px-3 py-1.5 rounded text-sm font-bold">停止掃描</button>
+              </div>
+              <div id="isbn-scanner-box" class="hidden">
+                <video id="isbn-video" class="w-full max-w-sm rounded bg-black" playsinline muted></video>
+              </div>
+              <p id="isbn-status" class="text-xs text-slate-600">可用手機相機對準書背條碼，或手動輸入 ISBN 後按「自動填資料」（資料來源：Google Books／Open Library，中文書可能查唔到，需手動填）。</p>
+              <div id="isbn-cover-box" class="hidden items-center gap-2 flex">
+                <img id="isbn-cover-img" alt="封面預覽" class="h-20 rounded border">
+                <span class="text-xs text-slate-600">已自動帶入封面（如自行上傳圖片會優先用你上傳嘅）</span>
+              </div>
+              <input type="hidden" id="p-image-url">
+            </div>
+
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block font-bold text-slate-700 mb-1">分類主題 *</label>
@@ -1674,6 +1691,169 @@ longitude: longitude,
       `).join('');
     }
 
+    // --- ISBN 掃描 + 自動填資料 ---
+    let _isbnStream = null, _isbnLoop = null, _isbnQuagga = false;
+
+    function setIsbnStatus(msg) {
+      document.getElementById('isbn-status').innerText = msg;
+    }
+
+    function stopIsbnScan() {
+      if (_isbnLoop) { clearInterval(_isbnLoop); _isbnLoop = null; }
+      if (_isbnStream) { _isbnStream.getTracks().forEach(t => t.stop()); _isbnStream = null; }
+      if (_isbnQuagga && window.Quagga) { try { Quagga.stop(); } catch (e) {} _isbnQuagga = false; }
+      document.getElementById('isbn-scanner-box').classList.add('hidden');
+      document.getElementById('isbn-stop-btn').classList.add('hidden');
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function startIsbnScan() {
+      const box = document.getElementById('isbn-scanner-box');
+      const video = document.getElementById('isbn-video');
+      box.classList.remove('hidden');
+      document.getElementById('isbn-stop-btn').classList.remove('hidden');
+      setIsbnStatus('正在開啟相機…');
+
+      try {
+        _isbnStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } }, audio: false
+        });
+      } catch (e) {
+        setIsbnStatus('無法開啟相機，請允許相機權限，或手動輸入 ISBN。');
+        stopIsbnScan();
+        return;
+      }
+      video.srcObject = _isbnStream;
+      await video.play().catch(() => {});
+      setIsbnStatus('請將書背條碼對準鏡頭…');
+
+      if ('BarcodeDetector' in window) {
+        const detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a'] });
+        _isbnLoop = setInterval(async () => {
+          try {
+            const codes = await detector.detect(video);
+            if (codes && codes.length) onIsbnDetected(codes[0].rawValue);
+          } catch (e) {}
+        }, 400);
+        return;
+      }
+
+      // 後備方案：QuaggaJS
+      try {
+        if (!window.Quagga) await loadScript('https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js');
+        stopVideoOnly();
+        Quagga.init({
+          inputStream: { type: 'LiveStream', target: document.getElementById('isbn-scanner-box'), constraints: { facingMode: 'environment' } },
+          decoder: { readers: ['ean_reader'] }
+        }, err => {
+          if (err) { setIsbnStatus('掃描器啟動失敗，請手動輸入 ISBN。'); return; }
+          _isbnQuagga = true;
+          Quagga.start();
+          Quagga.onDetected(res => {
+            const code = res && res.codeResult && res.codeResult.code;
+            if (code) onIsbnDetected(code);
+          });
+        });
+      } catch (e) {
+        setIsbnStatus('此瀏覽器唔支援掃描，請手動輸入 ISBN。');
+      }
+    }
+
+    function stopVideoOnly() {
+      if (_isbnStream) { _isbnStream.getTracks().forEach(t => t.stop()); _isbnStream = null; }
+      document.getElementById('isbn-video').classList.add('hidden');
+    }
+
+    function onIsbnDetected(code) {
+      const clean = String(code).replace(/\D/g, '');
+      if (clean.length !== 13 && clean.length !== 10) return;
+      document.getElementById('p-isbn').value = clean;
+      stopIsbnScan();
+      setIsbnStatus('掃到 ISBN：' + clean + '，正在查書籍資料…');
+      lookupIsbn();
+    }
+
+    function fillIfEmpty(id, value) {
+      if (!value) return;
+      const el = document.getElementById(id);
+      if (!el.value) el.value = value;
+    }
+
+    async function lookupIsbn() {
+      const isbn = document.getElementById('p-isbn').value.replace(/[^0-9Xx]/g, '');
+      if (!isbn) { setIsbnStatus('請先輸入或掃描 ISBN。'); return; }
+      setIsbnStatus('正在查詢書籍資料…');
+
+      let found = false;
+      // 1. Google Books
+      try {
+        const r = await fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + encodeURIComponent(isbn));
+        const j = await r.json();
+        const v = j.items && j.items[0] && j.items[0].volumeInfo;
+        if (v) {
+          found = true;
+          fillIfEmpty('p-name', v.title + (v.subtitle ? '：' + v.subtitle : ''));
+          fillIfEmpty('p-author', (v.authors || []).join('、'));
+          fillIfEmpty('p-publisher', v.publisher || '');
+          fillIfEmpty('p-desc', v.description || '');
+          const img = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail);
+          if (img) setIsbnCover(img.replace('http://', 'https://'));
+        }
+      } catch (e) {}
+
+      // 2. Open Library 後備
+      if (!found) {
+        try {
+          const r = await fetch('https://openlibrary.org/isbn/' + encodeURIComponent(isbn) + '.json');
+          if (r.ok) {
+            const d = await r.json();
+            found = true;
+            fillIfEmpty('p-name', d.title ? d.title + (d.subtitle ? '：' + d.subtitle : '') : '');
+            fillIfEmpty('p-publisher', (d.publishers || []).join('、'));
+            if (d.description) fillIfEmpty('p-desc', typeof d.description === 'string' ? d.description : (d.description.value || ''));
+            const coverId = (d.covers || []).find(c => c > 0);
+            if (coverId) setIsbnCover('https://covers.openlibrary.org/b/id/' + coverId + '-L.jpg');
+            const keys = (d.authors || []).map(a => a.key).filter(Boolean);
+            if (keys.length) {
+              const names = [];
+              for (const k of keys.slice(0, 3)) {
+                try {
+                  const ar = await fetch('https://openlibrary.org' + k + '.json');
+                  if (ar.ok) { const aj = await ar.json(); if (aj.name) names.push(aj.name); }
+                } catch (e) {}
+              }
+              fillIfEmpty('p-author', names.join('、'));
+            }
+          }
+        } catch (e) {}
+      }
+
+
+
+      setIsbnStatus(found
+        ? '已自動填入可查到嘅資料（空白欄位才會填）。請檢查並補上價格、庫存。'
+        : '查唔到此 ISBN 嘅資料（中文書常見），請手動填寫。');
+    }
+
+    function setIsbnCover(url) {
+      document.getElementById('p-image-url').value = url;
+      document.getElementById('isbn-cover-img').src = url;
+      document.getElementById('isbn-cover-box').classList.remove('hidden');
+    }
+
+    function clearIsbnCover() {
+      document.getElementById('p-image-url').value = '';
+      document.getElementById('isbn-cover-box').classList.add('hidden');
+    }
+
+
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('p-id').value;
@@ -1710,7 +1890,9 @@ longitude: longitude,
         quantity: totalQty,
         description: document.getElementById('p-desc').value
       };
+      if (!imageUrl) imageUrl = document.getElementById('p-image-url').value || null;
       if (imageUrl) payload.image_url = imageUrl;
+
 
       if (id) await _supabase.from('shop_products').update(payload).eq('id', id);
       else await _supabase.from('shop_products').insert([payload]);
@@ -1721,6 +1903,8 @@ longitude: longitude,
     }
 
     function editProduct(p) {
+      clearIsbnCover();
+
       document.getElementById('p-id').value = p.id;
       document.getElementById('p-name').value = p.name;
       document.getElementById('p-author').value = p.author || '';
@@ -1744,6 +1928,9 @@ longitude: longitude,
     }
 
     function resetProductForm() {
+      stopIsbnScan();
+      clearIsbnCover();
+
       document.getElementById('product-form').reset();
       document.getElementById('p-id').value = '';
       document.getElementById('product-form-title').innerText = "新增網店書籍 / 商品";
