@@ -105,6 +105,9 @@
         <button onclick="switchAdminTab('manual-receipt', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-receipt"></i> 手動新增收據
         </button>
+        <button onclick="switchAdminTab('consignments', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-handshake"></i> 寄售管理
+        </button>
         <button onclick="switchAdminTab('payment-settings', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-credit-card"></i> 收款設定
         </button>
@@ -228,6 +231,121 @@
             </button>
           </div>
         </form>
+      </div>
+    </section>
+
+    <!-- 2b. 寄售管理 -->
+    <section id="sec-consignments" class="admin-section">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border">
+          <h2 id="consign-form-title" class="text-lg font-bold text-amber-900 mb-1 border-b pb-2">🤝 開立寄售單</h2>
+          <p class="text-xs text-slate-500 mb-4">給寄售人 / 創作者 / 出版社簽署及留底，可下載 PDF 收據（寄售憑證）。</p>
+
+          <form id="consign-form" onsubmit="saveConsignment(event)" class="space-y-4 text-xs">
+            <input type="hidden" id="c-id">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">寄售人 / 機構名稱 *</label>
+                <input type="text" id="c-name" required class="w-full border rounded-lg px-3 py-2" placeholder="例如：陳小明 / XX 出版社">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">身份 *</label>
+                <select id="c-type" class="w-full border rounded-lg px-3 py-2 bg-white">
+                  <option value="創作者">創作者</option>
+                  <option value="出版社">出版社</option>
+                  <option value="寄售人 / 個人">寄售人 / 個人</option>
+                  <option value="團體 / 機構">團體 / 機構</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">聯絡電話</label>
+                <input type="text" id="c-phone" class="w-full border rounded-lg px-3 py-2" placeholder="例如：91234567">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">電郵</label>
+                <input type="email" id="c-email" class="w-full border rounded-lg px-3 py-2" placeholder="例如：name@mail.com">
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">地址 / 通訊資料</label>
+              <input type="text" id="c-address" class="w-full border rounded-lg px-3 py-2" placeholder="退書或郵寄用地址（可留空）">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+              <div>
+                <label class="block font-bold text-amber-900 mb-1">寄放分店 *</label>
+                <select id="c-branch" class="w-full border rounded-lg px-2.5 py-2 bg-white">
+                  <option value="網店">網店</option>
+                  <option value="觀塘店">觀塘店</option>
+                  <option value="西營盤店">西營盤店</option>
+                  <option value="荃灣店">荃灣店</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-amber-900 mb-1">寄售開始日期</label>
+                <input type="date" id="c-start" class="w-full border rounded-lg px-2.5 py-2 bg-white">
+              </div>
+              <div>
+                <label class="block font-bold text-amber-900 mb-1">寄售期限</label>
+                <input type="date" id="c-end" class="w-full border rounded-lg px-2.5 py-2 bg-white">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">寄售人分成比例 (%) *</label>
+                <input type="number" id="c-share" value="70" min="0" max="100" oninput="applyDefaultShare()" class="w-full border rounded-lg px-3 py-2">
+                <p class="text-[10px] text-slate-500 mt-1">書店抽成 = 100% − 此比例；個別項目可獨立調整。</p>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">結算狀態 *</label>
+                <select id="c-status" class="w-full border rounded-lg px-3 py-2 bg-white">
+                  <option value="未結算">未結算</option>
+                  <option value="部分結算">部分結算</option>
+                  <option value="已結算">已結算</option>
+                  <option value="已退回貨品">已退回貨品</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <label class="font-bold text-slate-700">寄售項目（書籍 / 文創分開列示）*</label>
+                <div class="flex gap-2">
+                  <button type="button" onclick="addConsignItemRow({category:'書籍'})" class="bg-amber-900 text-white px-2.5 py-1 rounded text-[11px] font-semibold"><i class="fa-solid fa-book mr-1"></i>加書籍</button>
+                  <button type="button" onclick="addConsignItemRow({category:'文創'})" class="bg-purple-800 text-white px-2.5 py-1 rounded text-[11px] font-semibold"><i class="fa-solid fa-palette mr-1"></i>加文創</button>
+                </div>
+              </div>
+              <div id="consign-items-container" class="space-y-2"></div>
+              <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                <div class="bg-slate-50 border rounded-lg p-2.5">📚 書籍合計：HK$ <span id="c-total-book" class="font-bold">0</span></div>
+                <div class="bg-slate-50 border rounded-lg p-2.5">🎨 文創合計：HK$ <span id="c-total-craft" class="font-bold">0</span></div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-amber-900">總定價：HK$ <span id="c-total-retail" class="font-bold">0</span></div>
+              </div>
+              <div class="text-right font-bold text-sm mt-2 text-emerald-700">全數售出應付寄售人：HK$ <span id="c-payable">0</span></div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">備註 / 條款</label>
+              <textarea id="c-notes" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="例如：期滿未售出貨品由寄售人自行取回"></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+              <button type="submit" class="flex-grow bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl transition shadow">儲存寄售單</button>
+              <button type="button" onclick="resetConsignForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-xl transition font-semibold">重置</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
+          <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-lg font-bold text-slate-800">已開立寄售單</h2>
+            <button onclick="fetchConsignments()" class="bg-white border px-2.5 py-1 rounded-lg text-[11px] font-medium hover:bg-slate-50"><i class="fa-solid fa-rotate"></i></button>
+          </div>
+          <div id="consign-list" class="space-y-3 text-xs">
+            <p class="text-slate-400 italic">載入中...</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -793,6 +911,56 @@
     </div>
   </div>
 
+  <!-- 寄售單 PDF 收據模板 -->
+  <div id="consign-pdf-template" class="hidden bg-white p-8 mx-auto text-slate-800 font-sans" style="width: 460px;">
+    <div class="text-center mb-4">
+      <h1 class="text-lg font-bold">無所事事小書店 Donothing Bookshop</h1>
+      <p class="text-xs text-slate-500">寄售單 / 寄售收據 Consignment Receipt</p>
+    </div>
+    <div class="space-y-1.5 text-xs mb-4">
+      <p><strong>寄售單號：</strong><span id="cpdf-no"></span></p>
+      <p><strong>開立日期：</strong><span id="cpdf-date"></span></p>
+      <p><strong>寄售人：</strong><span id="cpdf-name"></span>（<span id="cpdf-type"></span>）</p>
+      <p><strong>聯絡：</strong><span id="cpdf-contact"></span></p>
+      <p><strong>地址：</strong><span id="cpdf-address"></span></p>
+      <p><strong>寄放分店：</strong><span id="cpdf-branch"></span></p>
+      <p><strong>寄售期：</strong><span id="cpdf-period"></span></p>
+    </div>
+    <div class="border-t border-b py-3 mb-3">
+      <table class="w-full" style="font-size:10px">
+        <thead>
+          <tr class="border-b text-left text-slate-500">
+            <th class="pb-1">類別</th>
+            <th class="pb-1">項目 / ISBN</th>
+            <th class="pb-1 text-center">數量</th>
+            <th class="pb-1 text-right">小計</th>
+            <th class="pb-1 text-center">分成</th>
+            <th class="pb-1 text-right">應付</th>
+          </tr>
+        </thead>
+        <tbody id="cpdf-items-tbody"></tbody>
+      </table>
+    </div>
+    <div class="space-y-1 text-xs text-right mb-4">
+      <p>書籍合計定價：<span id="cpdf-total-book"></span></p>
+      <p>文創合計定價：<span id="cpdf-total-craft"></span></p>
+      <p>總定價：<span id="cpdf-total-retail" class="font-bold"></span></p>
+      <p class="text-emerald-700">全數售出應付寄售人：<span id="cpdf-payable" class="font-bold"></span></p>
+      <p>結算狀態：<span id="cpdf-status"></span></p>
+    </div>
+    <div class="text-xs mb-6">
+      <p class="font-bold mb-1">備註 / 條款</p>
+      <p id="cpdf-notes" class="text-slate-600 whitespace-pre-line"></p>
+    </div>
+    <div class="grid grid-cols-2 gap-6 text-[10px] text-slate-500 mb-4">
+      <div class="border-t pt-1">寄售人簽署</div>
+      <div class="border-t pt-1">書店代表簽署</div>
+    </div>
+    <div class="text-center text-[10px] text-slate-400 border-t pt-3">
+      <p>此單據為寄售貨品交收憑證，雙方各持一份。</p>
+    </div>
+  </div>
+
   <footer class="bg-slate-800 text-slate-400 text-xs py-6 text-center mt-auto">
     <p>© 無所事事小書店 後台管理系統</p>
   </footer>
@@ -1018,6 +1186,8 @@ window.onload = async function () {
   fetchProducts();
   fetchEco();
   fetchTheatre();
+  fetchConsignments();
+  if (!document.querySelector('.consign-item-row')) addConsignItemRow({ category: '書籍' });
 
   document
     .getElementById('bs-region')
@@ -1263,6 +1433,231 @@ window.onload = async function () {
         button.disabled = false;
         button.innerHTML = originalHtml;
       }
+    }
+
+    // --- 2b. 寄售管理 ---
+    let consignCache = [];
+
+    function addConsignItemRow(item = {}) {
+      const container = document.getElementById('consign-items-container');
+      const share = item.share_pct != null ? item.share_pct : (Number(document.getElementById('c-share').value) || 70);
+      const row = document.createElement('div');
+      row.className = "consign-item-row grid grid-cols-12 gap-1.5 items-center";
+      row.innerHTML = `
+        <select class="c-item-category col-span-2 border rounded px-1.5 py-1.5 bg-white text-[11px]" onchange="calcConsignTotals()">
+          <option value="書籍" ${item.category === '文創' ? '' : 'selected'}>書籍</option>
+          <option value="文創" ${item.category === '文創' ? 'selected' : ''}>文創</option>
+        </select>
+        <input type="text" placeholder="名稱 *" value="${(item.name || '').replace(/"/g, '&quot;')}" class="c-item-name col-span-4 border rounded px-2 py-1.5" required>
+        <input type="text" placeholder="ISBN / 編號" value="${(item.isbn || '').replace(/"/g, '&quot;')}" class="c-item-isbn col-span-2 border rounded px-2 py-1.5">
+        <input type="number" placeholder="定價" value="${item.price != null ? item.price : 0}" min="0" oninput="calcConsignTotals()" class="c-item-price col-span-1 border rounded px-1.5 py-1.5" required>
+        <input type="number" placeholder="數量" value="${item.qty != null ? item.qty : 1}" min="1" oninput="calcConsignTotals()" class="c-item-qty col-span-1 border rounded px-1.5 py-1.5" required>
+        <input type="number" placeholder="分成%" value="${share}" min="0" max="100" oninput="calcConsignTotals()" class="c-item-share col-span-1 border rounded px-1.5 py-1.5">
+        <button type="button" onclick="this.parentElement.remove(); calcConsignTotals();" class="col-span-1 text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+      `;
+      container.appendChild(row);
+      calcConsignTotals();
+    }
+
+    function applyDefaultShare() {
+      const share = Number(document.getElementById('c-share').value) || 0;
+      document.querySelectorAll('.consign-item-row .c-item-share').forEach(el => { el.value = share; });
+      calcConsignTotals();
+    }
+
+    function readConsignItems() {
+      const items = [];
+      document.querySelectorAll('.consign-item-row').forEach(row => {
+        const name = row.querySelector('.c-item-name').value.trim();
+        if (!name) return;
+        items.push({
+          category: row.querySelector('.c-item-category').value,
+          name,
+          isbn: row.querySelector('.c-item-isbn').value.trim(),
+          price: Number(row.querySelector('.c-item-price').value) || 0,
+          qty: Number(row.querySelector('.c-item-qty').value) || 0,
+          share_pct: Number(row.querySelector('.c-item-share').value) || 0
+        });
+      });
+      return items;
+    }
+
+    function consignSums(items) {
+      let book = 0, craft = 0, payable = 0;
+      items.forEach(i => {
+        const sub = i.price * i.qty;
+        if (i.category === '文創') craft += sub; else book += sub;
+        payable += sub * (Number(i.share_pct) || 0) / 100;
+      });
+      return { book, craft, retail: book + craft, payable: Math.round(payable * 100) / 100 };
+    }
+
+    function calcConsignTotals() {
+      const s = consignSums(readConsignItems());
+      document.getElementById('c-total-book').innerText = s.book;
+      document.getElementById('c-total-craft').innerText = s.craft;
+      document.getElementById('c-total-retail').innerText = s.retail;
+      document.getElementById('c-payable').innerText = s.payable;
+    }
+
+    async function fetchConsignments() {
+      const { data, error } = await _supabase.from('consignments').select('*').order('created_at', { ascending: false });
+      const list = document.getElementById('consign-list');
+      if (error) { list.innerHTML = `<p class="text-red-600">載入失敗：${error.message}</p>`; return; }
+      consignCache = data || [];
+      if (!consignCache.length) { list.innerHTML = '<p class="text-slate-400 italic">尚未開立任何寄售單。</p>'; return; }
+      list.innerHTML = consignCache.map(c => {
+        const items = Array.isArray(c.items) ? c.items : [];
+        const books = items.filter(i => i.category !== '文創').reduce((a, b) => a + (b.qty || 0), 0);
+        const crafts = items.filter(i => i.category === '文創').reduce((a, b) => a + (b.qty || 0), 0);
+        const statusColor = c.settlement_status === '已結算' ? 'bg-emerald-100 text-emerald-800' : (c.settlement_status === '部分結算' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700');
+        return `
+        <div class="border rounded-xl p-3">
+          <div class="flex justify-between items-start gap-2">
+            <div>
+              <p class="font-bold text-slate-800">${c.consignor_name} <span class="text-[10px] text-slate-500">${c.consignor_type || ''}</span></p>
+              <p class="text-[11px] text-slate-500">${c.consignment_no || ('#' + c.id)} · ${c.branch || '—'}</p>
+              <p class="text-[11px] text-slate-500">${c.start_date || '—'} 至 ${c.end_date || '—'}</p>
+              <p class="text-[11px] text-slate-600 mt-1">📚 ${books} 本 · 🎨 ${crafts} 件 · 定價 HK$ ${c.total_retail} · 應付 HK$ ${c.payable_amount}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor}">${c.settlement_status}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button onclick="downloadConsignPdf(${c.id})" class="bg-amber-900 text-white px-2 py-1 rounded text-[11px] font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i>下載收據</button>
+            <button onclick="editConsignment(${c.id})" class="bg-slate-100 border px-2 py-1 rounded text-[11px] font-semibold">編輯</button>
+            <button onclick="setConsignStatus(${c.id}, '已結算')" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-1 rounded text-[11px] font-semibold">標記已結算</button>
+            <button onclick="deleteConsignment(${c.id})" class="text-red-600 px-2 py-1 rounded text-[11px] font-semibold">刪除</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function saveConsignment(e) {
+      e.preventDefault();
+      const items = readConsignItems();
+      if (!items.length) { alert('請至少加入一個寄售項目。'); return; }
+      const s = consignSums(items);
+      const id = document.getElementById('c-id').value;
+      const payload = {
+        consignor_name: document.getElementById('c-name').value.trim(),
+        consignor_type: document.getElementById('c-type').value,
+        consignor_phone: document.getElementById('c-phone').value.trim(),
+        consignor_email: document.getElementById('c-email').value.trim(),
+        consignor_address: document.getElementById('c-address').value.trim(),
+        branch: document.getElementById('c-branch').value,
+        start_date: document.getElementById('c-start').value || null,
+        end_date: document.getElementById('c-end').value || null,
+        items: items,
+        default_share_pct: Number(document.getElementById('c-share').value) || 0,
+        total_retail: s.retail,
+        payable_amount: s.payable,
+        settlement_status: document.getElementById('c-status').value,
+        notes: document.getElementById('c-notes').value.trim()
+      };
+
+      let error, saved;
+      if (id) {
+        const res = await _supabase.from('consignments').update(payload).eq('id', id).select().single();
+        error = res.error; saved = res.data;
+      } else {
+        payload.consignment_no = 'CS' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(Date.now()).slice(-4);
+        const res = await _supabase.from('consignments').insert([payload]).select().single();
+        error = res.error; saved = res.data;
+      }
+
+      if (error) { alert('儲存失敗：' + error.message); return; }
+      await fetchConsignments();
+      resetConsignForm();
+      if (saved && confirm('寄售單已儲存！要即刻下載 PDF 收據嗎？')) downloadConsignPdf(saved.id);
+    }
+
+    function editConsignment(id) {
+      const c = consignCache.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('c-id').value = c.id;
+      document.getElementById('c-name').value = c.consignor_name || '';
+      document.getElementById('c-type').value = c.consignor_type || '創作者';
+      document.getElementById('c-phone').value = c.consignor_phone || '';
+      document.getElementById('c-email').value = c.consignor_email || '';
+      document.getElementById('c-address').value = c.consignor_address || '';
+      document.getElementById('c-branch').value = c.branch || '網店';
+      document.getElementById('c-start').value = c.start_date || '';
+      document.getElementById('c-end').value = c.end_date || '';
+      document.getElementById('c-share').value = c.default_share_pct != null ? c.default_share_pct : 70;
+      document.getElementById('c-status').value = c.settlement_status || '未結算';
+      document.getElementById('c-notes').value = c.notes || '';
+      document.getElementById('consign-items-container').innerHTML = '';
+      (Array.isArray(c.items) ? c.items : []).forEach(i => addConsignItemRow(i));
+      if (!document.querySelector('.consign-item-row')) addConsignItemRow({ category: '書籍' });
+      document.getElementById('consign-form-title').innerText = `✏️ 編輯寄售單 ${c.consignment_no || ('#' + c.id)}`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetConsignForm() {
+      document.getElementById('consign-form').reset();
+      document.getElementById('c-id').value = '';
+      document.getElementById('c-share').value = 70;
+      document.getElementById('consign-items-container').innerHTML = '';
+      addConsignItemRow({ category: '書籍' });
+      document.getElementById('consign-form-title').innerText = '🤝 開立寄售單';
+    }
+
+    async function setConsignStatus(id, status) {
+      const { error } = await _supabase.from('consignments').update({ settlement_status: status }).eq('id', id);
+      if (error) alert('更新失敗：' + error.message);
+      else fetchConsignments();
+    }
+
+    async function deleteConsignment(id) {
+      if (!confirm('確定刪除此寄售單？')) return;
+      const { error } = await _supabase.from('consignments').delete().eq('id', id);
+      if (error) alert('刪除失敗：' + error.message);
+      else fetchConsignments();
+    }
+
+    function downloadConsignPdf(id) {
+      const c = consignCache.find(x => x.id === id);
+      if (!c) { alert('找不到此寄售單，請重新整理。'); return; }
+      const items = Array.isArray(c.items) ? c.items : [];
+      const s = consignSums(items);
+
+      document.getElementById('cpdf-no').innerText = c.consignment_no || ('#' + c.id);
+      document.getElementById('cpdf-date').innerText = new Date(c.created_at).toLocaleDateString();
+      document.getElementById('cpdf-name').innerText = c.consignor_name || '';
+      document.getElementById('cpdf-type').innerText = c.consignor_type || '';
+      document.getElementById('cpdf-contact').innerText = [c.consignor_phone, c.consignor_email].filter(Boolean).join(' / ') || '未提供';
+      document.getElementById('cpdf-address').innerText = c.consignor_address || '未提供';
+      document.getElementById('cpdf-branch').innerText = c.branch || '—';
+      document.getElementById('cpdf-period').innerText = `${c.start_date || '—'} 至 ${c.end_date || '—'}`;
+      document.getElementById('cpdf-total-book').innerText = `HK$ ${s.book}`;
+      document.getElementById('cpdf-total-craft').innerText = `HK$ ${s.craft}`;
+      document.getElementById('cpdf-total-retail').innerText = `HK$ ${s.retail}`;
+      document.getElementById('cpdf-payable').innerText = `HK$ ${s.payable}`;
+      document.getElementById('cpdf-status').innerText = c.settlement_status || '未結算';
+      document.getElementById('cpdf-notes').innerText = c.notes || '—';
+
+      const order = ['書籍', '文創'];
+      const sorted = items.slice().sort((a, b) => order.indexOf(a.category === '文創' ? '文創' : '書籍') - order.indexOf(b.category === '文創' ? '文創' : '書籍'));
+      document.getElementById('cpdf-items-tbody').innerHTML = sorted.map(i => `
+        <tr class="border-b border-slate-100">
+          <td class="py-1">${i.category || '書籍'}</td>
+          <td class="py-1">${i.name}${i.isbn ? `<br><span class="text-slate-400">${i.isbn}</span>` : ''}</td>
+          <td class="py-1 text-center">${i.qty}</td>
+          <td class="py-1 text-right">HK$ ${i.price * i.qty}</td>
+          <td class="py-1 text-center">${i.share_pct}%</td>
+          <td class="py-1 text-right">HK$ ${Math.round(i.price * i.qty * (Number(i.share_pct) || 0)) / 100}</td>
+        </tr>
+      `).join('');
+
+      const element = document.getElementById('consign-pdf-template');
+      element.classList.remove('hidden');
+      html2pdf().from(element).set({
+        margin: 10,
+        filename: `consignment_${c.consignment_no || c.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).save().then(() => { element.classList.add('hidden'); });
     }
 
     // --- 2. 手動新增收據 ---
@@ -1938,11 +2333,7 @@ longitude: longitude,
         preview.src = dataUrl;
         preview.classList.remove('hidden');
 
-        const r = await fetch(AI_API_BASE + '/api/public/identify-book', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageDataUrl: dataUrl })
-        });
+        const r = await postIdentify(dataUrl);
         const j = await r.json().catch(() => ({}));
         if (!r.ok) { setAiStatus(j.error || ('辨識失敗（' + r.status + '）。')); return; }
 
