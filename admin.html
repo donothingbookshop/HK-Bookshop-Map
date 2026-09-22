@@ -24,12 +24,26 @@
 
   <style>
     #admin-bookshop-map {
-  height: 300px;
+  height: 460px;
   width: 100%;
   border-radius: 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #d97706;
   z-index: 1;
 }
+    .bookshop-location-marker {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: #9a3412;
+      border: 3px solid #fff;
+      border-radius: 50% 50% 50% 0;
+      box-shadow: 0 3px 10px rgba(15,23,42,.45);
+      transform: rotate(-45deg);
+    }
+    .bookshop-location-marker i { transform: rotate(45deg); font-size: 14px; }
+    #admin-bookshop-map .leaflet-control-zoom a { width: 38px; height: 38px; line-height: 38px; font-size: 22px; }
     .admin-section { display: none; }
     .admin-section.active { display: block; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -45,7 +59,7 @@
       main>.bg-white.p-4>div{display:flex!important;width:max-content;min-width:100%;gap:.5rem!important;scroll-snap-type:x proximity;padding-bottom:.125rem}
       .admin-nav-btn{flex:0 0 auto;min-height:48px;min-width:8rem;padding:.625rem .75rem!important;font-size:.75rem!important;scroll-snap-align:start;white-space:nowrap}
       .admin-section>.flex.justify-between{align-items:flex-start!important;gap:.75rem}.admin-section>.flex.justify-between button{flex:0 0 auto}h2.text-xl{font-size:1.125rem!important;line-height:1.35}.admin-section .bg-white.p-6{padding:1rem!important}
-      button,a[class*="px-"]{min-height:44px}input:not([type="checkbox"]):not([type="radio"]),select,textarea{min-height:44px;font-size:16px!important}input[type="file"]{width:100%;max-width:100%;min-height:44px}#admin-bookshop-map{height:min(52vh,340px)}
+      button,a[class*="px-"]{min-height:44px}input:not([type="checkbox"]):not([type="radio"]),select,textarea{min-height:44px;font-size:16px!important}input[type="file"]{width:100%;max-width:100%;min-height:44px}#admin-bookshop-map{height:min(58vh,430px)}
       .manual-item-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(5rem,.65fr) 4.5rem 44px;gap:.5rem!important;align-items:center}.manual-item-row .m-item-name,.manual-item-row .m-item-price,.manual-item-row .m-item-qty{width:100%!important;min-width:0}.manual-item-row button{width:44px;height:44px;padding:0!important}
       #orders-list>div{padding:1rem!important}#orders-list .pt-2.border-t{align-items:stretch!important;flex-direction:column}#orders-list .pt-2.border-t>div{width:100%}#orders-list .pt-2.border-t select{flex:1;min-width:0}#orders-list .pt-2.border-t>div:last-child{display:grid!important;grid-template-columns:1fr 1fr}#orders-list .pt-2.border-t button{width:100%;justify-content:center}#orders-list input[type="file"]+button{width:100%}
       #admin-bookshop-list>div,#admin-author-list>div,#admin-publisher-list>div,#admin-product-list>div,#admin-eco-list>div,#admin-theatre-list>div{align-items:stretch!important;flex-direction:column;gap:.75rem}
@@ -441,8 +455,8 @@
 
     <!-- 4. 實體書店管理 -->
     <section id="sec-bookshops" class="admin-section">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border h-fit">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div id="bookshop-editor" class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border h-fit">
           <h2 id="bookshop-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增實體書店</h2>
           <form id="bookshop-form" onsubmit="saveBookshop(event)" class="space-y-3 text-xs">
             <input type="hidden" id="bs-id">
@@ -479,19 +493,26 @@
             </div>
                     <!-- 書店地圖位置：不需手動輸入經緯度 -->
             <div class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
-              <div class="flex items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
                 <label class="block font-bold text-amber-900">
                   <i class="fa-solid fa-map-location-dot mr-1"></i>書店地圖位置
                 </label>
 
-                <button type="button" onclick="searchBookshopAddress(event)"
-                        class="bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold transition">
-                  <i class="fa-solid fa-magnifying-glass mr-1"></i>搜尋地址
-                </button>
+                <div class="flex gap-2">
+                  <button type="button" onclick="focusSelectedBookshopLocation()"
+                          class="bg-white border border-amber-700 text-amber-900 hover:bg-amber-100 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition"
+                          title="返回已選位置">
+                    <i class="fa-solid fa-crosshairs mr-1"></i>已選位置
+                  </button>
+                  <button type="button" onclick="searchBookshopAddress(event)"
+                          class="bg-amber-800 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold transition">
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i>搜尋地址
+                  </button>
+                </div>
               </div>
 
               <p class="text-[11px] text-slate-600">
-                先填寫上方「地址」，再按「搜尋地址」；亦可以直接喺地圖點擊或拖動標記修正位置。
+                先搜尋地址，再放大地圖微調。點擊地圖可移動標記，亦可直接拖動紅色標記。
               </p>
 
               <div id="admin-bookshop-map"></div>
@@ -1002,6 +1023,7 @@
 // ===== 書店位置選擇地圖 =====
 let adminBookshopMap;
 let adminBookshopMarker;
+let adminBookshopIcon;
 
 const DEFAULT_BOOKSHOP_POSITION = [22.3193, 114.1694];
 
@@ -1021,7 +1043,7 @@ function setBookshopCoordinates(lat, lng, zoom = 16) {
   if (lngInput) lngInput.value = longitude;
 
   if (status) {
-    status.textContent = '已選擇地圖位置。';
+    status.textContent = `已選擇位置：${latitude.toFixed(6)}, ${longitude.toFixed(6)}（可拖動紅色標記微調）`;
     status.className =
       'text-[11px] text-emerald-700 font-medium';
   }
@@ -1029,10 +1051,30 @@ function setBookshopCoordinates(lat, lng, zoom = 16) {
   if (!adminBookshopMap) return;
 
   if (!adminBookshopMarker) {
+    if (!adminBookshopIcon) {
+      adminBookshopIcon = L.divIcon({
+        className: '',
+        html: '<span class="bookshop-location-marker"><i class="fa-solid fa-book-open"></i></span>',
+        iconSize: [38, 44],
+        iconAnchor: [19, 42]
+      });
+    }
     adminBookshopMarker = L.marker(
       [latitude, longitude],
-      { draggable: true }
-    ).addTo(adminBookshopMap);
+      { draggable: true, icon: adminBookshopIcon, autoPan: true, title: '拖動以修正書店位置' }
+    ).addTo(adminBookshopMap).bindTooltip('拖動我修正位置', {
+      permanent: true,
+      direction: 'top',
+      offset: [0, -38]
+    });
+
+    adminBookshopMarker.on('dragstart', function () {
+      const dragStatus = document.getElementById('bs-location-status');
+      if (dragStatus) {
+        dragStatus.textContent = '正在移動標記，放手後會更新位置…';
+        dragStatus.className = 'text-[11px] text-amber-700 font-medium';
+      }
+    });
 
     adminBookshopMarker.on('dragend', function () {
       const point = adminBookshopMarker.getLatLng();
@@ -1069,17 +1111,17 @@ function initAdminBookshopMap() {
 
   if (!mapElement) return;
 
-  adminBookshopMap = L.map(mapElement).setView(
+  adminBookshopMap = L.map(mapElement, { zoomControl: true }).setView(
     DEFAULT_BOOKSHOP_POSITION,
     12
   );
 
   L.tileLayer(
-    'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
       attribution:
-        '&copy; OpenStreetMap contributors &copy; CARTO',
-      maxZoom: 20
+        '&copy; OpenStreetMap contributors',
+      maxZoom: 19
     }
   ).addTo(adminBookshopMap);
 
@@ -1091,9 +1133,25 @@ function initAdminBookshopMap() {
     );
   });
 
+  adminBookshopMap.on('zoomend', function () {
+    if (adminBookshopMarker) adminBookshopMarker.openTooltip();
+  });
+
   setTimeout(function () {
     adminBookshopMap.invalidateSize();
   }, 300);
+}
+
+function focusSelectedBookshopLocation() {
+  initAdminBookshopMap();
+  const lat = Number(document.getElementById('bs-lat').value);
+  const lng = Number(document.getElementById('bs-lng').value);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    alert('尚未選擇位置，請先搜尋地址或點擊地圖。');
+    return;
+  }
+  adminBookshopMap.setView([lat, lng], Math.max(adminBookshopMap.getZoom(), 18));
+  if (adminBookshopMarker) adminBookshopMarker.openTooltip();
 }
 
 async function searchBookshopAddress(event) {
@@ -1145,7 +1203,7 @@ async function searchBookshopAddress(event) {
     setBookshopCoordinates(
       results[0].lat,
       results[0].lon,
-      17
+      18
     );
   } catch (error) {
     console.error(error);
@@ -1990,6 +2048,7 @@ window.onload = async function () {
             <p class="text-slate-500 mt-0.5">${b.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
+            <button onclick='locateBookshop(${JSON.stringify(b)})' class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded" title="在地圖修正位置"><i class="fa-solid fa-location-crosshairs mr-1"></i>定位</button>
             <button onclick='editBookshop(${JSON.stringify(b)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteBookshop(${b.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
@@ -2094,6 +2153,16 @@ longitude: longitude,
       document.getElementById('bs-gmap').value = b.google_map_url || '';
       document.getElementById('bookshop-form-title').innerText = "編輯實體書店";
       document.getElementById('bs-country-box').classList.toggle('hidden', b.region !== '外國香港書店/圖書館');
+    }
+
+    function locateBookshop(b) {
+      editBookshop(b);
+      const editor = document.getElementById('bookshop-editor');
+      if (editor) editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function () {
+        if (adminBookshopMap) adminBookshopMap.invalidateSize();
+        focusSelectedBookshopLocation();
+      }, 450);
     }
 
     function resetBookshopForm() {
