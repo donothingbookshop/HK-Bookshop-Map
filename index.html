@@ -1025,6 +1025,26 @@
       renderProducts(lastRenderedProducts);
     }
 
+    // --- 新訂單通知（電郵 / WhatsApp）---
+    const ORDER_API_BASES = [
+      'https://project--5bb896e7-4cff-4da2-a9ae-d8aa5a9c2392.lovable.app',
+      'https://project--5bb896e7-4cff-4da2-a9ae-d8aa5a9c2392-dev.lovable.app'
+    ];
+
+    async function notifyNewOrder(orderId) {
+      for (const base of ORDER_API_BASES) {
+        try {
+          const r = await fetch(base + '/api/public/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+          });
+          if (r.ok) return;
+        } catch (e) { /* 通知失敗唔影響落單 */ }
+      }
+      console.warn('訂單通知發送失敗，訂單已成功記錄。');
+    }
+
     async function submitOrder() {
       if (cart.length === 0) return alert("購物車目前沒有任何商品！");
       const name = document.getElementById('cust-name').value.trim();
@@ -1061,6 +1081,7 @@
 
         if (data && data[0]) {
           currentOrderId = data[0].id;
+          notifyNewOrder(data[0].id);
         }
 
         showPaymentModal(payMethod, totalPrice);

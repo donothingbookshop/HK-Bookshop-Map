@@ -102,6 +102,9 @@
         <button onclick="switchAdminTab('orders', event)" class="admin-nav-btn bg-amber-900 text-white p-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
           <i class="fa-solid fa-box-archive"></i> 訂單管理
         </button>
+        <button onclick="switchAdminTab('stats', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-chart-simple"></i> 銷售統計
+        </button>
         <button onclick="switchAdminTab('manual-receipt', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-receipt"></i> 手動新增收據
         </button>
@@ -145,6 +148,32 @@
       </div>
       <div id="orders-list" class="space-y-4">
         <p class="text-slate-400 italic">載入訂單中...</p>
+      </div>
+    </section>
+
+    <!-- 1b. 銷售統計 -->
+    <section id="sec-stats" class="admin-section">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">📊 銷售統計</h2>
+          <p class="text-xs text-slate-500">統計已確認（已傳送憑證／已完成）訂單：每本書賣出數量、現存餘數，以及每月總成交金額。</p>
+        </div>
+        <button onclick="fetchSalesStats()" class="bg-white border px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-rotate"></i> 重新整理
+        </button>
+      </div>
+
+      <div id="stats-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-amber-900 mb-3 border-b pb-2 text-sm">每月總成交金額</h3>
+          <div id="stats-monthly" class="text-xs"><p class="text-slate-400 italic">載入中…</p></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-amber-900 mb-3 border-b pb-2 text-sm">每本書 / 商品銷量與餘數</h3>
+          <div id="stats-products" class="text-xs"><p class="text-slate-400 italic">載入中…</p></div>
+        </div>
       </div>
     </section>
 
@@ -1179,6 +1208,7 @@ window.onload = async function () {
   if (!allowed) return;
 
   fetchOrders();
+  fetchSalesStats();
   fetchPaymentSettings();
   fetchBookshops();
   fetchAuthors();
@@ -1313,10 +1343,162 @@ window.onload = async function () {
       }).join('');
     }
 
+    // 已確認狀態：會自動扣減庫存
+    const CONFIRMED_STATUSES = ['已傳送憑證', '已完成'];
+
+    function parseStocks(p) {
+      let stocks = p.branch_stocks || {};
+      if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch (e) { stocks = {}; } }
+      const out = {};
+      Object.keys(stocks).forEach(k => { out[k] = Number(stocks[k]) || 0; });
+      return out;
+    }
+
+    function parseItems(o) {
+      let arr = o.items || [];
+      if (typeof arr === 'string') { try { arr = JSON.parse(arr); } catch (e) { arr = []; } }
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    // sign = -1 扣減庫存；sign = +1 回補庫存
+    async function adjustStockForOrder(order, sign) {
+      const items = parseItems(order).filter(i => i && i.id);
+      if (items.length === 0) return;
+      const ids = [...new Set(items.map(i => i.id))];
+      const { data: products, error } = await _supabase.from('shop_products').select('*').in('id', ids);
+      if (error || !products) return;
+
+      for (const p of products) {
+        const stocks = parseStocks(p);
+        let changed = false;
+        items.filter(i => i.id === p.id).forEach(i => {
+          const branch = i.branch || '網店';
+          const qty = (Number(i.qty) || 0) * sign;
+          const next = (Number(stocks[branch]) || 0) + qty;
+          stocks[branch] = Math.max(0, next);
+          changed = true;
+        });
+        if (!changed) continue;
+        const total = Object.values(stocks).reduce((a, b) => a + (Number(b) || 0), 0);
+        await _supabase.from('shop_products').update({ branch_stocks: stocks, quantity: total }).eq('id', p.id);
+      }
+    }
+
     async function updateOrderStatus(id, status) {
-      const { error } = await _supabase.from('shop_orders').update({ status }).eq('id', id);
-      if (error) alert("更新失敗：" + error.message);
-      else fetchOrders();
+      const { data: order } = await _supabase.from('shop_orders').select('*').eq('id', id).maybeSingle();
+
+      const payload = { status };
+      if (order) {
+        const shouldDeduct = CONFIRMED_STATUSES.includes(status);
+        if (shouldDeduct && !order.stock_deducted) {
+          await adjustStockForOrder(order, -1);
+          payload.stock_deducted = true;
+        } else if (!shouldDeduct && order.stock_deducted) {
+          await adjustStockForOrder(order, 1);
+          payload.stock_deducted = false;
+        }
+      }
+
+      const { error } = await _supabase.from('shop_orders').update(payload).eq('id', id);
+      if (error) { alert("更新失敗：" + error.message); return; }
+      await fetchOrders();
+      fetchProducts();
+      fetchSalesStats();
+    }
+
+    // --- 1b. 銷售統計 ---
+    async function fetchSalesStats() {
+      const cards = document.getElementById('stats-cards');
+      const monthlyEl = document.getElementById('stats-monthly');
+      const prodEl = document.getElementById('stats-products');
+      if (!cards) return;
+
+      const [{ data: orders }, { data: products }] = await Promise.all([
+        _supabase.from('shop_orders').select('*').order('id', { ascending: false }),
+        _supabase.from('shop_products').select('*').order('id', { ascending: false })
+      ]);
+
+      const paidOrders = (orders || []).filter(o => CONFIRMED_STATUSES.includes(o.status));
+      const soldMap = {};   // key: 商品 id 或名稱
+      let totalQty = 0, totalAmount = 0;
+      const monthly = {};
+
+      paidOrders.forEach(o => {
+        const month = (o.created_at || '').slice(0, 7) || '未知';
+        if (!monthly[month]) monthly[month] = { amount: 0, orders: 0, qty: 0 };
+        monthly[month].amount += Number(o.total_amount) || 0;
+        monthly[month].orders += 1;
+        totalAmount += Number(o.total_amount) || 0;
+
+        parseItems(o).forEach(i => {
+          const key = i.id ? 'id:' + i.id : 'name:' + (i.name || '未命名');
+          if (!soldMap[key]) soldMap[key] = { name: i.name || '未命名', qty: 0, amount: 0, branches: {} };
+          const q = Number(i.qty) || 0;
+          soldMap[key].qty += q;
+          soldMap[key].amount += q * (Number(i.price) || 0);
+          const b = i.branch || '網店';
+          soldMap[key].branches[b] = (soldMap[key].branches[b] || 0) + q;
+          totalQty += q;
+          monthly[month].qty += q;
+        });
+      });
+
+      const thisMonth = new Date().toISOString().slice(0, 7);
+      const card = (label, value, sub) => `
+        <div class="bg-white p-4 rounded-xl border shadow-sm">
+          <p class="text-[11px] text-slate-500 font-semibold">${label}</p>
+          <p class="text-lg font-bold text-amber-900 mt-1">${value}</p>
+          <p class="text-[11px] text-slate-400">${sub || ''}</p>
+        </div>`;
+      cards.innerHTML =
+        card('本月成交金額', 'HK$ ' + (monthly[thisMonth] ? monthly[thisMonth].amount.toLocaleString() : 0), thisMonth) +
+        card('累計成交金額', 'HK$ ' + totalAmount.toLocaleString(), `${paidOrders.length} 張已確認訂單`) +
+        card('累計賣出數量', totalQty + ' 件', '書籍 / 商品總數') +
+        card('待確認訂單', (orders || []).filter(o => !CONFIRMED_STATUSES.includes(o.status) && o.status !== '已取消').length + ' 張', '未扣減庫存');
+
+      const months = Object.keys(monthly).sort().reverse();
+      monthlyEl.innerHTML = months.length === 0
+        ? `<p class="text-slate-400 italic">暫無已確認訂單。</p>`
+        : `<table class="w-full text-left">
+            <thead><tr class="text-slate-500 border-b"><th class="py-1.5">月份</th><th class="py-1.5">訂單數</th><th class="py-1.5">賣出件數</th><th class="py-1.5 text-right">成交金額</th></tr></thead>
+            <tbody>${months.map(m => `
+              <tr class="border-b last:border-0">
+                <td class="py-1.5 font-semibold text-slate-700">${m}</td>
+                <td class="py-1.5">${monthly[m].orders}</td>
+                <td class="py-1.5">${monthly[m].qty}</td>
+                <td class="py-1.5 text-right font-bold text-amber-900">HK$ ${monthly[m].amount.toLocaleString()}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+
+      const rows = (products || []).map(p => {
+        const s = soldMap['id:' + p.id] || soldMap['name:' + p.name] || { qty: 0, amount: 0, branches: {} };
+        const stocks = parseStocks(p);
+        const remain = Object.values(stocks).reduce((a, b) => a + b, 0);
+        return { name: p.name, sold: s.qty, amount: s.amount, remain, stocks };
+      }).sort((a, b) => b.sold - a.sold);
+
+      // 已刪除商品但有銷售紀錄
+      const known = new Set((products || []).flatMap(p => ['id:' + p.id, 'name:' + p.name]));
+      Object.keys(soldMap).filter(k => !known.has(k)).forEach(k => {
+        rows.push({ name: soldMap[k].name + '（已下架）', sold: soldMap[k].qty, amount: soldMap[k].amount, remain: null, stocks: {} });
+      });
+
+      prodEl.innerHTML = rows.length === 0
+        ? `<p class="text-slate-400 italic">暫無商品資料。</p>`
+        : `<table class="w-full text-left">
+            <thead><tr class="text-slate-500 border-b"><th class="py-1.5">書籍 / 商品</th><th class="py-1.5">賣出</th><th class="py-1.5">餘數</th><th class="py-1.5 text-right">銷售額</th></tr></thead>
+            <tbody>${rows.map(r => `
+              <tr class="border-b last:border-0">
+                <td class="py-1.5 font-semibold text-slate-700">${r.name}
+                  ${Object.keys(r.stocks).length ? `<span class="block text-[10px] text-slate-400">${Object.entries(r.stocks).map(([b, q]) => b + ' ' + q).join(' ｜ ')}</span>` : ''}
+                </td>
+                <td class="py-1.5">${r.sold}</td>
+                <td class="py-1.5 ${r.remain === null ? 'text-slate-400' : (r.remain === 0 ? 'text-red-600 font-bold' : (r.remain <= 2 ? 'text-amber-600 font-bold' : ''))}">${r.remain === null ? '—' : r.remain + (r.remain === 0 ? '（售罄）' : '')}</td>
+                <td class="py-1.5 text-right">HK$ ${r.amount.toLocaleString()}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
     }
 
     async function deleteOrder(id) {
@@ -2102,6 +2284,12 @@ longitude: longitude,
             <span class="font-bold text-slate-800">${p.name}</span>
             <span class="ml-2 text-amber-900 font-bold">HK$ ${p.price}</span>
             <p class="text-slate-500 mt-0.5">作者：${p.author || '未提供'} | 出版社：${p.publisher || '未提供'}</p>
+            ${(() => {
+              const stocks = parseStocks(p);
+              const remain = Object.values(stocks).reduce((a, b) => a + b, 0);
+              const detail = Object.entries(stocks).filter(([, q]) => q > 0).map(([b, q]) => `${b} ${q}`).join(' ｜ ') || '各分店 0';
+              return `<p class="mt-0.5 ${remain === 0 ? 'text-red-600 font-bold' : (remain <= 2 ? 'text-amber-600 font-bold' : 'text-emerald-700 font-semibold')}">餘數：${remain} 本${remain === 0 ? '（已售罄）' : ''} <span class="text-slate-400 font-normal">（${detail}）</span></p>`;
+            })()}
           </div>
           <div class="flex gap-2">
             <button onclick='editProduct(${JSON.stringify(p)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
