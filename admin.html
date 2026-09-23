@@ -2039,6 +2039,7 @@ window.onload = async function () {
     async function fetchBookshops() {
       const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
       const el = document.getElementById('admin-bookshop-list');
+      window._bsMap = Object.fromEntries(data.map(b => [b.id, b]));
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無書店資料</p>`; return; }
       el.innerHTML = data.map(b => `
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
@@ -2048,8 +2049,8 @@ window.onload = async function () {
             <p class="text-slate-500 mt-0.5">${b.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick='locateBookshop(${JSON.stringify(b)})' class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded" title="在地圖修正位置"><i class="fa-solid fa-location-crosshairs mr-1"></i>定位</button>
-            <button onclick='editBookshop(${JSON.stringify(b)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="locateBookshop(window._bsMap[${b.id}])" class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded" title="在地圖修正位置"><i class="fa-solid fa-location-crosshairs mr-1"></i>定位</button>
+            <button onclick="editBookshop(window._bsMap[${b.id}])" class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteBookshop(${b.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
