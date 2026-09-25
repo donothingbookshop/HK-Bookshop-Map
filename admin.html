@@ -1598,19 +1598,26 @@ window.onload = async function () {
         balLine.classList.add('hidden');
       }
 
-      const element = document.getElementById('receipt-pdf-template');
-      element.classList.remove('hidden');
-      
-      const opt = {
-        margin: 10,
-        filename: `receipt_order_${order.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
-      };
+      savePdfSafely('receipt-pdf-template', `receipt_order_${order.id}.pdf`, 'a5');
+    }
 
-      html2pdf().from(element).set(opt).save().then(() => {
+    // 手機捲動後 html2canvas 會截錯位置導致內容被切走；先捲返頂再截圖
+    function savePdfSafely(templateId, filename, format) {
+      const element = document.getElementById(templateId);
+      const prevScroll = window.scrollY;
+      window.scrollTo(0, 0);
+      element.classList.remove('hidden');
+      const w = element.offsetWidth, h = element.scrollHeight;
+      return html2pdf().from(element).set({
+        margin: 10,
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, scrollX: 0, scrollY: 0, width: w, height: h, windowWidth: Math.max(w, 1024), useCORS: true },
+        jsPDF: { unit: 'mm', format, orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      }).save().catch(err => alert('下載收據失敗：' + err.message)).finally(() => {
         element.classList.add('hidden');
+        window.scrollTo(0, prevScroll);
       });
     }
 
@@ -1889,15 +1896,7 @@ window.onload = async function () {
         </tr>
       `).join('');
 
-      const element = document.getElementById('consign-pdf-template');
-      element.classList.remove('hidden');
-      html2pdf().from(element).set({
-        margin: 10,
-        filename: `consignment_${c.consignment_no || c.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).save().then(() => { element.classList.add('hidden'); });
+      savePdfSafely('consign-pdf-template', `consignment_${c.consignment_no || c.id}.pdf`, 'a4');
     }
 
     // --- 2. 手動新增收據 ---
