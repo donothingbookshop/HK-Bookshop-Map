@@ -1601,21 +1601,44 @@ window.onload = async function () {
       savePdfSafely('receipt-pdf-template', `receipt_order_${order.id}.pdf`, 'a5');
     }
 
-    // 手機捲動後 html2canvas 會截錯位置導致內容被切走；先捲返頂再截圖
+    // 用固定 A4/A5 離屏位置產生 PDF，避免手機窄畫面令收據置中後被截到右邊
     function savePdfSafely(templateId, filename, format) {
       const element = document.getElementById(templateId);
       const prevScroll = window.scrollY;
+      const previousStyle = element.getAttribute('style') || '';
       window.scrollTo(0, 0);
       element.classList.remove('hidden');
-      const w = element.offsetWidth, h = element.scrollHeight;
+      Object.assign(element.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        margin: '0',
+        maxWidth: 'none',
+        zIndex: '-9999',
+        transform: 'none'
+      });
+      const w = element.offsetWidth;
+      const h = element.scrollHeight;
       return html2pdf().from(element).set({
         margin: 10,
         filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, scrollX: 0, scrollY: 0, width: w, height: h, windowWidth: Math.max(w, 1024), useCORS: true },
+        html2canvas: {
+          scale: 2,
+          scrollX: 0,
+          scrollY: 0,
+          width: w,
+          height: h,
+          windowWidth: w,
+          windowHeight: h,
+          x: 0,
+          y: 0,
+          useCORS: true
+        },
         jsPDF: { unit: 'mm', format, orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
       }).save().catch(err => alert('下載收據失敗：' + err.message)).finally(() => {
+        element.setAttribute('style', previousStyle);
         element.classList.add('hidden');
         window.scrollTo(0, prevScroll);
       });
