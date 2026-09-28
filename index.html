@@ -202,6 +202,14 @@
             <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
           </div>
 
+          <div class="flex rounded-lg border border-slate-300 overflow-hidden text-xs font-bold" id="type-tabs">
+            <button type="button" data-t="ALL" onclick="filterProductType('ALL')" class="px-3 py-1.5 bg-amber-800 text-white">全部</button>
+            <button type="button" data-t="BOOK" onclick="filterProductType('BOOK')" class="px-3 py-1.5 bg-white text-slate-700">📚 書籍</button>
+            <button type="button" data-t="MERCH" onclick="filterProductType('MERCH')" class="px-3 py-1.5 bg-white text-slate-700">🎁 文創周邊</button>
+          </div>
+          <select id="region-select" onchange="currentRegionFilter=this.value;applyProductFilters()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white font-medium text-slate-700">
+            <option value="ALL">🌏 全部地區</option><option value="香港">香港出版</option><option value="台灣">台灣出版</option><option value="OTHER">其他國家</option>
+          </select>
           <div class="flex items-center space-x-2">
             <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-800 shadow-sm cursor-pointer font-medium text-slate-700">
               <option value="ALL">📖 全部主題</option>
@@ -555,7 +563,7 @@
     let map;
     let mapMarkers = [];
     let allBookshops = [], allEco = [], allTheatre = [], allProducts = [], allAuthors = [], allPublishers = [], cart = [];
-    let currentSearchQuery = '', currentCategoryFilter = 'ALL';
+    let currentSearchQuery = '', currentCategoryFilter = 'ALL', currentTypeFilter = 'ALL', currentRegionFilter = 'ALL';
     let currentBookshopRegion = 'ALL', currentBookshopCountry = 'ALL_OVERSEAS', currentBookshopSearch = '';
     let paymentSettings = null;
     let currentOrderId = null;
@@ -710,6 +718,7 @@
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot mr-1 text-amber-800"></i>${shop.address || '無地址'}</p>
             ${shop.phone ? `<p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-phone mr-1 text-amber-800"></i>${shop.phone}</p>` : ''}
             <p class="text-xs text-slate-400 mb-3"><i class="fa-regular fa-clock mr-1"></i>${shop.opening_hours || '未提供營業時間'}</p>
+            ${shop.opened_year || shop.closed_year ? `<p class="text-xs text-slate-400 mb-3"><i class="fa-regular fa-calendar mr-1"></i>${shop.opened_year || '?'} – ${shop.closed_year || '至今'}${shop.closed_year ? '（已結業）' : ''}</p>` : ''}
             <p class="text-sm text-slate-600 mb-4 whitespace-pre-line">${shop.description || ''}</p>
           </div>
           <div class="px-5 py-3 bg-slate-50 border-t flex justify-between items-center text-xs">
@@ -903,8 +912,21 @@
       applyProductFilters();
     }
 
+    function isMerch(p) { return cleanCategory(p.category || '').includes('文創'); }
+    function filterProductType(t) {
+      currentTypeFilter = t;
+      document.querySelectorAll('#type-tabs button').forEach(b => {
+        const on = b.dataset.t === t;
+        b.className = 'px-3 py-1.5 ' + (on ? 'bg-amber-800 text-white' : 'bg-white text-slate-700');
+      });
+      applyProductFilters();
+    }
     function applyProductFilters() {
       let filtered = allProducts;
+      if (currentTypeFilter === 'BOOK') filtered = filtered.filter(p => !isMerch(p));
+      if (currentTypeFilter === 'MERCH') filtered = filtered.filter(p => isMerch(p));
+      if (currentRegionFilter === 'OTHER') filtered = filtered.filter(p => p.publish_region && !['香港','台灣'].includes(p.publish_region));
+      else if (currentRegionFilter !== 'ALL') filtered = filtered.filter(p => p.publish_region === currentRegionFilter);
       if (currentCategoryFilter !== 'ALL') {
         filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
       }

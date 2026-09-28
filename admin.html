@@ -508,6 +508,16 @@
               <label class="block font-bold text-slate-700 mb-1">營業時間</label>
               <input type="text" id="bs-hours" class="w-full border rounded px-3 py-2" placeholder="例：週一至週日 12:00-20:00">
             </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">開業年份</label>
+                <input type="number" id="bs-opened" min="1800" max="2100" class="w-full border rounded px-3 py-2" placeholder="例：2015">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">結業年份（仍營業留空）</label>
+                <input type="number" id="bs-closed" min="1800" max="2100" class="w-full border rounded px-3 py-2" placeholder="例：2024">
+              </div>
+            </div>
                     <!-- 書店地圖位置：不需手動輸入經緯度 -->
             <div class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
               <div class="flex flex-wrap items-center justify-between gap-2">
@@ -708,6 +718,18 @@
               <div>
                 <label class="block font-bold text-slate-700 mb-1">書籍重量 (g)</label>
                 <input type="number" id="p-weight" class="w-full border rounded px-3 py-2" placeholder="例：350">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">出版地區</label>
+                <select id="p-region-sel" onchange="document.getElementById('p-region-other').classList.toggle('hidden', this.value!=='其他')" class="w-full border rounded px-3 py-2 bg-white">
+                  <option value="">未選擇</option><option value="香港">香港</option><option value="台灣">台灣</option><option value="其他">其他國家（自填）</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">&nbsp;</label>
+                <input type="text" id="p-region-other" class="hidden w-full border rounded px-3 py-2" placeholder="例：日本、英國">
               </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
@@ -2170,6 +2192,8 @@ if (
         address: document.getElementById('bs-address').value,
         phone: document.getElementById('bs-phone').value,
         opening_hours: document.getElementById('bs-hours').value,
+        opened_year: Number(document.getElementById('bs-opened').value) || null,
+        closed_year: Number(document.getElementById('bs-closed').value) || null,
         latitude: latitude,
 longitude: longitude,
         description: document.getElementById('bs-desc').value,
@@ -2201,6 +2225,8 @@ longitude: longitude,
       document.getElementById('bs-address').value = b.address || '';
       document.getElementById('bs-phone').value = b.phone || '';
       document.getElementById('bs-hours').value = b.opening_hours || '';
+      document.getElementById('bs-opened').value = b.opened_year || '';
+      document.getElementById('bs-closed').value = b.closed_year || '';
       setTimeout(() => {
   initAdminBookshopMap();
 
@@ -2741,7 +2767,8 @@ longitude: longitude,
         stock_type: document.getElementById('p-stock-type').value,
         branch_stocks: branchStocks,
         quantity: totalQty,
-        description: document.getElementById('p-desc').value
+        description: document.getElementById('p-desc').value,
+        publish_region: (() => { const s = document.getElementById('p-region-sel').value; return s === '其他' ? (document.getElementById('p-region-other').value.trim() || '其他') : (s || null); })()
       };
       if (!imageUrl) imageUrl = document.getElementById('p-image-url').value || null;
       if (imageUrl) payload.image_url = imageUrl;
@@ -2769,6 +2796,10 @@ longitude: longitude,
       document.getElementById('p-category').value = p.category || '';
       document.getElementById('p-stock-type').value = p.stock_type || '買斷';
       document.getElementById('p-desc').value = p.description || '';
+      { const reg = p.publish_region || ''; const known = ['', '香港', '台灣'].includes(reg);
+        document.getElementById('p-region-sel').value = known ? reg : '其他';
+        document.getElementById('p-region-other').value = known ? '' : reg;
+        document.getElementById('p-region-other').classList.toggle('hidden', known); }
 
       let stocks = p.branch_stocks || {};
       if (typeof stocks === 'string') { try { stocks = JSON.parse(stocks); } catch(e) { stocks = {}; } }
@@ -2787,6 +2818,7 @@ longitude: longitude,
       document.getElementById('ai-cover-preview').classList.add('hidden');
 
       document.getElementById('product-form').reset();
+      document.getElementById('p-region-other').classList.add('hidden');
       document.getElementById('p-id').value = '';
       document.getElementById('product-form-title').innerText = "新增網店書籍 / 商品";
     }
