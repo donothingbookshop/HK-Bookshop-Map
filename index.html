@@ -287,6 +287,14 @@
         <button onclick="filterEco('平台/大自然/教育')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🌿 平台/大自然/教育</button>
         <button onclick="filterEco('農地')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">👨‍🌾 農地</button>
         <button onclick="filterEco('回收/環保')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">♻️ 回收/環保</button>
+        <button onclick="filterEco('陶藝')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🏺 陶藝</button>
+        <button onclick="filterEco('醬園')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🫙 醬園</button>
+        <button onclick="filterEco('酒')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🍶 酒</button>
+        <button onclick="filterEco('咖啡')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">☕ 咖啡</button>
+        <button onclick="filterEco('麵')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🍜 麵</button>
+        <button onclick="filterEco('養蜂場')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🐝 養蜂場</button>
+        <button onclick="filterEco('漁產')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🐟 漁產</button>
+        <button onclick="filterEco('其他')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">✏️ 其他</button>
       </div>
 
       <div id="eco-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1281,8 +1289,11 @@
       `).join('');
     }
 
+    const ECO_KNOWN_CATS = ['平台/大自然/教育','農地','回收/環保','陶藝','醬園','酒','咖啡','麵','養蜂場','漁產'];
+
     function filterEco(cat) {
       if (cat === 'ALL') renderEco(allEco);
+      else if (cat === '其他') renderEco(allEco.filter(e => e.category && !ECO_KNOWN_CATS.includes(e.category)));
       else renderEco(allEco.filter(e => e.category === cat));
     }
 

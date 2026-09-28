@@ -865,11 +865,23 @@
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">分類 *</label>
-              <select id="e-category" class="w-full border rounded px-3 py-2 bg-white">
+              <select id="e-category" onchange="onEcoCategoryChange()" class="w-full border rounded px-3 py-2 bg-white">
                 <option value="平台/大自然/教育">🌿 平台/大自然/教育</option>
                 <option value="農地">👨‍🌾 農地</option>
                 <option value="回收/環保">♻️ 回收/環保</option>
+                <option value="陶藝">🏺 陶藝</option>
+                <option value="醬園">🫙 醬園</option>
+                <option value="酒">🍶 酒</option>
+                <option value="咖啡">☕ 咖啡</option>
+                <option value="麵">🍜 麵</option>
+                <option value="養蜂場">🐝 養蜂場</option>
+                <option value="漁產">🐟 漁產</option>
+                <option value="其他">✏️ 其他（自行輸入）</option>
               </select>
+            </div>
+            <div id="e-category-other-wrap" class="hidden">
+              <label class="block font-bold text-slate-700 mb-1">自訂分類名稱 *</label>
+              <input type="text" id="e-category-other" class="w-full border rounded px-3 py-2" placeholder="例如：手作皮革">
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">地址</label>
@@ -2852,9 +2864,15 @@ longitude: longitude,
     async function saveEco(e) {
       e.preventDefault();
       const id = document.getElementById('e-id').value;
+      const catSel = document.getElementById('e-category').value;
+      let category = catSel;
+      if (catSel === '其他') {
+        category = document.getElementById('e-category-other').value.trim();
+        if (!category) { alert("請輸入自訂分類名稱。"); return; }
+      }
       const payload = {
         name: document.getElementById('e-name').value,
-        category: document.getElementById('e-category').value,
+        category: category,
         address: document.getElementById('e-address').value,
         phone: document.getElementById('e-phone').value,
         description: document.getElementById('e-desc').value,
@@ -2874,7 +2892,10 @@ longitude: longitude,
     function editEco(e) {
       document.getElementById('e-id').value = e.id;
       document.getElementById('e-name').value = e.name;
-      document.getElementById('e-category').value = e.category;
+      const catSel = document.getElementById('e-category');
+      const known = Array.from(catSel.options).some(o => o.value !== '其他' && o.value === e.category);
+      if (known) { catSel.value = e.category; onEcoCategoryChange(); }
+      else { catSel.value = '其他'; document.getElementById('e-category-other').value = e.category || ''; onEcoCategoryChange(); }
       document.getElementById('e-address').value = e.address || '';
       document.getElementById('e-phone').value = e.phone || '';
       document.getElementById('e-desc').value = e.description || '';
@@ -2884,9 +2905,15 @@ longitude: longitude,
       document.getElementById('eco-form-title').innerText = "編輯農業/環保機構";
     }
 
+    function onEcoCategoryChange() {
+      const isOther = document.getElementById('e-category').value === '其他';
+      document.getElementById('e-category-other-wrap').classList.toggle('hidden', !isOther);
+    }
+
     function resetEcoForm() {
       document.getElementById('eco-form').reset();
       document.getElementById('e-id').value = '';
+      document.getElementById('e-category-other-wrap').classList.add('hidden');
       document.getElementById('eco-form-title').innerText = "新增農業/環保機構";
     }
 
