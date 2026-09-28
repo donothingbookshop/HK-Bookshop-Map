@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無所事事小書店 Donothing Bookshop | 香港書店地圖 & 文化社區</title>
+  <title>無所事事小書店 Donothing Bookshop | 香港獨立書店地圖 & 文化社區</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -489,6 +489,31 @@
     </div>
   </div>
 
+  <section id="contact-us" class="max-w-3xl mx-auto w-full px-4 py-8">
+    <div class="bg-white rounded-2xl border shadow-sm p-6">
+      <h2 class="text-lg font-bold text-amber-900 mb-1">✉️ 聯絡我</h2>
+      <p class="text-xs text-slate-500 mb-4">有任何問題歡迎留言，我哋會盡快回覆你。</p>
+      <form id="contact-form" onsubmit="submitContact(event)" class="space-y-3 text-sm">
+        <div class="grid sm:grid-cols-2 gap-3">
+          <input id="ct-name" required maxlength="100" class="border rounded px-3 py-2" placeholder="你的名字 *">
+          <input id="ct-email" type="email" required maxlength="255" class="border rounded px-3 py-2" placeholder="電郵 *">
+        </div>
+        <input id="ct-phone" maxlength="50" class="w-full border rounded px-3 py-2" placeholder="聯絡電話 / WhatsApp（選填）">
+        <textarea id="ct-message" required maxlength="2000" rows="4" class="w-full border rounded px-3 py-2" placeholder="你的問題 *"></textarea>
+        <button id="ct-btn" type="submit" class="bg-amber-900 hover:bg-amber-800 text-white font-bold px-5 py-2 rounded-lg">送出</button>
+        <p id="ct-status" class="text-xs"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="donate" class="max-w-3xl mx-auto w-full px-4 pb-8 hidden">
+    <div class="bg-rose-50 rounded-2xl border border-rose-100 p-6 text-center">
+      <h2 class="text-lg font-bold text-rose-900 mb-1">☕ 隨緣樂助</h2>
+      <p class="text-xs text-slate-600 mb-4">如果你鍾意呢個書店地圖，歡迎隨心支持我哋繼續營運。</p>
+      <div id="donate-options" class="flex flex-wrap justify-center gap-6"></div>
+    </div>
+  </section>
+
   <footer class="bg-slate-800 text-slate-400 text-xs py-6 text-center mt-auto">
     <p>© 無所事事小書店 Donothing Bookshop & 文化社區</p>
   </footer>
@@ -498,6 +523,34 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function submitContact(e) {
+      e.preventDefault();
+      const st = document.getElementById('ct-status'), btn = document.getElementById('ct-btn');
+      const v = id => document.getElementById(id).value.trim();
+      const row = { name: v('ct-name'), email: v('ct-email'), phone: v('ct-phone') || null, message: v('ct-message') };
+      if (!row.name || !row.message || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(row.email)) { st.className='text-xs text-red-600'; st.textContent='請填寫名字、正確電郵同問題。'; return; }
+      btn.disabled = true; st.className='text-xs text-slate-500'; st.textContent='送出中…';
+      const { error } = await _supabase.from('contact_messages').insert(row);
+      btn.disabled = false;
+      if (error) { st.className='text-xs text-red-600'; st.textContent='送出失敗，請稍後再試。'; return; }
+      e.target.reset(); st.className='text-xs text-green-700'; st.textContent='已收到你的留言，多謝！';
+    }
+    async function loadDonate() {
+      const { data } = await _supabase.from('payment_settings').select('donate_payme_link,donate_payme_img_url,donate_bmc_link,donate_bmc_img_url').eq('id','default').maybeSingle();
+      if (!data) return;
+      const safe = u => /^https?:\/\//i.test(u || '') ? u.replace(/"/g,'%22') : '';
+      const opts = [['PayMe', data.donate_payme_link, data.donate_payme_img_url], ['Buy Me a Coffee', data.donate_bmc_link, data.donate_bmc_img_url]]
+        .filter(o => safe(o[1]) || safe(o[2]))
+        .map(([n, l, img]) => {
+          const inner = `${safe(img) ? `<img src="${safe(img)}" alt="${n}" class="w-36 h-36 object-contain bg-white rounded-lg border mx-auto">` : ''}<div class="mt-2 text-sm font-bold text-rose-900">${n}</div>`;
+          return safe(l) ? `<a href="${safe(l)}" target="_blank" rel="noopener" class="block hover:opacity-80">${inner}</a>` : `<div>${inner}</div>`;
+        });
+      if (!opts.length) return;
+      document.getElementById('donate-options').innerHTML = opts.join('');
+      document.getElementById('donate').classList.remove('hidden');
+    }
+    loadDonate();
+
 
     let map;
     let mapMarkers = [];

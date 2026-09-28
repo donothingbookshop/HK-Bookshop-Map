@@ -441,6 +441,18 @@
             </div>
           </div>
 
+          <div class="p-4 bg-rose-50 rounded-xl border space-y-3">
+            <h3 class="font-bold text-rose-900 text-sm border-b pb-1">4. 隨緣樂助（網站最底顯示）</h3>
+            <div><label class="block font-bold text-slate-700 mb-1">PayMe 樂助連結</label>
+              <input type="text" id="set-donate-payme-link" class="w-full border rounded px-3 py-2 bg-white" placeholder="https://payme.hsbc/..."></div>
+            <div><label class="block font-bold text-slate-700 mb-1">PayMe 樂助圖片</label>
+              <input type="file" id="set-donate-payme-file" accept="image/*" class="w-full border rounded p-1 bg-white"><div id="preview-donate-payme" class="mt-2"></div></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Buy Me a Coffee 連結</label>
+              <input type="text" id="set-donate-bmc-link" class="w-full border rounded px-3 py-2 bg-white" placeholder="https://buymeacoffee.com/..."></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Buy Me a Coffee 圖片</label>
+              <input type="file" id="set-donate-bmc-file" accept="image/*" class="w-full border rounded p-1 bg-white"><div id="preview-donate-bmc" class="mt-2"></div></div>
+          </div>
+
           <div>
             <label class="block font-bold text-slate-700 mb-1">其他注意事項 / 付款提示</label>
             <textarea id="set-instructions" rows="3" class="w-full border rounded px-3 py-2" placeholder="例如：轉帳時請註明訂單號碼，並保留入數紙..."></textarea>
@@ -450,6 +462,11 @@
             儲存收款設定
           </button>
         </form>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border max-w-2xl mx-auto mt-6">
+        <div class="flex justify-between items-center mb-3"><h2 class="text-lg font-bold text-slate-800">✉️ 訪客留言（聯絡我）</h2>
+        <button type="button" onclick="fetchContactMessages()" class="text-xs border px-2 py-1 rounded">重新載入</button></div>
+        <div id="admin-contact-list" class="space-y-2 text-xs"></div>
       </div>
     </section>
 
@@ -1016,6 +1033,8 @@
   </footer>
 
   <script>
+window._objStore=[];window._objReg=function(o){window._objStore.push(o);return window._objStore.length-1};window._objGet=function(i){return window._objStore[i]};
+
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0ZWVlZHlsZGZlbXhtdnZ5bGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNTI3MzUsImV4cCI6MjEwMzkyODczNX0.Ri7wQQpUJMvqs44jixOD1rU7cP2vt-dKQmSIhrDKAdE';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1267,7 +1286,7 @@ window.onload = async function () {
 
   fetchOrders();
   fetchSalesStats();
-  fetchPaymentSettings();
+  fetchPaymentSettings(); fetchContactMessages();
   fetchBookshops();
   fetchAuthors();
   fetchPublishers();
@@ -1392,7 +1411,7 @@ window.onload = async function () {
               </div>
               
               <div class="flex gap-2">
-                <button onclick='downloadReceiptPdf(${JSON.stringify(o)})' class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition"><i class="fa-solid fa-file-pdf mr-1"></i>下載收據</button>
+                <button onclick="downloadReceiptPdf(window._objGet(${window._objReg(o)}))" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition"><i class="fa-solid fa-file-pdf mr-1"></i>下載收據</button>
                 <button onclick="deleteOrder(${o.id})" class="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded transition"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
               </div>
             </div>
@@ -2014,6 +2033,10 @@ window.onload = async function () {
       if (data.fps_qr_url) {
         document.getElementById('preview-fps-qr').innerHTML = `<img src="${data.fps_qr_url}" class="w-24 h-24 object-contain border rounded">`;
       }
+      document.getElementById('set-donate-payme-link').value = data.donate_payme_link || '';
+      document.getElementById('set-donate-bmc-link').value = data.donate_bmc_link || '';
+      if (data.donate_payme_img_url) document.getElementById('preview-donate-payme').innerHTML = `<img src="${data.donate_payme_img_url}" class="w-24 h-24 object-contain border rounded">`;
+      if (data.donate_bmc_img_url) document.getElementById('preview-donate-bmc').innerHTML = `<img src="${data.donate_bmc_img_url}" class="w-24 h-24 object-contain border rounded">`;
       if (data.payme_qr_url) {
         document.getElementById('preview-payme-qr').innerHTML = `<img src="${data.payme_qr_url}" class="w-24 h-24 object-contain border rounded">`;
       }
@@ -2051,11 +2074,38 @@ window.onload = async function () {
 
       if (fpsQrUrl) payload.fps_qr_url = fpsQrUrl;
       if (paymeQrUrl) payload.payme_qr_url = paymeQrUrl;
+      payload.donate_payme_link = document.getElementById('set-donate-payme-link').value;
+      payload.donate_bmc_link = document.getElementById('set-donate-bmc-link').value;
+      for (const [fid, col] of [['set-donate-payme-file','donate_payme_img_url'],['set-donate-bmc-file','donate_bmc_img_url']]) {
+        const f = document.getElementById(fid).files[0];
+        if (f) {
+          const fn = `donate_${col}_${Date.now()}.${f.name.split('.').pop()}`;
+          const up = await _supabase.storage.from('images').upload(fn, f);
+          if (up.error) { alert('圖片上載失敗：' + up.error.message); return; }
+          payload[col] = _supabase.storage.from('images').getPublicUrl(fn).data.publicUrl;
+        }
+      }
 
       const { error } = await _supabase.from('payment_settings').upsert(payload);
       if (error) alert("儲存失敗：" + error.message);
       else { alert("收款設定儲存成功！"); fetchPaymentSettings(); }
     }
+
+    function escHtml(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    async function fetchContactMessages() {
+      const el = document.getElementById('admin-contact-list'); if (!el) return;
+      const { data, error } = await _supabase.from('contact_messages').select('*').order('created_at', { ascending: false });
+      if (error) { el.innerHTML = `<p class="text-red-600">載入失敗：${escHtml(error.message)}</p>`; return; }
+      if (!data.length) { el.innerHTML = '<p class="text-slate-400 italic">暫無留言</p>'; return; }
+      el.innerHTML = data.map(m => `<div class="border rounded-lg p-3 ${m.status==='已回覆'?'bg-slate-50':'bg-amber-50'}">
+        <div class="flex justify-between"><b>${escHtml(m.name)}</b><span class="text-slate-400">${new Date(m.created_at).toLocaleString('zh-HK')}</span></div>
+        <div class="text-slate-500">📧 <a class="underline" href="mailto:${escHtml(m.email)}">${escHtml(m.email)}</a>${m.phone?' ｜ 📞 '+escHtml(m.phone):''}</div>
+        <p class="whitespace-pre-line mt-1 text-slate-700">${escHtml(m.message)}</p>
+        <div class="flex gap-2 mt-2"><button onclick="markContact(${m.id}, '${m.status==='已回覆'?'未回覆':'已回覆'}')" class="bg-amber-800 text-white px-2 py-1 rounded">${m.status==='已回覆'?'標記未回覆':'標記已回覆'}</button>
+        <button onclick="deleteContact(${m.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded">刪除</button><span class="ml-auto">${escHtml(m.status)}</span></div></div>`).join('');
+    }
+    async function markContact(id, status) { await _supabase.from('contact_messages').update({ status }).eq('id', id); fetchContactMessages(); }
+    async function deleteContact(id) { if (!confirm('確定刪除此留言？')) return; await _supabase.from('contact_messages').delete().eq('id', id); fetchContactMessages(); }
 
     // --- 4. 實體書店管理 ---
     async function fetchBookshops() {
@@ -2231,7 +2281,7 @@ longitude: longitude,
             <p class="text-slate-500 mt-0.5 line-clamp-1">${a.bio || '無簡介'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick='editAuthor(${JSON.stringify(a)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="editAuthor(window._objGet(${window._objReg(a)}))" class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteAuthor(${a.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
@@ -2304,7 +2354,7 @@ longitude: longitude,
             <p class="text-slate-500 mt-0.5 line-clamp-1">${p.description || '無簡介'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick='editPublisher(${JSON.stringify(p)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="editPublisher(window._objGet(${window._objReg(p)}))" class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deletePublisher(${p.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
@@ -2384,7 +2434,7 @@ longitude: longitude,
             })()}
           </div>
           <div class="flex gap-2">
-            <button onclick='editProduct(${JSON.stringify(p)})' class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="editProduct(window._objGet(${window._objReg(p)}))" class="bg-amber-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteProduct(${p.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
@@ -2760,7 +2810,7 @@ longitude: longitude,
             <p class="text-slate-500 mt-0.5">${e.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick='editEco(${JSON.stringify(e)})' class="bg-emerald-800 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="editEco(window._objGet(${window._objReg(e)}))" class="bg-emerald-800 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteEco(${e.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
@@ -2827,7 +2877,7 @@ longitude: longitude,
             <p class="text-slate-500 mt-0.5">${t.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
-            <button onclick='editTheatre(${JSON.stringify(t)})' class="bg-purple-900 text-white px-2.5 py-1 rounded">編輯</button>
+            <button onclick="editTheatre(window._objGet(${window._objReg(t)}))" class="bg-purple-900 text-white px-2.5 py-1 rounded">編輯</button>
             <button onclick="deleteTheatre(${t.id})" class="bg-red-100 text-red-600 px-2.5 py-1 rounded">刪除</button>
           </div>
         </div>
