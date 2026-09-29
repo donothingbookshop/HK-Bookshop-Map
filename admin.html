@@ -1374,12 +1374,36 @@ async function accAction(action, user_id, extra) {
   try { await accApi(Object.assign({ action, user_id }, extra)); fetchAdminAccounts(); }
   catch (e) { alert('操作失敗：' + e.message); }
 }
+// 檢查密碼有冇喺已知資料外洩事件出現過（Have I Been Pwned 免費 API，
+// k-anonymity：只會送出 SHA-1 嘅頭 5 個字，密碼本身唔會離開瀏覽器）
+async function isPwnedPassword(password) {
+  try {
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
+    const hash = Array.from(new Uint8Array(buf))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+    const res = await fetch('https://api.pwnedpasswords.com/range/' + hash.slice(0, 5));
+    if (!res.ok) return false; // 查詢失敗時唔會擋住操作
+    const suffix = hash.slice(5);
+    return (await res.text()).split('\n').some(line => line.split(':')[0].trim() === suffix);
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
 async function createAdminAccount(ev) {
   ev.preventDefault();
   try {
+    const pwd = document.getElementById('acc-password').value;
+    if (await isPwnedPassword(pwd)) {
+      alert('呢個密碼曾經喺資料外洩事件出現過，好易被人撞破，請揀過另一個密碼。');
+      return;
+    }
     await accApi({ action: 'create',
       email: document.getElementById('acc-email').value.trim(),
-      password: document.getElementById('acc-password').value,
+      password: pwd,
       display_name: document.getElementById('acc-name').value.trim(),
       role: document.getElementById('acc-role').value });
     alert('已新增管理員，請將電郵同初始密碼交俾對方。');
