@@ -285,7 +285,6 @@
       <div class="flex flex-wrap gap-2 mb-6">
         <button onclick="filterEco('ALL')" class="bg-emerald-800 text-white px-3 py-1 rounded-full text-xs font-medium transition">全部分類</button>
         <button onclick="filterEco('平台/大自然/教育')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🌿 平台/大自然/教育</button>
-        <button onclick="filterEco('農地')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">👨‍🌾 農地</button>
         <button onclick="filterEco('回收/環保')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">♻️ 回收/環保</button>
         <button onclick="filterEco('陶藝')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🏺 陶藝</button>
         <button onclick="filterEco('醬園')" class="bg-white border px-3 py-1 rounded-full text-xs hover:bg-emerald-50 transition">🫙 醬園</button>
@@ -1289,7 +1288,7 @@
       `).join('');
     }
 
-    const ECO_KNOWN_CATS = ['平台/大自然/教育','農地','回收/環保','陶藝','醬園','酒','咖啡','麵','養蜂場','漁產'];
+    const ECO_KNOWN_CATS = ['平台/大自然/教育','回收/環保','陶藝','醬園','酒','咖啡','麵','養蜂場','漁產'];
 
     function filterEco(cat) {
       if (cat === 'ALL') renderEco(allEco);
