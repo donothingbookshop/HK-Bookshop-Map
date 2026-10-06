@@ -635,6 +635,16 @@
               <label class="block font-bold text-slate-700 mb-1">作者簡介</label>
               <textarea id="au-bio" rows="4" class="w-full border rounded px-3 py-2"></textarea>
             </div>
+            <div class="border-t pt-3">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="block font-bold text-slate-700">作者書籍</label>
+                <button type="button" onclick="addAuthorBookRow()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded font-bold transition">
+                  <i class="fa-solid fa-plus mr-1"></i>新增書籍
+                </button>
+              </div>
+              <div id="au-books-list" class="space-y-3"></div>
+              <p class="text-[11px] text-slate-400 mt-2">可加入多本書；每本可上載封面及填寫簡介。</p>
+            </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">官方網站</label>
               <input type="url" id="au-web" class="w-full border rounded px-3 py-2">
@@ -2410,6 +2420,51 @@ longitude: longitude,
     }
 
     // --- 5. 本地作者管理 ---
+    function addAuthorBookRow(book = {}) {
+      const list = document.getElementById('au-books-list');
+      const row = document.createElement('div');
+      row.className = 'author-book-row border rounded-lg p-3 bg-slate-50 space-y-2 relative';
+      row.dataset.imageUrl = book.image_url || '';
+      row.innerHTML = `
+        <button type="button" onclick="this.closest('.author-book-row').remove()" aria-label="刪除這本書" class="absolute top-2 right-2 text-red-500 hover:text-red-700 w-7 h-7 rounded bg-red-50"><i class="fa-solid fa-trash"></i></button>
+        <div class="pr-9">
+          <label class="block font-bold text-slate-600 mb-1">書名 *</label>
+          <input type="text" class="au-book-title w-full border rounded px-3 py-2 bg-white" required value="">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">書籍封面</label>
+          ${book.image_url ? `<img src="${book.image_url}" alt="現有書籍封面" class="w-16 h-20 object-cover border rounded mb-2">` : ''}
+          <input type="file" class="au-book-image w-full border rounded p-1 bg-white" accept="image/*">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">書籍簡介</label>
+          <textarea class="au-book-desc w-full border rounded px-3 py-2 bg-white" rows="3"></textarea>
+        </div>`;
+      row.querySelector('.au-book-title').value = book.title || '';
+      row.querySelector('.au-book-desc').value = book.description || '';
+      list.appendChild(row);
+    }
+
+    async function collectAuthorBooks() {
+      const rows = Array.from(document.querySelectorAll('.author-book-row'));
+      const books = [];
+      for (const [index, row] of rows.entries()) {
+        const title = row.querySelector('.au-book-title').value.trim();
+        const description = row.querySelector('.au-book-desc').value.trim();
+        const file = row.querySelector('.au-book-image').files[0];
+        let imageUrl = row.dataset.imageUrl || '';
+        if (file) {
+          const extension = file.name.split('.').pop();
+          const fileName = `author_book_${Date.now()}_${index}.${extension}`;
+          const { error } = await _supabase.storage.from('images').upload(fileName, file);
+          if (error) throw error;
+          imageUrl = _supabase.storage.from('images').getPublicUrl(fileName).data.publicUrl;
+        }
+        if (title) books.push({ title, description, image_url: imageUrl });
+      }
+      return books;
+    }
+
     async function fetchAuthors() {
       const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
       const el = document.getElementById('admin-author-list');
@@ -2434,29 +2489,37 @@ longitude: longitude,
       const file = document.getElementById('au-image-file').files[0];
       let imageUrl = null;
 
-      if (file) {
-        const fileName = `author_${Date.now()}.${file.name.split('.').pop()}`;
-        await _supabase.storage.from('images').upload(fileName, file);
-        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
-        imageUrl = publicUrl;
+      try {
+        if (file) {
+          const fileName = `author_${Date.now()}.${file.name.split('.').pop()}`;
+          const { error } = await _supabase.storage.from('images').upload(fileName, file);
+          if (error) throw error;
+          const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
+          imageUrl = publicUrl;
+        }
+
+        const payload = {
+          name: document.getElementById('au-name').value,
+          phone: document.getElementById('au-phone').value,
+          bio: document.getElementById('au-bio').value,
+          website_url: document.getElementById('au-web').value,
+          instagram_url: document.getElementById('au-ig').value,
+          facebook_url: document.getElementById('au-fb').value,
+          books: await collectAuthorBooks()
+        };
+        if (imageUrl) payload.image_url = imageUrl;
+
+        const { error } = id
+          ? await _supabase.from('authors').update(payload).eq('id', id)
+          : await _supabase.from('authors').insert([payload]);
+        if (error) throw error;
+
+        resetAuthorForm();
+        fetchAuthors();
+        alert("儲存成功！");
+      } catch (error) {
+        alert(`儲存作者失敗：${error.message || error}`);
       }
-
-      const payload = {
-        name: document.getElementById('au-name').value,
-        phone: document.getElementById('au-phone').value,
-        bio: document.getElementById('au-bio').value,
-        website_url: document.getElementById('au-web').value,
-        instagram_url: document.getElementById('au-ig').value,
-        facebook_url: document.getElementById('au-fb').value
-      };
-      if (imageUrl) payload.image_url = imageUrl;
-
-      if (id) await _supabase.from('authors').update(payload).eq('id', id);
-      else await _supabase.from('authors').insert([payload]);
-
-      resetAuthorForm();
-      fetchAuthors();
-      alert("儲存成功！");
     }
 
     function editAuthor(a) {
@@ -2467,12 +2530,15 @@ longitude: longitude,
       document.getElementById('au-web').value = a.website_url || '';
       document.getElementById('au-ig').value = a.instagram_url || '';
       document.getElementById('au-fb').value = a.facebook_url || '';
+      document.getElementById('au-books-list').innerHTML = '';
+      (Array.isArray(a.books) ? a.books : []).forEach(addAuthorBookRow);
       document.getElementById('author-form-title').innerText = "編輯本地作者";
     }
 
     function resetAuthorForm() {
       document.getElementById('author-form').reset();
       document.getElementById('au-id').value = '';
+      document.getElementById('au-books-list').innerHTML = '';
       document.getElementById('author-form-title').innerText = "新增本地作者";
     }
 
