@@ -146,6 +146,9 @@
         <button onclick="switchAdminTab('eco', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-leaf"></i> 農業/環保
         </button>
+        <button onclick="switchAdminTab('market', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-tents"></i> 市集
+        </button>
         <button onclick="switchAdminTab('theatre', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-masks-theater"></i> 劇團
         </button>
@@ -396,6 +399,62 @@
     </section>
 
     <!-- 帳號管理 -->
+    <section id="sec-market" class="admin-section">
+      <div class="space-y-6">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h2 class="text-lg font-bold text-amber-950 mb-1"><i class="fa-solid fa-tents mr-1"></i> 市集擺檔</h2>
+          <p class="text-xs text-slate-500 mb-3">只喺後台使用，唔會顯示喺網站。市集數量獨立計算，唔會影響網店庫存。</p>
+          <form id="mk-event-form" onsubmit="saveMarketEvent(event)" class="grid md:grid-cols-4 gap-2">
+            <input id="mk-ev-name" required maxlength="100" placeholder="市集名稱 *" class="border rounded-lg px-3 py-2 text-sm md:col-span-2">
+            <input id="mk-ev-date" type="date" class="border rounded-lg px-3 py-2 text-sm">
+            <input id="mk-ev-loc" maxlength="100" placeholder="地點" class="border rounded-lg px-3 py-2 text-sm">
+            <button class="md:col-span-4 bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded-xl text-sm"><i class="fa-solid fa-plus mr-1"></i> 新增市集場次</button>
+          </form>
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <label class="text-sm font-semibold text-slate-700">揀選場次：</label>
+            <select id="mk-event-select" onchange="selectMarketEvent(this.value)" class="border rounded-lg px-3 py-2 text-sm min-w-[220px]"></select>
+            <button onclick="deleteMarketEvent()" class="text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-1.5 rounded-lg">刪除場次</button>
+          </div>
+        </div>
+
+        <div id="mk-body" class="hidden space-y-6">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border">
+            <h3 class="font-bold text-amber-950 mb-3">新增市集貨品</h3>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <select id="mk-from-product" class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]"><option value="">— 由已上架網店商品揀選（可選）—</option></select>
+              <button type="button" onclick="fillMarketFromProduct()" class="bg-slate-100 border px-3 py-2 rounded-lg text-sm">帶入資料</button>
+            </div>
+            <form id="mk-item-form" onsubmit="saveMarketItem(event)" class="grid md:grid-cols-3 gap-2">
+              <input type="hidden" id="mk-it-id"><input type="hidden" id="mk-it-pid"><input type="hidden" id="mk-it-img-url">
+              <input id="mk-it-name" required maxlength="200" placeholder="名稱 *" class="border rounded-lg px-3 py-2 text-sm md:col-span-2">
+              <input id="mk-it-price" type="number" min="0" step="0.1" required placeholder="價格 (HKD) *" class="border rounded-lg px-3 py-2 text-sm">
+              <select id="mk-it-cat" class="border rounded-lg px-3 py-2 text-sm"><option value="書籍">書籍</option><option value="文創周邊">文創周邊</option><option value="其他">其他</option></select>
+              <select id="mk-it-type" class="border rounded-lg px-3 py-2 text-sm"><option value="買斷">買斷</option><option value="寄售">寄售</option></select>
+              <input id="mk-it-qty" type="number" min="0" value="1" required placeholder="帶去數量" class="border rounded-lg px-3 py-2 text-sm">
+              <div class="md:col-span-3 flex items-center gap-2"><label class="text-xs text-slate-600">書籍 / 商品圖片</label><input id="mk-it-img" type="file" accept="image/*" class="text-xs"><img id="mk-it-preview" class="h-12 hidden rounded"></div>
+              <button class="md:col-span-2 bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded-xl text-sm">儲存貨品</button>
+              <button type="button" onclick="resetMarketItemForm()" class="border py-2 rounded-xl text-sm">清除</button>
+            </form>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl shadow-sm border">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 class="font-bold text-amber-950">收銀（撳一下記一件）</h3>
+              <select id="mk-pay" class="border rounded-lg px-3 py-1.5 text-sm"><option>現金</option><option>PayMe</option><option>FPS</option><option>其他</option></select>
+            </div>
+            <div id="mk-items" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm"></div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl shadow-sm border">
+            <h3 class="font-bold text-amber-950 mb-3">本場銷售統計</h3>
+            <div id="mk-stats" class="text-sm"></div>
+            <h4 class="font-semibold text-slate-700 mt-4 mb-2 text-sm">銷售紀錄</h4>
+            <div id="mk-sales" class="text-sm space-y-1 max-h-80 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="sec-accounts" class="admin-section">
       <div class="bg-white p-6 rounded-2xl shadow-sm border max-w-3xl mx-auto space-y-6">
         <h2 class="text-lg font-bold text-amber-950"><i class="fa-solid fa-user-shield mr-1"></i> 管理員帳號管理</h2>
@@ -1311,7 +1370,7 @@ async function searchBookshopAddress(event) {
   const { data: admin, error: adminError } =
     await _supabase
       .from('admin_users')
-      .select('user_id, display_name, role, active')
+      .select('user_id, display_name, role, active, permissions')
       .eq('user_id', user.id)
       .eq('active', true)
       .maybeSingle();
@@ -1337,6 +1396,8 @@ if (nameElement) {
   if (admin.role === 'owner') {
     document.getElementById('nav-accounts').classList.remove('hidden');
     fetchAdminAccounts();
+  } else {
+    applyMyPermissions(admin.permissions || {});
   }
   return true;
 }
@@ -1367,14 +1428,18 @@ async function fetchAdminAccounts() {
   const box = document.getElementById('acc-list');
   try {
     const { me, admins } = await accApi({ action: 'list' });
+    window._accMap = Object.fromEntries(admins.map(a => [a.user_id, a]));
     box.innerHTML = admins.map(a => {
       const self = a.user_id === me;
       return `<div class="flex flex-wrap items-center gap-2 border rounded-xl p-3 ${a.active ? '' : 'opacity-60'}">
         <div class="flex-1 min-w-[180px]"><div class="font-bold text-slate-800">${escHtml(a.display_name)} ${self ? '<span class="text-xs text-amber-700">（你）</span>' : ''}</div>
         <div class="text-xs text-slate-500">${escHtml(a.email)} · ${a.role === 'owner' ? '擁有者' : '管理員'} · ${a.active ? '啟用中' : '已停用'}</div></div>
         ${self ? '' : `<button onclick="accAction('set_role','${a.user_id}',{role:'${a.role === 'owner' ? 'admin' : 'owner'}'})" class="text-xs border px-2 py-1 rounded-lg">改做${a.role === 'owner' ? '管理員' : '擁有者'}</button>
+        ${a.role === 'owner' ? '' : `<button onclick="openPermEditor('${a.user_id}')" class="text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2 py-1 rounded-lg"><i class="fa-solid fa-key mr-1"></i>版面權限</button>`}
         <button onclick="accAction('set_active','${a.user_id}',{active:${!a.active}})" class="text-xs border px-2 py-1 rounded-lg">${a.active ? '停用' : '啟用'}</button>
         <button onclick="if(confirm('確定刪除此管理員帳號？'))accAction('delete','${a.user_id}',{})" class="text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded-lg">刪除</button>`}
+        <div class="w-full text-xs text-slate-500">${a.role === 'owner' ? '擁有者可使用全部版面' : (Object.keys(a.permissions || {}).length ? '可用版面：' + ADMIN_TABS.filter(([k]) => (a.permissions||{})[k] && a.permissions[k] !== 'none').map(([k,l]) => l + (a.permissions[k] === 'view' ? '（只睇）' : '')).join('、') : '未設定限制（全部版面可用）')}</div>
+        <div id="perm-${a.user_id}" class="hidden w-full bg-slate-50 border rounded-xl p-3"></div>
       </div>`;
     }).join('') || '未有管理員';
   } catch (e) { box.textContent = '載入失敗：' + e.message; }
@@ -1421,6 +1486,213 @@ async function createAdminAccount(ev) {
   } catch (e) { alert('新增失敗：' + e.message); }
 }
 
+
+const ADMIN_TABS = [
+  ['orders','訂單管理'],['stats','銷售統計'],['manual-receipt','手動新增收據'],['consignments','寄售管理'],
+  ['payment-settings','收款設定／聯絡訊息'],['bookshops','實體書店'],['authors','本地作者'],['publishers','本地出版社'],
+  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['market','市集']
+];
+window.MY_PERMS = null;
+function permOf(tab) { const p = window.MY_PERMS; if (!p || !Object.keys(p).length) return 'edit'; return p[tab] || 'none'; }
+function applyMyPermissions(perms) {
+  window.MY_PERMS = perms;
+  if (!Object.keys(perms).length) return;
+  let first = null;
+  ADMIN_TABS.forEach(([k]) => {
+    const lv = permOf(k);
+    const btn = document.querySelector(`.admin-nav-btn[onclick^="switchAdminTab('${k}'"]`);
+    const sec = document.getElementById('sec-' + k);
+    if (lv === 'none') { if (btn) btn.style.display = 'none'; if (sec) sec.dataset.locked = '1'; }
+    else if (!first) first = k;
+    if (lv === 'view' && sec) {
+      sec.classList.add('readonly-sec');
+      sec.insertAdjacentHTML('afterbegin', '<div class="mb-3 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2"><i class="fa-solid fa-eye mr-1"></i>你喺呢個版面只可以查看，唔可以新增或修改。</div>');
+    }
+  });
+  document.querySelectorAll('.admin-section').forEach(el => el.classList.remove('active'));
+  if (first) {
+    document.getElementById('sec-' + first).classList.add('active');
+    document.querySelectorAll('.admin-nav-btn').forEach(b => {
+      if ((b.getAttribute('onclick') || '').startsWith(`switchAdminTab('${first}'`)) b.className = b.className.replace('bg-white hover:bg-slate-50 border text-slate-700','bg-amber-900 text-white');
+      else if ((b.getAttribute('onclick') || '').startsWith("switchAdminTab('orders'")) b.className = b.className.replace('bg-amber-900 text-white','bg-white hover:bg-slate-50 border text-slate-700');
+    });
+  }
+}
+const RO_WORDS = /新增|儲存|刪除|編輯|確認|上載|更新|保存|移除|改做|標記|帶入|記錄|已回覆|扣|結算|\+|－|−/;
+document.addEventListener('click', e => {
+  const sec = e.target.closest && e.target.closest('.readonly-sec');
+  if (!sec) return;
+  const b = e.target.closest('button, input[type=submit], [onclick]');
+  if (!b || b.tagName === 'SELECT') return;
+  if (b.closest('form') || RO_WORDS.test(b.textContent || '') || b.type === 'submit') {
+    e.preventDefault(); e.stopPropagation(); alert('你喺呢個版面只有查看權限。');
+  }
+}, true);
+document.addEventListener('submit', e => {
+  if (e.target.closest('.readonly-sec')) { e.preventDefault(); e.stopPropagation(); alert('你喺呢個版面只有查看權限。'); }
+}, true);
+
+function openPermEditor(uid) {
+  const a = (window._accMap || {})[uid]; if (!a) return;
+  const perms = a.permissions || {};
+  const empty = !Object.keys(perms).length;
+  const box = document.getElementById('perm-' + uid);
+  if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+  box.innerHTML = `<p class="text-xs text-slate-500 mb-2">揀每個版面嘅權限（「可新增修改」包括新增卡片、修改同刪除資料）。</p>
+    <div class="grid sm:grid-cols-2 gap-2">${ADMIN_TABS.map(([k,l]) => {
+      const v = empty ? 'edit' : (perms[k] || 'none');
+      return `<label class="flex items-center justify-between gap-2 border rounded-lg px-2 py-1.5 bg-white"><span class="text-xs">${l}</span>
+        <select data-tab="${k}" class="border rounded px-1 py-0.5 text-xs">
+          <option value="none" ${v==='none'?'selected':''}>不可使用</option>
+          <option value="view" ${v==='view'?'selected':''}>只可查看</option>
+          <option value="edit" ${v==='edit'?'selected':''}>可新增修改</option></select></label>`;
+    }).join('')}</div>
+    <button onclick="savePerms('${uid}')" class="mt-3 bg-amber-900 text-white text-xs font-bold px-4 py-2 rounded-lg">儲存權限</button>`;
+  box.classList.remove('hidden');
+}
+async function savePerms(uid) {
+  const permissions = {};
+  document.querySelectorAll(`#perm-${uid} select[data-tab]`).forEach(s => permissions[s.dataset.tab] = s.value);
+  try { await accApi({ action: 'set_permissions', user_id: uid, permissions }); alert('已儲存權限，對方重新整理後台就會生效。'); fetchAdminAccounts(); }
+  catch (e) { alert('儲存失敗：' + e.message); }
+}
+
+// ===== 市集 =====
+let mkEvents = [], mkItems = [], mkSales = [], mkCurrent = null;
+async function fetchMarket() {
+  const sel = document.getElementById('mk-event-select'); if (!sel) return;
+  const { data } = await _supabase.from('market_events').select('*').order('event_date', { ascending: false, nullsFirst: false }).order('id', { ascending: false });
+  mkEvents = data || [];
+  sel.innerHTML = mkEvents.length ? mkEvents.map(e => `<option value="${e.id}">${escHtml(e.name)}${e.event_date ? '（' + e.event_date + '）' : ''}${e.location ? ' · ' + escHtml(e.location) : ''}</option>`).join('') : '<option value="">未有場次，請先新增</option>';
+  const keep = mkCurrent && mkEvents.find(e => e.id === mkCurrent) ? mkCurrent : (mkEvents[0] && mkEvents[0].id);
+  if (keep) { sel.value = keep; selectMarketEvent(keep); } else document.getElementById('mk-body').classList.add('hidden');
+  const { data: prods } = await _supabase.from('shop_products').select('id,name,price,category,stock_type,image_url').order('name');
+  window._mkProds = Object.fromEntries((prods || []).map(p => [p.id, p]));
+  document.getElementById('mk-from-product').innerHTML = '<option value="">— 由已上架網店商品揀選（可選）—</option>' + (prods || []).map(p => `<option value="${p.id}">${escHtml(p.name)}（HK$${p.price}）</option>`).join('');
+}
+async function saveMarketEvent(ev) {
+  ev.preventDefault();
+  const { data, error } = await _supabase.from('market_events').insert({
+    name: document.getElementById('mk-ev-name').value.trim(),
+    event_date: document.getElementById('mk-ev-date').value || null,
+    location: document.getElementById('mk-ev-loc').value.trim() || null }).select().single();
+  if (error) return alert('新增失敗：' + error.message);
+  document.getElementById('mk-event-form').reset(); mkCurrent = data.id; fetchMarket();
+}
+async function deleteMarketEvent() {
+  if (!mkCurrent || !confirm('確定刪除呢個市集場次？貨品同銷售紀錄會一併刪除。')) return;
+  const { error } = await _supabase.from('market_events').delete().eq('id', mkCurrent);
+  if (error) return alert('刪除失敗：' + error.message);
+  mkCurrent = null; fetchMarket();
+}
+async function selectMarketEvent(id) {
+  mkCurrent = Number(id) || null;
+  document.getElementById('mk-body').classList.toggle('hidden', !mkCurrent);
+  if (!mkCurrent) return;
+  const [it, sa] = await Promise.all([
+    _supabase.from('market_items').select('*').eq('event_id', mkCurrent).order('category').order('name'),
+    _supabase.from('market_sales').select('*').eq('event_id', mkCurrent).order('created_at', { ascending: false })]);
+  mkItems = it.data || []; mkSales = sa.data || [];
+  renderMarket();
+}
+function mkSoldOf(id) { return mkSales.filter(s => s.item_id === id).reduce((n, s) => n + s.qty, 0); }
+function renderMarket() {
+  window._mkItemMap = Object.fromEntries(mkItems.map(i => [i.id, i]));
+  document.getElementById('mk-items').innerHTML = mkItems.map(i => {
+    const sold = mkSoldOf(i.id), left = i.quantity - sold, out = left <= 0;
+    return `<div class="border rounded-xl p-2 flex flex-col ${out ? 'opacity-60' : ''}">
+      ${i.image_url ? `<img src="${escHtml(i.image_url)}" class="h-24 w-full object-cover rounded-lg mb-1">` : ''}
+      <div class="font-semibold text-slate-800 leading-tight">${escHtml(i.name)}</div>
+      <div class="text-xs text-slate-500">${escHtml(i.category || '')} · ${escHtml(i.stock_type || '')}</div>
+      <div class="text-amber-900 font-bold">HK$${Number(i.price)}</div>
+      <div class="text-xs ${out ? 'text-red-600 font-bold' : 'text-slate-600'}">${out ? '已售罄' : '尚餘 ' + left}　已售 ${sold}</div>
+      <button ${out ? 'disabled' : ''} onclick="recordMarketSale(${i.id})" class="mt-1 bg-emerald-700 disabled:bg-slate-300 text-white rounded-lg py-1.5 text-xs font-bold">記一件</button>
+      <div class="flex gap-1 mt-1"><button onclick="editMarketItem(window._mkItemMap[${i.id}])" class="flex-1 border rounded py-1 text-xs">編輯</button>
+      <button onclick="deleteMarketItem(${i.id})" class="flex-1 border border-red-200 text-red-700 rounded py-1 text-xs">刪除</button></div></div>`;
+  }).join('') || '<p class="text-slate-400 italic col-span-full">未有貨品。</p>';
+  const total = mkSales.reduce((n, s) => n + Number(s.price) * s.qty, 0);
+  const qty = mkSales.reduce((n, s) => n + s.qty, 0);
+  const byPay = {}; mkSales.forEach(s => byPay[s.payment_method] = (byPay[s.payment_method] || 0) + Number(s.price) * s.qty);
+  const byItem = {}; mkSales.forEach(s => { const k = s.item_name; byItem[k] = byItem[k] || { q: 0, a: 0 }; byItem[k].q += s.qty; byItem[k].a += Number(s.price) * s.qty; });
+  document.getElementById('mk-stats').innerHTML = `
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+      <div class="bg-amber-50 rounded-xl p-3"><div class="text-xs text-slate-500">總成交</div><div class="text-xl font-bold text-amber-900">HK$${total.toFixed(1)}</div></div>
+      <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">售出件數</div><div class="text-xl font-bold">${qty}</div></div>
+      <div class="bg-slate-50 rounded-xl p-3 text-xs">${Object.entries(byPay).map(([k,v]) => `${escHtml(k)}：HK$${v.toFixed(1)}`).join('<br>') || '未有收款'}</div>
+    </div>
+    <table class="w-full text-xs"><thead><tr class="text-left text-slate-500 border-b"><th class="py-1">貨品</th><th>售出</th><th>尚餘</th><th class="text-right">金額</th></tr></thead><tbody>
+    ${mkItems.map(i => { const b = byItem[i.name] || { q: 0, a: 0 }; return `<tr class="border-b"><td class="py-1">${escHtml(i.name)}</td><td>${mkSoldOf(i.id)}</td><td>${Math.max(0, i.quantity - mkSoldOf(i.id))}</td><td class="text-right">HK$${b.a.toFixed(1)}</td></tr>`; }).join('')}
+    </tbody></table>`;
+  document.getElementById('mk-sales').innerHTML = mkSales.map(s => `<div class="flex items-center justify-between border-b py-1">
+    <span>${new Date(s.created_at).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}　${escHtml(s.item_name)} × ${s.qty}　<span class="text-slate-500">${escHtml(s.payment_method)}</span></span>
+    <span class="flex items-center gap-2">HK$${(Number(s.price) * s.qty).toFixed(1)}<button onclick="deleteMarketSale(${s.id})" class="text-red-600 text-xs">刪除</button></span></div>`).join('') || '<p class="text-slate-400 italic">未有銷售。</p>';
+}
+async function recordMarketSale(id) {
+  const i = window._mkItemMap[id]; if (!i) return;
+  if (i.quantity - mkSoldOf(id) <= 0) return alert('已售罄');
+  const { error } = await _supabase.from('market_sales').insert({ event_id: mkCurrent, item_id: id, item_name: i.name, price: i.price, qty: 1, payment_method: document.getElementById('mk-pay').value });
+  if (error) return alert('記錄失敗：' + error.message);
+  selectMarketEvent(mkCurrent);
+}
+async function deleteMarketSale(id) {
+  if (!confirm('刪除呢筆銷售？')) return;
+  const { error } = await _supabase.from('market_sales').delete().eq('id', id);
+  if (error) return alert('刪除失敗：' + error.message);
+  selectMarketEvent(mkCurrent);
+}
+function fillMarketFromProduct() {
+  const p = (window._mkProds || {})[document.getElementById('mk-from-product').value]; if (!p) return;
+  document.getElementById('mk-it-pid').value = p.id;
+  document.getElementById('mk-it-name').value = p.name || '';
+  document.getElementById('mk-it-price').value = p.price ?? '';
+  const cat = document.getElementById('mk-it-cat'); cat.value = p.category === '文創周邊' ? '文創周邊' : (p.category ? '書籍' : '其他');
+  document.getElementById('mk-it-type').value = p.stock_type === '寄售' ? '寄售' : '買斷';
+  document.getElementById('mk-it-img-url').value = p.image_url || '';
+  const pv = document.getElementById('mk-it-preview'); pv.src = p.image_url || ''; pv.classList.toggle('hidden', !p.image_url);
+}
+function editMarketItem(i) {
+  document.getElementById('mk-it-id').value = i.id;
+  document.getElementById('mk-it-pid').value = i.product_id || '';
+  document.getElementById('mk-it-name').value = i.name;
+  document.getElementById('mk-it-price').value = i.price;
+  document.getElementById('mk-it-cat').value = i.category || '其他';
+  document.getElementById('mk-it-type').value = i.stock_type || '買斷';
+  document.getElementById('mk-it-qty').value = i.quantity;
+  document.getElementById('mk-it-img-url').value = i.image_url || '';
+  const pv = document.getElementById('mk-it-preview'); pv.src = i.image_url || ''; pv.classList.toggle('hidden', !i.image_url);
+  document.getElementById('mk-item-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function resetMarketItemForm() {
+  document.getElementById('mk-item-form').reset();
+  ['mk-it-id','mk-it-pid','mk-it-img-url'].forEach(x => document.getElementById(x).value = '');
+  document.getElementById('mk-it-preview').classList.add('hidden');
+}
+async function saveMarketItem(ev) {
+  ev.preventDefault();
+  let image_url = document.getElementById('mk-it-img-url').value || null;
+  const f = document.getElementById('mk-it-img').files[0];
+  if (f) {
+    const fn = `market_${Date.now()}_${Math.random().toString(36).slice(2)}.${(f.name.split('.').pop() || 'jpg')}`;
+    const up = await _supabase.storage.from('images').upload(fn, f);
+    if (up.error) return alert('圖片上載失敗：' + up.error.message);
+    image_url = _supabase.storage.from('images').getPublicUrl(fn).data.publicUrl;
+  }
+  const row = { event_id: mkCurrent, product_id: Number(document.getElementById('mk-it-pid').value) || null,
+    name: document.getElementById('mk-it-name').value.trim(), price: Number(document.getElementById('mk-it-price').value) || 0,
+    category: document.getElementById('mk-it-cat').value, stock_type: document.getElementById('mk-it-type').value,
+    quantity: Math.max(0, parseInt(document.getElementById('mk-it-qty').value) || 0), image_url };
+  const id = document.getElementById('mk-it-id').value;
+  const { error } = id ? await _supabase.from('market_items').update(row).eq('id', id) : await _supabase.from('market_items').insert(row);
+  if (error) return alert('儲存失敗：' + error.message);
+  resetMarketItemForm(); document.getElementById('mk-from-product').value = ''; selectMarketEvent(mkCurrent);
+}
+async function deleteMarketItem(id) {
+  if (!confirm('刪除呢件市集貨品？')) return;
+  const { error } = await _supabase.from('market_items').delete().eq('id', id);
+  if (error) return alert('刪除失敗：' + error.message);
+  selectMarketEvent(mkCurrent);
+}
+
 async function logoutAdmin() {
   await _supabase.auth.signOut();
   window.location.replace('login.html');
@@ -1440,6 +1712,7 @@ window.onload = async function () {
   fetchEco();
   fetchTheatre();
   fetchConsignments();
+  fetchMarket();
   if (!document.querySelector('.consign-item-row')) addConsignItemRow({ category: '書籍' });
 
   document
