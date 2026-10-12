@@ -660,7 +660,7 @@
     async function loadDonate() {
       const { data } = await _supabase.from('payment_settings').select('donate_payme_link,donate_payme_img_url,donate_bmc_link,donate_bmc_img_url').eq('id','default').maybeSingle();
       if (!data) return;
-      const safe = u => /^https?:\/\//i.test(u || '') ? u.replace(/"/g,'%22') : '';
+      const safe = u => /^https?:\/\/\S+$/i.test((u || '').trim()) ? u.trim().replace(/"/g,'%22') : '';
       const opts = [['PayMe', data.donate_payme_link, data.donate_payme_img_url], ['Buy Me a Coffee', data.donate_bmc_link, data.donate_bmc_img_url]]
         .filter(o => safe(o[1]) || safe(o[2]))
         .map(([n, l, img]) => {
@@ -1448,14 +1448,12 @@
       btn.innerText = "上傳中...";
 
       try {
-        const { data, error } = await _supabase.storage.from('images').upload(fileName, file);
+        const { data, error } = await _supabase.storage.from('payment-proofs').upload(fileName, file);
         if (error) throw error;
-
-        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
 
         if (currentOrderId) {
           await _supabase.from('shop_orders').update({
-            payment_proof_url: publicUrl,
+            payment_proof_url: 'payment-proofs:' + fileName,
             status: '已傳送憑證'
           }).eq('id', currentOrderId);
         }

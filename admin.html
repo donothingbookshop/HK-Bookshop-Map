@@ -1784,7 +1784,7 @@ window.onload = async function () {
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 ${o.payment_proof_url
-                  ? `<a href="${o.payment_proof_url}" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-bold hover:underline text-xs inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> 查看現有付款／入數紙相片</a>`
+                  ? `<button type="button" onclick="openPaymentProof(${o.id})" class="text-blue-700 font-bold hover:underline text-xs inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> 查看現有付款／入數紙相片（5 分鐘有效連結）</button>`
                   : `<span class="text-slate-500 text-xs">未上傳付款／入數紙相片</span>`}
               </div>
               <span id="order-proof-status-${o.id}" class="hidden text-[11px] font-semibold"></span>
@@ -2113,17 +2113,13 @@ window.onload = async function () {
         statusEl.textContent = '正在上傳相片…';
 
         const { error: uploadError } = await _supabase.storage
-          .from('images')
+          .from('payment-proofs')
           .upload(fileName, file, { cacheControl: '3600', upsert: false });
         if (uploadError) throw uploadError;
 
-        const { data: publicUrlData } = _supabase.storage.from('images').getPublicUrl(fileName);
-        const publicUrl = publicUrlData?.publicUrl;
-        if (!publicUrl) throw new Error('未能取得相片網址。');
-
         const { error: updateError } = await _supabase
           .from('shop_orders')
-          .update({ payment_proof_url: publicUrl })
+          .update({ payment_proof_url: 'payment-proofs:' + fileName })
           .eq('id', orderId);
         if (updateError) throw updateError;
 
