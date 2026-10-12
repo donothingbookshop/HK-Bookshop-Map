@@ -1452,10 +1452,8 @@
         if (error) throw error;
 
         if (currentOrderId) {
-          await _supabase.from('shop_orders').update({
-            payment_proof_url: 'payment-proofs:' + fileName,
-            status: '已傳送憑證'
-          }).eq('id', currentOrderId);
+          const { error: aErr } = await _supabase.rpc('attach_payment_proof', { _order_id: currentOrderId, _path: fileName });
+          if (aErr) throw aErr;
         }
 
         statusEl.innerText = "✓ 付款相片已成功上傳！店家將儘快對帳。";

@@ -2082,6 +2082,24 @@ window.onload = async function () {
       });
     }
 
+    async function openPaymentProof(orderId) {
+      const win = window.open('', '_blank');
+      try {
+        const { data: row, error } = await _supabase.from('shop_orders').select('payment_proof_url').eq('id', orderId).single();
+        if (error || !row?.payment_proof_url) throw error || new Error('搵唔到相片');
+        let url = row.payment_proof_url;
+        if (url.startsWith('payment-proofs:')) {
+          const { data, error: sErr } = await _supabase.storage.from('payment-proofs').createSignedUrl(url.slice('payment-proofs:'.length), 300);
+          if (sErr) throw sErr;
+          url = data.signedUrl;
+        }
+        if (win) win.location.href = url; else window.location.href = url;
+      } catch (e) {
+        if (win) win.close();
+        alert('未能開啟付款相片：' + (e.message || e));
+      }
+    }
+
     async function uploadOrderPaymentProof(orderId) {
       const fileInput = document.getElementById(`order-proof-file-${orderId}`);
       const statusEl = document.getElementById(`order-proof-status-${orderId}`);
