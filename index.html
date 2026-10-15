@@ -73,7 +73,8 @@
     .dir-thumb { position: absolute; left: 0; right: 0; top: 0; min-height: 30px; background: var(--faint); border-radius: 4px; cursor: grab; transition: background .15s; }
     .dir-rail:hover .dir-thumb, .dir-thumb.dragging { background: var(--primary); cursor: grabbing; }
     .dir-scroll-tall { height: min(78vh, 820px); }
-    .dir-scroll-tall > .dir-scroll-list { align-content: start; padding-bottom: 4px; }
+    .dir-scroll-tall > .dir-scroll-list { align-content: start; grid-auto-rows: max-content; padding-bottom: 4px; }
+    .dir-scroll-tall > .dir-scroll-list > * { min-height: max-content; flex-shrink: 0; }
     @media (max-width: 767px) { .dir-scroll-wrap { height: 62vh; } .dir-scroll-tall { height: 70vh; } }
     #tab-eco h2, #tab-theatre h2, #tab-directory h2 { border-left: 3px solid var(--eco); padding-left: 12px; }
     #tab-theatre h2 { border-color: var(--theatre); } #tab-directory h2 { border-color: var(--archive); }
