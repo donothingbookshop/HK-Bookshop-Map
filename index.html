@@ -75,7 +75,10 @@
     .dir-scroll-tall { height: min(78vh, 820px); }
     .dir-scroll-tall > .dir-scroll-list { align-content: start; grid-auto-rows: max-content; padding-bottom: 4px; }
     .dir-scroll-tall > .dir-scroll-list > * { min-height: max-content; flex-shrink: 0; }
-    @media (max-width: 767px) { .dir-scroll-wrap { height: 62vh; } .dir-scroll-tall { height: 70vh; } }
+    @media (max-width: 767px) { .dir-scroll-wrap { height: 62vh; } .dir-scroll-tall { height: 70vh; }
+      .shop-scroll-wrap { height: auto; }
+      .shop-scroll-wrap > .dir-scroll-list { height: auto; overflow: visible; padding-right: 0; }
+      .shop-scroll-wrap > .dir-rail { display: none; } }
     #tab-eco h2, #tab-theatre h2, #tab-directory h2 { border-left: 3px solid var(--eco); padding-left: 12px; }
     #tab-theatre h2 { border-color: var(--theatre); } #tab-directory h2 { border-color: var(--archive); }
     .bookshop-workspace { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); height: min(740px, 72vh); min-height: 480px; border-block: 1px solid var(--line); }
@@ -326,7 +329,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 dir-scroll-wrap dir-scroll-tall"><div class="dir-scroll-list grid grid-cols-1 sm:grid-cols-2 gap-6 content-start" id="product-list">
+        <div class="lg:col-span-2 dir-scroll-wrap dir-scroll-tall shop-scroll-wrap"><div class="dir-scroll-list grid grid-cols-1 sm:grid-cols-2 gap-6 content-start" id="product-list">
           <p class="text-faint italic col-span-full">載入商品中...</p>
         </div><div class="dir-rail"><span class="dir-thumb"></span></div>
 </div>

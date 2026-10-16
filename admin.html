@@ -255,6 +255,9 @@
               <label class="font-bold text-slate-700">購買書籍 / 商品項目 *</label>
               <button type="button" onclick="addManualItemRow()" class="bg-amber-900 text-white px-2.5 py-1 rounded text-[11px] font-semibold"><i class="fa-solid fa-plus mr-1"></i>新增項目</button>
             </div>
+            <select id="m-product-picker" onfocus="loadManualProductPicker()" onchange="pickManualProduct(this)" class="w-full border rounded-lg px-3 py-2 bg-white mb-2 text-slate-600 focus:ring-2 focus:ring-amber-800 focus:outline-none">
+              <option value="">📚 從已上架網店商品揀選，自動帶入名稱同價錢…</option>
+            </select>
             <div id="manual-items-container" class="space-y-2">
               <div class="manual-item-row flex gap-2 items-center">
                 <input type="text" placeholder="書籍 / 商品名稱 *" class="m-item-name flex-grow border rounded px-3 py-1.5" required>
@@ -1714,6 +1717,7 @@ window.onload = async function () {
   fetchTheatre();
   fetchConsignments();
   fetchMarket();
+  loadManualProductPicker();
   if (!document.querySelector('.consign-item-row')) addConsignItemRow({ category: '書籍' });
 
   document
@@ -2392,6 +2396,36 @@ window.onload = async function () {
         <button type="button" onclick="this.parentElement.remove(); calcManualTotal();" class="text-red-500 hover:text-red-700 px-2"><i class="fa-solid fa-trash"></i></button>
       `;
       container.appendChild(row);
+    }
+
+    let _mrProducts = null;
+    async function loadManualProductPicker() {
+      const sel = document.getElementById('m-product-picker');
+      if (!sel || _mrProducts) return;
+      const { data, error } = await _supabase.from('shop_products').select('id,name,price,category,quantity').order('name');
+      if (error || !data) return;
+      _mrProducts = data;
+      data.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        const qty = Number(p.quantity) || 0;
+        opt.textContent = `${p.name} — HK$ ${Number(p.price) || 0}${qty <= 0 ? '（售罄）' : ''}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function pickManualProduct(sel) {
+      const id = Number(sel.value);
+      sel.value = '';
+      if (!id || !_mrProducts) return;
+      const p = _mrProducts.find(x => x.id === id);
+      if (!p) return;
+      addManualItemRow();
+      const rows = document.querySelectorAll('#manual-items-container .manual-item-row');
+      const row = rows[rows.length - 1];
+      row.querySelector('.m-item-name').value = p.name;
+      row.querySelector('.m-item-price').value = Number(p.price) || 0;
+      calcManualTotal();
     }
 
     function calcManualTotal() {
