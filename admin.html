@@ -537,6 +537,8 @@
           <div>
             <label class="block font-bold text-slate-700 mb-1">其他注意事項 / 付款提示</label>
             <textarea id="set-instructions" rows="3" class="w-full border rounded px-3 py-2" placeholder="例如：轉帳時請註明訂單號碼，並保留入數紙..."></textarea>
+            <label class="block font-bold text-slate-700 mt-3 mb-1">🔒 私隱政策（網站頁尾顯示）</label>
+            <textarea id="set-privacy" rows="10" class="w-full border rounded px-3 py-2 text-xs"></textarea>
           </div>
 
           <button type="submit" class="w-full bg-amber-900 hover:bg-amber-800 text-white font-bold py-2.5 rounded-xl transition shadow">
@@ -833,6 +835,13 @@
                 <input type="text" id="p-isbn" class="w-full border rounded px-3 py-2">
               </div>
             </div>
+            <div class="border rounded p-2 bg-slate-50 space-y-2">
+              <label class="flex items-center gap-2 font-bold text-slate-700"><input type="checkbox" id="p-used" onchange="document.getElementById('p-used-box').classList.toggle('hidden',!this.checked)"> ✅ 二手書（上面價格當原價）</label>
+              <div id="p-used-box" class="hidden grid grid-cols-2 gap-2">
+                <div><label class="block font-bold text-slate-700 mb-1">二手價 (HKD) *</label><input type="number" step="any" id="p-used-price" class="w-full border rounded px-3 py-2"></div>
+                <div><label class="block font-bold text-slate-700 mb-1">書況</label><input type="text" id="p-condition" class="w-full border rounded px-3 py-2" placeholder="例：九成新"></div>
+              </div>
+            </div>
             <div class="bg-amber-50 border border-amber-200 rounded p-3 space-y-2">
               <div class="flex flex-wrap gap-2">
                 <button type="button" onclick="startIsbnScan()" class="bg-slate-800 text-white px-3 py-1.5 rounded text-sm font-bold">📷 掃描 ISBN 條碼</button>
@@ -878,8 +887,9 @@
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block font-bold text-slate-700 mb-1">分類主題 *</label>
-                <select id="p-category" class="w-full border rounded px-3 py-2 bg-white">
-                  <option value="小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）">📖 小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）</option>
+                <select id="p-category" onchange="toggleMerchFields()" class="w-full border rounded px-3 py-2 bg-white">
+                  <option value="文學小說（文學／散文／愛情）">📖 文學小說（文學／散文／愛情）</option>
+                  <option value="類型小說（推理／懸疑／科幻／奇幻／歷史）">🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）</option>
                   <option value="Zine／雜誌">📰 Zine／雜誌</option>
                   <option value="童書繪本">🎨 童書繪本</option>
                   <option value="漫畫">💬 漫畫</option>
@@ -2497,6 +2507,7 @@ window.onload = async function () {
       document.getElementById('set-bank-holder').value = data.bank_holder || '';
       document.getElementById('set-bank-account').value = data.bank_account || '';
       document.getElementById('set-instructions').value = data.instructions || '';
+      document.getElementById('set-privacy').value = data.privacy_policy || DEFAULT_PRIVACY;
 
       if (data.fps_qr_url) {
         document.getElementById('preview-fps-qr').innerHTML = `<img src="${data.fps_qr_url}" class="w-24 h-24 object-contain border rounded">`;
@@ -2537,7 +2548,8 @@ window.onload = async function () {
         bank_name: document.getElementById('set-bank-name').value,
         bank_holder: document.getElementById('set-bank-holder').value,
         bank_account: document.getElementById('set-bank-account').value,
-        instructions: document.getElementById('set-instructions').value
+        instructions: document.getElementById('set-instructions').value,
+        privacy_policy: document.getElementById('set-privacy').value
       };
 
       if (fpsQrUrl) payload.fps_qr_url = fpsQrUrl;
@@ -3235,6 +3247,25 @@ longitude: longitude,
       });
     }
 
+    const DEFAULT_PRIVACY = `私隱政策
+
+1. 收集的資料
+當你於本網站落單、留言或聯絡我們時，我們可能收集你的姓名、電話、電郵及付款證明。
+
+2. 用途
+資料只用於處理訂單、安排取書或送貨、回覆查詢及必要的聯絡。
+
+3. 保護與保存
+付款證明儲存於私人空間，只有授權管理員可查閱。資料只保存至處理所需時間。
+
+4. 第三方
+我們不會出售你的個人資料。只會在處理付款、送貨或法律要求時與相關服務提供者分享。
+
+5. 查閱及刪除
+你可隨時透過「聯絡我」要求查閱、更正或刪除你的個人資料。
+
+6. 政策更新
+本政策可能不時更新，最新版本以本頁為準。`;
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('p-id').value;
@@ -3263,7 +3294,10 @@ longitude: longitude,
         translator: document.getElementById('p-translator').value,
         publisher: document.getElementById('p-publisher').value,
         weight: Number(document.getElementById('p-weight').value) || null,
-        price: Number(document.getElementById('p-price').value),
+        price: document.getElementById('p-used').checked ? Number(document.getElementById('p-used-price').value) : Number(document.getElementById('p-price').value),
+        is_second_hand: document.getElementById('p-used').checked,
+        original_price: document.getElementById('p-used').checked ? Number(document.getElementById('p-price').value) : null,
+        book_condition: document.getElementById('p-used').checked ? (document.getElementById('p-condition').value.trim() || null) : null,
         isbn: document.getElementById('p-isbn').value,
         category: document.getElementById('p-category').value,
         stock_type: document.getElementById('p-stock-type').value,
@@ -3293,7 +3327,11 @@ longitude: longitude,
       document.getElementById('p-translator').value = p.translator || '';
       document.getElementById('p-publisher').value = p.publisher || '';
       document.getElementById('p-weight').value = p.weight || '';
-      document.getElementById('p-price').value = p.price;
+      document.getElementById('p-price').value = p.is_second_hand && p.original_price != null ? p.original_price : p.price;
+      document.getElementById('p-used').checked = !!p.is_second_hand;
+      document.getElementById('p-used-price').value = p.is_second_hand ? p.price : '';
+      document.getElementById('p-condition').value = p.book_condition || '';
+      document.getElementById('p-used-box').classList.toggle('hidden', !p.is_second_hand);
       document.getElementById('p-isbn').value = p.isbn || '';
       document.getElementById('p-category').value = p.category || '';
       document.getElementById('p-stock-type').value = p.stock_type || '買斷';
@@ -3310,10 +3348,17 @@ longitude: longitude,
       document.getElementById('p-stock-sai-ying-pun').value = stocks['西營盤店'] || 0;
       document.getElementById('p-stock-tsuen-wan').value = stocks['荃灣店'] || 0;
 
+      toggleMerchFields();
       document.getElementById('product-form-title').innerText = "編輯網店商品";
+    }
+    function toggleMerchFields() {
+      const merch = (document.getElementById('p-category').value || '').includes('文創');
+      ['p-author','p-translator','p-isbn'].forEach(id => { const el = document.getElementById(id); if (el && el.parentElement) el.parentElement.classList.toggle('hidden', merch); });
+      const u = document.getElementById('p-used'); if (u && u.parentElement && u.parentElement.parentElement) u.parentElement.parentElement.classList.toggle('hidden', merch);
     }
 
     function resetProductForm() {
+      setTimeout(() => { document.getElementById('p-used').checked = false; document.getElementById('p-used-box').classList.add('hidden'); toggleMerchFields(); }, 0);
       stopIsbnScan();
       clearIsbnCover();
       clearAiResult();

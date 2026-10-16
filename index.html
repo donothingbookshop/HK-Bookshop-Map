@@ -308,12 +308,12 @@
             <button type="button" data-t="MERCH" onclick="filterProductType('MERCH')" class="px-3 py-1.5 bg-surface text-ink">🎁 文創周邊</button>
           </div>
           <select id="region-select" onchange="currentRegionFilter=this.value;applyProductFilters()" class="border border-line rounded-lg px-3 py-1.5 text-xs bg-surface font-medium text-ink">
-            <option value="ALL">🌏 全部地區</option><option value="香港">香港出版</option><option value="台灣">台灣出版</option><option value="OTHER">其他國家</option>
+            <option value="ALL">🌏 全部地區</option><option value="USED">♻️ 只看二手書</option><option value="香港">香港出版</option><option value="台灣">台灣出版</option><option value="OTHER">其他國家</option>
           </select>
           <div class="flex items-center space-x-2">
-            <select id="category-select" onchange="filterProductCategory(this.value)" class="border border-line rounded-lg px-3 py-1.5 text-xs bg-surface focus:outline-none focus:ring-2 focus:ring-bookshop shadow-sm cursor-pointer font-medium text-ink">
+            <select id="category-select" style="max-width:9.5rem" onchange="filterProductCategory(this.value)" class="border border-line rounded-lg px-3 py-1.5 text-xs bg-surface focus:outline-none focus:ring-2 focus:ring-bookshop shadow-sm cursor-pointer font-medium text-ink">
               <option value="ALL">📖 全部主題</option>
-              <option value="小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）">📖 小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）</option>
+              <option value="文學小說（文學／散文／愛情）">📖 文學小說</option><option value="類型小說（推理／懸疑／科幻／奇幻／歷史）">🔍 類型小說</option>
               <option value="Zine／雜誌">📰 Zine／雜誌</option>
               <option value="童書繪本">🎨 童書繪本</option>
               <option value="漫畫">💬 漫畫</option>
@@ -332,6 +332,7 @@
         <div class="lg:col-span-2 dir-scroll-wrap dir-scroll-tall shop-scroll-wrap"><div class="dir-scroll-list grid grid-cols-1 sm:grid-cols-2 gap-6 content-start" id="product-list">
           <p class="text-faint italic col-span-full">載入商品中...</p>
         </div><div class="dir-rail"><span class="dir-thumb"></span></div>
+<div id="shop-pager" class="flex flex-wrap items-center justify-center gap-2 text-xs mt-4"></div>
 </div>
         
         <div id="checkout-sidebar" class="bg-surface p-6 rounded-xl border border-line shadow-md h-fit sticky top-20">
@@ -648,7 +649,18 @@
 
   <footer class="bg-ink text-faint text-xs py-6 text-center mt-auto">
     <p>© 香港獨立文化地圖 · Independent Culture Guide</p>
+    <p class="mt-2"><button type="button" onclick="openPrivacy()" class="underline hover:text-primary-contrast">私隱政策</button></p>
   </footer>
+  <div id="privacy-modal" class="hidden fixed inset-0 z-[3000] bg-ink/60 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="bg-surface rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 relative">
+      <button type="button" onclick="document.getElementById('privacy-modal').classList.add('hidden')" class="absolute top-3 right-4 text-faint text-xl">×</button>
+      <h3 class="font-bold text-lg text-ink mb-3">🔒 私隱政策</h3>
+      <div id="privacy-text" class="text-sm text-muted-ink whitespace-pre-line leading-relaxed">載入中…</div>
+    </div>
+  </div>
+  <button type="button" id="mobile-cart-bar" onclick="document.getElementById('checkout-sidebar').scrollIntoView({behavior:'smooth',block:'start'})" class="hidden lg:!hidden fixed bottom-4 left-4 right-4 z-[2000] bg-primary text-primary-contrast rounded-full shadow-lg px-5 py-3 text-sm font-bold flex justify-between items-center">
+    <span><i class="fa-solid fa-basket-shopping mr-1"></i><span id="mcb-count">0</span> 件</span><span>HK$ <span id="mcb-total">0</span> · 前往結帳 →</span>
+  </button>
 
   <script>
     const SUPABASE_URL = 'https://yteeedyldfemxmvvylem.supabase.co';
@@ -682,6 +694,11 @@
       document.getElementById('donate').classList.remove('hidden');
     }
     loadDonate();
+    async function openPrivacy() {
+      document.getElementById('privacy-modal').classList.remove('hidden');
+      const { data } = await _supabase.from('payment_settings').select('privacy_policy').eq('id','default').maybeSingle();
+      document.getElementById('privacy-text').textContent = (data && data.privacy_policy) || '私隱政策暫未提供，如有查詢請透過「聯絡我」與我們聯絡。';
+    }
 
 
     let map;
@@ -695,7 +712,7 @@
     function cleanCategory(str) {
       if (!str) return '其他';
       let clean = str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-      if (clean === '文學小說') return '小說（文學/散文/愛情/推理／懸疑/科幻/奇幻/武俠/歷史/恐怖）';
+      if (clean === '文學小說' || clean.startsWith('小說（文學/散文/愛情/推理')) return '文學小說（文學／散文／愛情）';
       return clean;
     }
 
@@ -1091,40 +1108,69 @@
       renderProducts(allProducts);
     }
 
-    function renderProducts(list) {
+    let shopPage = 1; const SHOP_PER_PAGE = 30;
+    function goShopPage(n, scroll) {
+      const pages = Math.max(1, Math.ceil(lastRenderedProducts.length / SHOP_PER_PAGE));
+      n = Math.min(pages, Math.max(1, parseInt(n, 10) || 1));
+      shopPage = n; renderProducts(lastRenderedProducts, true);
+      if (scroll !== false) document.getElementById('product-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function renderPager(total) {
+      const el = document.getElementById('shop-pager'); if (!el) return;
+      const pages = Math.ceil(total / SHOP_PER_PAGE);
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML = `<button ${shopPage<=1?'disabled':''} onclick="goShopPage(${shopPage-1})" class="px-3 py-1.5 border border-line rounded bg-surface disabled:opacity-40">上一頁</button>
+        <span class="flex items-center gap-1">第 <input id="shop-page-input" type="number" min="1" max="${pages}" value="${shopPage}" onkeydown="if(event.key==='Enter')goShopPage(this.value)" class="w-14 border border-line rounded px-2 py-1 text-center bg-surface"> / ${pages} 頁 <button onclick="goShopPage(document.getElementById('shop-page-input').value)" class="px-2 py-1 border border-line rounded bg-surface">前往</button></span>
+        <button ${shopPage>=pages?'disabled':''} onclick="goShopPage(${shopPage+1})" class="px-3 py-1.5 border border-line rounded bg-surface disabled:opacity-40">下一頁</button>`;
+    }
+    function renderProducts(list, keepPage) {
+      if (lastRenderedProducts !== list && !keepPage) shopPage = 1;
       lastRenderedProducts = list;
       const container = document.getElementById('product-list');
-      if (list.length === 0) { container.innerHTML = `<p class="text-faint italic col-span-full">尚無商品上架。</p>`; return; }
+      if (list.length === 0) {
+        renderPager(0);
+        container.innerHTML = allProducts.length === 0
+          ? `<p class="text-faint italic col-span-full">尚無商品上架。</p>`
+          : `<div class="col-span-full bg-paper border border-line rounded-xl p-6 text-center"><p class="text-3xl mb-2">📚</p><p class="font-bold text-ink">暫未找到相關書籍</p><p class="text-xs text-muted-ink mt-1">歡迎聯絡店長查詢代訂或進貨，我哋會盡力幫你搵。</p><a href="#contact-us" class="inline-block mt-3 bg-primary text-primary-contrast px-4 py-2 rounded text-xs font-bold">💬 聯絡店長代訂</a></div>`;
+        return;
+      }
+      const pages = Math.ceil(list.length / SHOP_PER_PAGE);
+      if (shopPage > pages) shopPage = pages;
+      renderPager(list.length);
+      const pageList = list.slice((shopPage - 1) * SHOP_PER_PAGE, shopPage * SHOP_PER_PAGE);
 
-      container.innerHTML = list.map(p => {
+      container.innerHTML = pageList.map(p => {
         const stocks = getStocks(p);
         const totalQty = Object.values(stocks).reduce((a, b) => a + Number(b || 0), 0);
         const inCart = cart.filter(x => x.id === p.id).reduce((a, b) => a + b.qty, 0);
         const soldOut = totalQty <= 0;
         const allTaken = !soldOut && inCart >= totalQty;
+        const used = p.is_second_hand;
 
         return `
-          <div class="bg-surface rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition ${soldOut ? 'opacity-75' : ''}">
+          <div class="bg-surface rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between hover:shadow-md transition">
             <div class="h-48 bg-paper flex items-center justify-center p-3 cursor-pointer relative" onclick="openBookModal(${p.id})">
-              ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain">` : `<i class="fa-solid fa-book text-4xl text-faint"></i>`}
-              ${soldOut ? `<span class="absolute top-2 left-2 bg-danger text-primary-contrast text-[10px] font-bold px-2 py-0.5 rounded-full">售罄</span>` : ''}
+              ${p.image_url ? `<img src="${p.image_url}" class="max-h-full object-contain" style="${soldOut ? 'filter:grayscale(1);opacity:.55' : ''}">` : `<i class="fa-solid fa-book text-4xl text-faint"></i>`}
+              ${soldOut ? `<div class="absolute inset-0 bg-paper/50 flex items-center justify-center"><span class="bg-ink text-primary-contrast text-xs font-bold px-3 py-1 rounded-full">已售罄</span></div>` : ''}
+              ${used ? `<span class="absolute top-2 right-2 bg-eco-soft text-eco border text-[10px] font-bold px-2 py-0.5 rounded-full">♻️ 二手${p.book_condition ? '・' + p.book_condition : ''}</span>` : ''}
             </div>
-            <div class="p-4 flex-grow flex flex-col justify-between">
+            <div class="p-4 flex-grow flex flex-col justify-between ${soldOut ? 'opacity-70' : ''}">
               <div>
                 <span class="text-[10px] bg-bookshop-soft text-bookshop px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
                 <h3 class="font-bold text-base text-ink mt-1 cursor-pointer hover:text-bookshop" onclick="openBookModal(${p.id})">${p.name}</h3>
-                <p class="text-xs text-muted-ink mt-0.5">作者：${p.author || '未提供'}</p>
+                ${isMerch(p) ? '' : `<p class="text-xs text-muted-ink mt-0.5">作者：${p.author || '未提供'}</p>`}
                 ${p.publisher ? `<p class="text-xs text-muted-ink mt-0.5">出版社：${p.publisher}</p>` : ''}
               </div>
               <div class="mt-3 border-t pt-3 flex justify-between items-center">
                 <div>
+                  ${used && p.original_price ? `<span class="text-xs text-faint line-through mr-1">HK$ ${p.original_price}</span>` : ''}
                   <span class="text-lg font-bold text-bookshop">HK$ ${p.price}</span>
-                  <span class="block text-[10px] ${soldOut ? 'text-danger font-bold' : 'text-faint'}">${soldOut ? '已售罄' : `現貨: ${totalQty} 本`}</span>
+                  <span class="block text-[10px] ${soldOut ? 'text-danger font-bold' : 'text-faint'}">${soldOut ? '已售罄' : `現貨: ${totalQty} ${isMerch(p) ? '件' : '本'}`}</span>
                 </div>
                 <div class="flex gap-1">
                   <button onclick="openBookModal(${p.id})" class="bg-surface hover:bg-muted text-ink px-2.5 py-1.5 rounded text-xs">詳情</button>
                   ${soldOut || allTaken
-                    ? `<button disabled class="bg-muted text-faint px-3 py-1.5 rounded text-xs cursor-not-allowed">${soldOut ? '售罄' : '已加滿'}</button>`
+                    ? `<button disabled class="bg-muted text-faint px-3 py-1.5 rounded text-xs cursor-not-allowed">${soldOut ? '已售罄' : '已加滿'}</button>`
                     : `<button onclick="addToCart(${p.id})" class="bg-primary hover:bg-primary text-primary-contrast px-3 py-1.5 rounded text-xs flex items-center gap-1"><i class="fa-solid fa-cart-plus"></i></button>`}
                 </div>
               </div>
@@ -1147,6 +1193,8 @@
     function isMerch(p) { return cleanCategory(p.category || '').includes('文創'); }
     function filterProductType(t) {
       currentTypeFilter = t;
+      const cs = document.getElementById('category-select');
+      cs.classList.toggle('hidden', t === 'MERCH'); if (t === 'MERCH') { cs.value = 'ALL'; currentCategoryFilter = 'ALL'; }
       document.querySelectorAll('#type-tabs button').forEach(b => {
         const on = b.dataset.t === t;
         b.className = 'px-3 py-1.5 ' + (on ? 'bg-primary text-primary-contrast' : 'bg-surface text-ink');
@@ -1157,7 +1205,8 @@
       let filtered = allProducts;
       if (currentTypeFilter === 'BOOK') filtered = filtered.filter(p => !isMerch(p));
       if (currentTypeFilter === 'MERCH') filtered = filtered.filter(p => isMerch(p));
-      if (currentRegionFilter === 'OTHER') filtered = filtered.filter(p => p.publish_region && !['香港','台灣'].includes(p.publish_region));
+      if (currentRegionFilter === 'USED') filtered = filtered.filter(p => p.is_second_hand);
+      else if (currentRegionFilter === 'OTHER') filtered = filtered.filter(p => p.publish_region && !['香港','台灣'].includes(p.publish_region));
       else if (currentRegionFilter !== 'ALL') filtered = filtered.filter(p => p.publish_region === currentRegionFilter);
       if (currentCategoryFilter !== 'ALL') {
         filtered = filtered.filter(p => cleanCategory(p.category) === cleanCategory(currentCategoryFilter));
@@ -1171,6 +1220,7 @@
           (p.isbn && p.isbn.toLowerCase().includes(currentSearchQuery))
         );
       }
+      shopPage = 1;
       renderProducts(filtered);
     }
 
@@ -1270,11 +1320,11 @@
         }
         item.qty += 1;
       } else {
-        cart.push({ id: p.id, name: p.name, price: p.price, qty: 1, branch });
+        cart.push({ id: p.id, name: p.is_second_hand ? `${p.name}（二手${p.book_condition ? '・' + p.book_condition : ''}）` : p.name, price: p.price, qty: 1, branch });
       }
 
       updateCartUI();
-      renderProducts(lastRenderedProducts);
+      renderProducts(lastRenderedProducts, true);
     }
 
     function updateCartUI() {
@@ -1287,6 +1337,7 @@
       const totalPrice = cart.reduce((a, b) => a + (b.price * b.qty), 0);
 
       countEl.innerText = totalItems;
+      { const bar = document.getElementById('mobile-cart-bar'); if (bar) { bar.classList.toggle('hidden', totalItems === 0); document.getElementById('mcb-count').innerText = totalItems; document.getElementById('mcb-total').innerText = totalPrice; } }
       sideCount.innerText = `${totalItems} 件商品`;
       totalEl.innerText = `HK$ ${totalPrice}`;
 
@@ -1329,7 +1380,7 @@
       item.qty += delta;
       if (item.qty <= 0) cart.splice(index, 1);
       updateCartUI();
-      renderProducts(lastRenderedProducts);
+      renderProducts(lastRenderedProducts, true);
     }
 
     // --- 新訂單通知（電郵 / WhatsApp）---
@@ -1394,7 +1445,7 @@
         showPaymentModal(payMethod, totalPrice);
 
         cart = [];
-        renderProducts(lastRenderedProducts);
+        renderProducts(lastRenderedProducts, true);
         document.getElementById('cust-name').value = '';
         document.getElementById('cust-phone').value = '';
         updateCartUI();
