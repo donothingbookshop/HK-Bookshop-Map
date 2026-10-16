@@ -197,6 +197,27 @@
       </div>
     </section>
 
+    <div id="edit-order-modal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3">
+      <form onsubmit="saveEditOrder(event)" class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 space-y-3 text-xs">
+        <div class="flex justify-between items-center border-b pb-2"><h3 id="eo-title" class="font-bold text-amber-900 text-base">編輯訂單</h3><button type="button" onclick="closeEditOrder()" class="text-slate-500 text-lg">✕</button></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block font-bold mb-1">顧客姓名</label><input id="eo-name" required class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="block font-bold mb-1">電話</label><input id="eo-phone" class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="block font-bold mb-1">付款方式</label><input id="eo-pay" class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="block font-bold mb-1">狀態</label><select id="eo-status" class="w-full border rounded px-2 py-1.5 bg-white"><option>待確認</option><option>訂金已付</option><option>已傳送憑證</option><option>已完成</option><option>已取消</option></select></div>
+        </div>
+        <div><div class="flex justify-between mb-1"><label class="font-bold">項目</label><button type="button" onclick="addEditOrderRow(); calcEditOrder();" class="bg-amber-900 text-white px-2 py-0.5 rounded">+ 新增</button></div>
+          <div id="eo-items" class="space-y-2"></div>
+          <p class="text-right font-bold text-amber-900 mt-2">總計：HK$ <span id="eo-total">0</span></p></div>
+        <div class="grid grid-cols-2 gap-2 bg-amber-50 p-2 rounded border border-amber-200">
+          <div><label class="block font-bold mb-1">已付訂金 (HK$)</label><input type="number" id="eo-deposit" oninput="calcEditOrder()" class="w-full border rounded px-2 py-1.5"></div>
+          <div><label class="block font-bold mb-1">尚欠尾款 (自動計算)</label><input type="number" id="eo-balance" class="w-full border rounded px-2 py-1.5"></div>
+        </div>
+        <div><label class="block font-bold mb-1">備註</label><textarea id="eo-notes" rows="2" class="w-full border rounded px-2 py-1.5"></textarea></div>
+        <button class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl">儲存修改</button>
+      </form>
+    </div>
+
     <!-- 2. 手動新增收據 -->
     <section id="sec-manual-receipt" class="admin-section">
       <div class="bg-white p-6 rounded-2xl shadow-sm border max-w-2xl mx-auto">
@@ -241,10 +262,10 @@
             <div id="manual-deposit-inputs" class="grid grid-cols-2 gap-3 mt-3 hidden">
               <div>
                 <label class="block text-[11px] text-slate-600 mb-1">已付訂金金額 (HK$)</label>
-                <input type="number" id="m-deposit-amount" value="0" class="w-full border rounded px-2.5 py-1.5 bg-white">
+                <input type="number" id="m-deposit-amount" value="0" oninput="calcManualBalance()" class="w-full border rounded px-2.5 py-1.5 bg-white">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-600 mb-1">尚欠尾款 (HK$)</label>
+                <label class="block text-[11px] text-slate-600 mb-1">尚欠尾款 (HK$，自動計算)</label>
                 <input type="number" id="m-balance-amount" value="0" class="w-full border rounded px-2.5 py-1.5 bg-white">
               </div>
             </div>
@@ -1843,6 +1864,7 @@ window.onload = async function () {
               </div>
               
               <div class="flex gap-2">
+                <button onclick="openEditOrder(${o.id})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1.5 rounded transition"><i class="fa-solid fa-pen mr-1"></i>編輯</button>
                 <button onclick="downloadReceiptPdf(window._objGet(${window._objReg(o)}))" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded transition"><i class="fa-solid fa-file-pdf mr-1"></i>下載收據</button>
                 <button onclick="deleteOrder(${o.id})" class="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded transition"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
               </div>
@@ -2410,7 +2432,7 @@ window.onload = async function () {
     async function loadManualProductPicker() {
       const sel = document.getElementById('m-product-picker');
       if (!sel || _mrProducts) return;
-      const { data, error } = await _supabase.from('shop_products').select('id,name,price,category,quantity').order('name');
+      const { data, error } = await _supabase.from('shop_products').select('id,name,price,category,quantity,branch_stocks').order('name');
       if (error || !data) return;
       _mrProducts = data;
       data.forEach(p => {
@@ -2428,12 +2450,22 @@ window.onload = async function () {
       if (!id || !_mrProducts) return;
       const p = _mrProducts.find(x => x.id === id);
       if (!p) return;
-      addManualItemRow();
-      const rows = document.querySelectorAll('#manual-items-container .manual-item-row');
-      const row = rows[rows.length - 1];
+      // 用第一行空白項目，否則新增一行
+      let rows = [...document.querySelectorAll('#manual-items-container .manual-item-row')];
+      let row = rows.find(r => !r.querySelector('.m-item-name').value.trim());
+      if (!row) { addManualItemRow(); rows = [...document.querySelectorAll('#manual-items-container .manual-item-row')]; row = rows[rows.length - 1]; }
       row.querySelector('.m-item-name').value = p.name;
       row.querySelector('.m-item-price').value = Number(p.price) || 0;
+      row.dataset.productId = p.id;
+      const stocks = parseStocks(p);
+      row.dataset.branch = Object.keys(stocks).find(b => stocks[b] > 0) || Object.keys(stocks)[0] || '網店';
       calcManualTotal();
+    }
+
+    function calcManualBalance() {
+      const total = Number(document.getElementById('manual-total-display').innerText) || 0;
+      const dep = Number(document.getElementById('m-deposit-amount').value) || 0;
+      document.getElementById('m-balance-amount').value = Math.max(0, total - dep);
     }
 
     function calcManualTotal() {
@@ -2444,6 +2476,7 @@ window.onload = async function () {
         total += price * qty;
       });
       document.getElementById('manual-total-display').innerText = total;
+      calcManualBalance();
     }
 
     async function submitManualReceipt(e) {
@@ -2454,25 +2487,40 @@ window.onload = async function () {
       const status = document.getElementById('m-status').value;
       const notes = document.getElementById('m-notes').value;
       const hasDep = document.getElementById('m-has-deposit').checked;
-      
+
+      if (!_mrProducts) { _mrProducts = null; await loadManualProductPicker(); }
       let items = [];
       document.querySelectorAll('.manual-item-row').forEach(row => {
-        items.push({
-          name: row.querySelector('.m-item-name').value,
+        const itemName = row.querySelector('.m-item-name').value.trim();
+        const item = {
+          name: itemName,
           price: Number(row.querySelector('.m-item-price').value),
           qty: Number(row.querySelector('.m-item-qty').value)
-        });
+        };
+        let pid = Number(row.dataset.productId) || null;
+        let branch = row.dataset.branch || null;
+        if (!pid && _mrProducts) {
+          const match = _mrProducts.find(p => (p.name || '').trim() === itemName);
+          if (match) {
+            pid = match.id;
+            const s = parseStocks(match);
+            branch = Object.keys(s).find(b => s[b] > 0) || Object.keys(s)[0] || '網店';
+          }
+        }
+        if (pid) { item.id = pid; item.branch = branch || '網店'; }
+        items.push(item);
       });
 
       const totalAmount = items.reduce((a, b) => a + (b.price * b.qty), 0);
       let depositAmount = 0, balanceAmount = 0;
-
       if (hasDep) {
         depositAmount = Number(document.getElementById('m-deposit-amount').value) || 0;
-        balanceAmount = totalAmount - depositAmount;
+        const manualBal = document.getElementById('m-balance-amount').value;
+        balanceAmount = manualBal === '' ? Math.max(0, totalAmount - depositAmount) : Number(manualBal);
       }
 
-      const { error } = await _supabase.from('shop_orders').insert([{
+      const deduct = CONFIRMED_STATUSES.includes(status);
+      const orderRow = {
         customer_name: name,
         customer_phone: phone,
         payment_method: payMethod,
@@ -2481,18 +2529,98 @@ window.onload = async function () {
         deposit_amount: depositAmount,
         balance_amount: balanceAmount,
         status: status,
-        notes: notes
-      }]);
+        notes: notes,
+        stock_deducted: deduct
+      };
+      const { error } = await _supabase.from('shop_orders').insert([orderRow]);
 
-      if (error) alert("建立收據失敗：" + error.message);
-      else {
-        alert("手動收據建立成功！已同步至訂單記錄。");
-        document.getElementById('manual-receipt-form').reset();
-        document.getElementById('manual-deposit-inputs').classList.add('hidden');
-        calcManualTotal();
-        fetchOrders();
-        switchAdminTab('orders');
-      }
+      if (error) { alert("建立收據失敗：" + error.message); return; }
+      if (deduct) await adjustStockForOrder(orderRow, -1);
+      _mrProducts = null;
+      document.getElementById('m-product-picker').querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+      alert("手動收據建立成功！已同步至訂單記錄" + (deduct ? "，並已扣減網店庫存。" : "。"));
+      document.getElementById('manual-receipt-form').reset();
+      document.querySelectorAll('#manual-items-container .manual-item-row').forEach(r => { delete r.dataset.productId; delete r.dataset.branch; });
+      document.getElementById('manual-deposit-inputs').classList.add('hidden');
+      calcManualTotal();
+      fetchOrders();
+      fetchProducts();
+      fetchSalesStats();
+      switchAdminTab('orders');
+    }
+
+    // --- 訂單編輯 ---
+    let _editOrder = null;
+    function calcEditOrder() {
+      let total = 0;
+      document.querySelectorAll('#eo-items .eo-row').forEach(r => {
+        total += (Number(r.querySelector('.eo-price').value) || 0) * (Number(r.querySelector('.eo-qty').value) || 0);
+      });
+      document.getElementById('eo-total').innerText = total;
+      const dep = Number(document.getElementById('eo-deposit').value) || 0;
+      document.getElementById('eo-balance').value = Math.max(0, total - dep);
+    }
+    function addEditOrderRow(i = {}) {
+      const row = document.createElement('div');
+      row.className = 'eo-row flex gap-2 items-center';
+      if (i.id) { row.dataset.productId = i.id; row.dataset.branch = i.branch || '網店'; }
+      row.innerHTML = `
+        <input type="text" class="eo-name flex-grow min-w-0 border rounded px-2 py-1.5" placeholder="名稱">
+        <input type="number" class="eo-price w-20 border rounded px-2 py-1.5" oninput="calcEditOrder()">
+        <input type="number" min="1" class="eo-qty w-14 border rounded px-2 py-1.5" oninput="calcEditOrder()">
+        <button type="button" onclick="this.parentElement.remove(); calcEditOrder();" class="text-red-500 px-1"><i class="fa-solid fa-trash"></i></button>`;
+      row.querySelector('.eo-name').value = i.name || '';
+      row.querySelector('.eo-price').value = Number(i.price) || 0;
+      row.querySelector('.eo-qty').value = Number(i.qty) || 1;
+      document.getElementById('eo-items').appendChild(row);
+    }
+    async function openEditOrder(id) {
+      const { data: o, error } = await _supabase.from('shop_orders').select('*').eq('id', id).maybeSingle();
+      if (error || !o) { alert('讀取訂單失敗'); return; }
+      _editOrder = o;
+      document.getElementById('eo-title').innerText = `編輯訂單 #${o.id}`;
+      document.getElementById('eo-name').value = o.customer_name || '';
+      document.getElementById('eo-phone').value = o.customer_phone || '';
+      document.getElementById('eo-pay').value = o.payment_method || '';
+      document.getElementById('eo-status').value = o.status || '待確認';
+      document.getElementById('eo-notes').value = o.notes || '';
+      document.getElementById('eo-deposit').value = Number(o.deposit_amount) || 0;
+      document.getElementById('eo-items').innerHTML = '';
+      parseItems(o).forEach(i => addEditOrderRow(i));
+      calcEditOrder();
+      if (o.balance_amount != null && Number(o.deposit_amount) > 0) document.getElementById('eo-balance').value = Number(o.balance_amount);
+      document.getElementById('edit-order-modal').classList.remove('hidden');
+    }
+    function closeEditOrder() { document.getElementById('edit-order-modal').classList.add('hidden'); _editOrder = null; }
+    async function saveEditOrder(e) {
+      e.preventDefault();
+      const o = _editOrder; if (!o) return;
+      const items = [...document.querySelectorAll('#eo-items .eo-row')].map(r => {
+        const it = { name: r.querySelector('.eo-name').value.trim(), price: Number(r.querySelector('.eo-price').value) || 0, qty: Number(r.querySelector('.eo-qty').value) || 0 };
+        if (r.dataset.productId) { it.id = Number(r.dataset.productId); it.branch = r.dataset.branch || '網店'; }
+        return it;
+      }).filter(i => i.name);
+      if (!items.length) { alert('最少要有一個項目'); return; }
+      const total = items.reduce((a, b) => a + b.price * b.qty, 0);
+      const status = document.getElementById('eo-status').value;
+      const deposit = Number(document.getElementById('eo-deposit').value) || 0;
+      const balance = Number(document.getElementById('eo-balance').value) || 0;
+      const newDeduct = CONFIRMED_STATUSES.includes(status);
+      // 先還原舊庫存，再按新內容扣減
+      if (o.stock_deducted) await adjustStockForOrder(o, 1);
+      const payload = {
+        customer_name: document.getElementById('eo-name').value,
+        customer_phone: document.getElementById('eo-phone').value,
+        payment_method: document.getElementById('eo-pay').value,
+        status, notes: document.getElementById('eo-notes').value,
+        items, total_amount: total, deposit_amount: deposit, balance_amount: deposit > 0 ? balance : 0,
+        stock_deducted: newDeduct
+      };
+      if (newDeduct) await adjustStockForOrder({ items }, -1);
+      const { error } = await _supabase.from('shop_orders').update(payload).eq('id', o.id);
+      if (error) { alert('儲存失敗：' + error.message); return; }
+      closeEditOrder();
+      fetchOrders(); fetchProducts(); fetchSalesStats();
     }
 
     // --- 3. 收款設定 ---
@@ -2961,14 +3089,18 @@ longitude: longitude,
       el.innerHTML = data.map(p => `
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
+            ${p.product_type === '文創周邊' ? '<span class="mr-1 px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">🎨 文創</span>' : '<span class="mr-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">📚 書籍</span>'}
             <span class="font-bold text-slate-800">${p.name}</span>
             <span class="ml-2 text-amber-900 font-bold">HK$ ${p.price}</span>
-            <p class="text-slate-500 mt-0.5">作者：${p.author || '未提供'} | 出版社：${p.publisher || '未提供'}</p>
+            ${p.product_type === '文創周邊'
+              ? `<p class="text-slate-500 mt-0.5">創作者：${p.creator || p.author || '未提供'}${p.publish_region ? ' | 地區：' + p.publish_region : ''}</p>`
+              : `<p class="text-slate-500 mt-0.5">作者：${p.author || '未提供'} | 出版社：${p.publisher || '未提供'}</p>`}
             ${(() => {
               const stocks = parseStocks(p);
               const remain = Object.values(stocks).reduce((a, b) => a + b, 0);
               const detail = Object.entries(stocks).filter(([, q]) => q > 0).map(([b, q]) => `${b} ${q}`).join(' ｜ ') || '各分店 0';
-              return `<p class="mt-0.5 ${remain === 0 ? 'text-red-600 font-bold' : (remain <= 2 ? 'text-amber-600 font-bold' : 'text-emerald-700 font-semibold')}">餘數：${remain} 本${remain === 0 ? '（已售罄）' : ''} <span class="text-slate-400 font-normal">（${detail}）</span></p>`;
+              const unit = p.product_type === '文創周邊' ? '件' : '本';
+              return `<p class="mt-0.5 ${remain === 0 ? 'text-red-600 font-bold' : (remain <= 2 ? 'text-amber-600 font-bold' : 'text-emerald-700 font-semibold')}">餘數：${remain} ${unit}${remain === 0 ? '（已售罄）' : ''} <span class="text-slate-400 font-normal">（${detail}）</span></p>`;
             })()}
           </div>
           <div class="flex gap-2">
