@@ -789,9 +789,20 @@
           <h2 id="product-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增網店書籍 / 商品</h2>
           <form id="product-form" onsubmit="saveProduct(event)" class="space-y-3 text-xs">
             <input type="hidden" id="p-id">
+            <input type="hidden" id="p-type" value="書籍">
+            <div id="p-type-tabs" class="flex gap-2">
+              <button type="button" data-t="書籍" onclick="setProductType('書籍')" class="flex-1 py-2 font-bold rounded bg-amber-900 text-white">📚 書籍</button>
+              <button type="button" data-t="文創周邊" onclick="setProductType('文創周邊')" class="flex-1 py-2 font-bold rounded bg-white text-slate-700 border">🎨 文創周邊</button>
+            </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">商品 / 書籍名稱 *</label>
               <input type="text" id="p-name" required class="w-full border rounded px-3 py-2">
+            </div>
+            <div class="merch-only hidden bg-purple-50 border border-purple-200 rounded p-3 space-y-2">
+              <div><label class="block font-bold text-slate-700 mb-1">創作者／品牌名稱 *</label><input type="text" id="p-creator" maxlength="200" class="w-full border rounded px-3 py-2"></div>
+              <div><label class="block font-bold text-slate-700 mb-1">Instagram</label><input type="url" id="p-creator-ig" class="w-full border rounded px-3 py-2" placeholder="https://instagram.com/..."></div>
+              <div><label class="block font-bold text-slate-700 mb-1">Facebook</label><input type="url" id="p-creator-fb" class="w-full border rounded px-3 py-2" placeholder="https://facebook.com/..."></div>
+              <div><label class="block font-bold text-slate-700 mb-1">官方網站</label><input type="url" id="p-creator-web" class="w-full border rounded px-3 py-2" placeholder="https://..."></div>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
@@ -815,7 +826,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block font-bold text-slate-700 mb-1">出版地區</label>
+                <label id="p-region-label" class="block font-bold text-slate-700 mb-1">出版地區</label>
                 <select id="p-region-sel" onchange="document.getElementById('p-region-other').classList.toggle('hidden', this.value!=='其他')" class="w-full border rounded px-3 py-2 bg-white">
                   <option value="">未選擇</option><option value="香港">香港</option><option value="台灣">台灣</option><option value="其他">其他國家（自填）</option>
                 </select>
@@ -842,7 +853,7 @@
                 <div><label class="block font-bold text-slate-700 mb-1">書況</label><input type="text" id="p-condition" class="w-full border rounded px-3 py-2" placeholder="例：九成新"></div>
               </div>
             </div>
-            <div class="bg-amber-50 border border-amber-200 rounded p-3 space-y-2">
+            <div class="book-only bg-amber-50 border border-amber-200 rounded p-3 space-y-2">
               <div class="flex flex-wrap gap-2">
                 <button type="button" onclick="startIsbnScan()" class="bg-slate-800 text-white px-3 py-1.5 rounded text-sm font-bold">📷 掃描 ISBN 條碼</button>
                 <button type="button" onclick="lookupIsbn()" class="bg-amber-600 text-white px-3 py-1.5 rounded text-sm font-bold">🔍 用 ISBN 自動填資料</button>
@@ -860,7 +871,7 @@
             </div>
 
             <!-- AI 封面辨識 -->
-            <div class="bg-sky-50 border border-sky-200 rounded p-3 space-y-2">
+            <div class="book-only bg-sky-50 border border-sky-200 rounded p-3 space-y-2">
               <div class="font-bold text-sky-900 text-sm">🤖 上載封面相片，用 AI 辨識書籍資料</div>
               <div class="flex flex-wrap items-center gap-2">
                 <input type="file" id="ai-cover-file" accept="image/*" capture="environment" class="border rounded p-1 text-sm bg-white">
@@ -887,20 +898,7 @@
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block font-bold text-slate-700 mb-1">分類主題 *</label>
-                <select id="p-category" onchange="toggleMerchFields()" class="w-full border rounded px-3 py-2 bg-white">
-                  <option value="文學小說（文學／散文／愛情）">📖 文學小說（文學／散文／愛情）</option>
-                  <option value="類型小說（推理／懸疑／科幻／奇幻／歷史）">🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）</option>
-                  <option value="Zine／雜誌">📰 Zine／雜誌</option>
-                  <option value="童書繪本">🎨 童書繪本</option>
-                  <option value="漫畫">💬 漫畫</option>
-                  <option value="詩集">📜 詩集</option>
-                  <option value="心理勵志">🧠 心理勵志</option>
-                  <option value="人文社科">🏛️ 人文社科</option>
-                  <option value="藝術設計">🎨 藝術設計</option>
-                  <option value="生活風格">🌱 生活風格</option>
-                  <option value="文創周邊">🎁 文創周邊</option>
-                  <option value="其他">其他</option>
-                </select>
+                <select id="p-category" class="w-full border rounded px-3 py-2 bg-white"></select>
               </div>
               <div>
                 <label class="block font-bold text-slate-700 mb-1">進貨類型 *</label>
@@ -3304,8 +3302,14 @@ longitude: longitude,
         branch_stocks: branchStocks,
         quantity: totalQty,
         description: document.getElementById('p-desc').value,
-        publish_region: (() => { const s = document.getElementById('p-region-sel').value; return s === '其他' ? (document.getElementById('p-region-other').value.trim() || '其他') : (s || null); })()
+        publish_region: (() => { const s = document.getElementById('p-region-sel').value; return s === '其他' ? (document.getElementById('p-region-other').value.trim() || '其他') : (s || null); })(),
+        product_type: currentPType(),
+        creator: document.getElementById('p-creator').value.trim() || null,
+        creator_ig: document.getElementById('p-creator-ig').value.trim() || null,
+        creator_fb: document.getElementById('p-creator-fb').value.trim() || null,
+        creator_website: document.getElementById('p-creator-web').value.trim() || null
       };
+      if (payload.product_type === '文創周邊') { Object.assign(payload, { author: null, translator: null, publisher: null, isbn: null, weight: null, is_second_hand: false, original_price: null, book_condition: null }); payload.price = Number(document.getElementById('p-price').value); }
       if (!imageUrl) imageUrl = document.getElementById('p-image-url').value || null;
       if (imageUrl) payload.image_url = imageUrl;
 
@@ -3348,17 +3352,42 @@ longitude: longitude,
       document.getElementById('p-stock-sai-ying-pun').value = stocks['西營盤店'] || 0;
       document.getElementById('p-stock-tsuen-wan').value = stocks['荃灣店'] || 0;
 
-      toggleMerchFields();
+      document.getElementById('p-creator').value = p.creator || '';
+      document.getElementById('p-creator-ig').value = p.creator_ig || '';
+      document.getElementById('p-creator-fb').value = p.creator_fb || '';
+      document.getElementById('p-creator-web').value = p.creator_website || '';
+      setProductType(p.product_type === '文創周邊' || (p.category || '').includes('文創') ? '文創周邊' : '書籍', p.category || '');
       document.getElementById('product-form-title').innerText = "編輯網店商品";
     }
+    const BOOK_CATS = [['文學小說（文學／散文／愛情）','📖 文學小說（文學／散文／愛情）'],['類型小說（推理／懸疑／科幻／奇幻／歷史）','🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）'],['Zine／雜誌','📰 Zine／雜誌'],['童書繪本','🎨 童書繪本'],['漫畫','💬 漫畫'],['詩集','📜 詩集'],['心理勵志','🧠 心理勵志'],['人文社科','🏛️ 人文社科'],['藝術設計','🎨 藝術設計'],['生活風格','🌱 生活風格'],['其他','其他']];
+    const MERCH_CATS = [['明信片／卡片','💌 明信片／卡片'],['貼紙／紙膠帶','🎨 貼紙／紙膠帶'],['布袋／Tote Bag','👜 布袋／Tote Bag'],['文具／筆記簿','✏️ 文具／筆記簿'],['飾品／徽章','💍 飾品／徽章'],['手作生活','🌿 手作生活'],['其他文創','🎁 其他文創']];
+    function currentPType() { return document.getElementById('p-type').value; }
+    function setProductType(t, keepCat) {
+      document.getElementById('p-type').value = t;
+      document.querySelectorAll('#p-type-tabs button').forEach(b => {
+        const on = b.dataset.t === t;
+        b.className = 'flex-1 py-2 font-bold rounded ' + (on ? 'bg-amber-900 text-white' : 'bg-white text-slate-700 border');
+      });
+      const sel = document.getElementById('p-category'); const prev = keepCat != null ? keepCat : sel.value;
+      const list = t === '文創周邊' ? MERCH_CATS : BOOK_CATS;
+      sel.innerHTML = list.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+      if (prev && !list.some(([v]) => v === prev)) sel.insertAdjacentHTML('beforeend', `<option value="${prev.replace(/"/g,'&quot;')}">${prev}</option>`);
+      if (prev) sel.value = prev;
+      toggleMerchFields();
+    }
     function toggleMerchFields() {
-      const merch = (document.getElementById('p-category').value || '').includes('文創');
-      ['p-author','p-translator','p-isbn'].forEach(id => { const el = document.getElementById(id); if (el && el.parentElement) el.parentElement.classList.toggle('hidden', merch); });
+      const merch = currentPType() === '文創周邊';
+      document.querySelectorAll('.book-only').forEach(el => el.classList.toggle('hidden', merch));
+      document.querySelectorAll('.merch-only').forEach(el => el.classList.toggle('hidden', !merch));
+      ['p-author','p-translator','p-isbn','p-publisher','p-weight'].forEach(id => { const el = document.getElementById(id); if (el && el.parentElement) el.parentElement.classList.toggle('hidden', merch); });
       const u = document.getElementById('p-used'); if (u && u.parentElement && u.parentElement.parentElement) u.parentElement.parentElement.classList.toggle('hidden', merch);
+      if (merch && u) { u.checked = false; document.getElementById('p-used-box').classList.add('hidden'); }
+      document.getElementById('p-region-label').innerText = merch ? '創作者／出品地區' : '出版地區';
+      document.getElementById('p-creator').required = merch;
     }
 
     function resetProductForm() {
-      setTimeout(() => { document.getElementById('p-used').checked = false; document.getElementById('p-used-box').classList.add('hidden'); toggleMerchFields(); }, 0);
+      setTimeout(() => { document.getElementById('p-used').checked = false; document.getElementById('p-used-box').classList.add('hidden'); setProductType('書籍', ''); }, 0);
       stopIsbnScan();
       clearIsbnCover();
       clearAiResult();
@@ -3525,5 +3554,6 @@ longitude: longitude,
       fetchTheatre();
     }
   </script>
+<script>document.addEventListener('DOMContentLoaded',()=>setProductType('書籍',''));</script>
 </body>
 </html>

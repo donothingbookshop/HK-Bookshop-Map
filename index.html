@@ -503,6 +503,9 @@
               <p id="modal-publisher"><i class="fa-solid fa-building-columns mr-1.5 text-bookshop"></i>出版社：<span></span></p>
               <p id="modal-weight"><i class="fa-solid fa-weight-hanging mr-1.5 text-bookshop"></i>重量：<span></span></p>
               <p id="modal-isbn"><i class="fa-solid fa-barcode mr-1.5 text-bookshop"></i>ISBN：<span></span></p>
+              <p id="modal-creator" class="hidden"><i class="fa-solid fa-palette mr-1.5 text-bookshop"></i>創作者：<span></span></p>
+              <p id="modal-region" class="hidden"><i class="fa-solid fa-earth-asia mr-1.5 text-bookshop"></i>地區：<span></span></p>
+              <div id="modal-creator-links" class="hidden flex flex-wrap gap-2 pt-1"></div>
             </div>
 
             <div class="mb-4">
@@ -1158,8 +1161,8 @@
               <div>
                 <span class="text-[10px] bg-bookshop-soft text-bookshop px-2 py-0.5 rounded font-bold">${cleanCategory(p.category)}</span>
                 <h3 class="font-bold text-base text-ink mt-1 cursor-pointer hover:text-bookshop" onclick="openBookModal(${p.id})">${p.name}</h3>
-                ${isMerch(p) ? '' : `<p class="text-xs text-muted-ink mt-0.5">作者：${p.author || '未提供'}</p>`}
-                ${p.publisher ? `<p class="text-xs text-muted-ink mt-0.5">出版社：${p.publisher}</p>` : ''}
+                ${isMerch(p) ? `<p class="text-xs text-muted-ink mt-0.5">創作者：${p.creator || '未提供'}${p.publish_region ? '・' + p.publish_region : ''}</p>` : `<p class="text-xs text-muted-ink mt-0.5">作者：${p.author || '未提供'}</p>`}
+                ${p.publisher && !isMerch(p) ? `<p class="text-xs text-muted-ink mt-0.5">出版社：${p.publisher}</p>` : ''}
               </div>
               <div class="mt-3 border-t pt-3 flex justify-between items-center">
                 <div>
@@ -1190,11 +1193,13 @@
       applyProductFilters();
     }
 
-    function isMerch(p) { return cleanCategory(p.category || '').includes('文創'); }
+    function isMerch(p) { return p.product_type === '文創周邊' || cleanCategory(p.category || '').includes('文創'); }
+    const BOOK_CAT_OPTS = document.getElementById('category-select').innerHTML;
+    const MERCH_CAT_OPTS = '<option value="ALL">🎨 全部文創</option>' + ['💌 明信片／卡片','🎨 貼紙／紙膠帶','👜 布袋／Tote Bag','✏️ 文具／筆記簿','💍 飾品／徽章','🌿 手作生活','🎁 其他文創'].map(l => { const v = l.slice(l.indexOf(' ') + 1); return `<option value="${v}">${l}</option>`; }).join('');
     function filterProductType(t) {
       currentTypeFilter = t;
       const cs = document.getElementById('category-select');
-      cs.classList.toggle('hidden', t === 'MERCH'); if (t === 'MERCH') { cs.value = 'ALL'; currentCategoryFilter = 'ALL'; }
+      cs.innerHTML = t === 'MERCH' ? MERCH_CAT_OPTS : BOOK_CAT_OPTS; cs.value = 'ALL'; currentCategoryFilter = 'ALL';
       document.querySelectorAll('#type-tabs button').forEach(b => {
         const on = b.dataset.t === t;
         b.className = 'px-3 py-1.5 ' + (on ? 'bg-primary text-primary-contrast' : 'bg-surface text-ink');
@@ -1237,6 +1242,15 @@
       document.querySelector('#modal-publisher span').innerText = p.publisher || '未提供';
       document.querySelector('#modal-weight span').innerText = p.weight ? `${p.weight} g` : '未提供';
       document.querySelector('#modal-isbn span').innerText = p.isbn || '未提供';
+      { const m = isMerch(p);
+        ['modal-author','modal-translator','modal-publisher','modal-weight','modal-isbn'].forEach(i => document.getElementById(i).classList.toggle('hidden', m));
+        document.getElementById('modal-creator').classList.toggle('hidden', !m);
+        document.querySelector('#modal-creator span').innerText = p.creator || '未提供';
+        const rg = document.getElementById('modal-region'); rg.classList.toggle('hidden', !p.publish_region); document.querySelector('#modal-region span').innerText = p.publish_region || '';
+        const safe = u => /^https?:\/\/\S+$/i.test(u || '') ? u : null;
+        const links = [[p.creator_ig,'fa-brands fa-instagram','Instagram'],[p.creator_fb,'fa-brands fa-facebook','Facebook'],[p.creator_website,'fa-solid fa-globe','官方網站']].filter(([u]) => m && safe(u));
+        const lk = document.getElementById('modal-creator-links'); lk.classList.toggle('hidden', !links.length);
+        lk.innerHTML = links.map(([u,ic,l]) => `<a href="${u.replace(/"/g,'&quot;')}" target="_blank" rel="noopener" class="border border-line rounded-full px-2.5 py-1 text-ink hover:text-bookshop"><i class="${ic} mr-1"></i>${l}</a>`).join(''); }
       document.getElementById('modal-description').innerText = p.description || '暫無簡介描述';
       document.getElementById('modal-price').innerText = `HK$ ${p.price}`;
 
