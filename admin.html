@@ -146,6 +146,9 @@
         <button onclick="switchAdminTab('eco', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-leaf"></i> 農業/環保
         </button>
+        <button onclick="switchAdminTab('reading-room', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-couch"></i> 閱書室
+        </button>
         <button onclick="switchAdminTab('market', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-tents"></i> 市集
         </button>
@@ -427,6 +430,41 @@
     </section>
 
     <!-- 帳號管理 -->
+    <section id="sec-reading-room" class="admin-section">
+      <div class="space-y-6">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-lg mb-1">🛋️ 開放時段設定</h3>
+          <p class="text-xs text-slate-500 mb-3">揀日子，再剔你會喺場嘅小時。未剔嘅時間前台唔會顯示。</p>
+          <div class="flex flex-wrap gap-2 items-end">
+            <label class="text-xs">日期<input type="date" id="rra-date" class="border rounded-lg p-2 block" onchange="rraLoadDay()"></label>
+            <label class="text-xs">每小時上限<select id="rra-cap" class="border rounded-lg p-2 block"><option>1</option><option selected>2</option><option>3</option></select></label>
+            <button onclick="rraSaveDay()" class="bg-amber-900 text-white px-4 py-2 rounded-lg text-sm font-semibold">儲存當日時段</button>
+            <button onclick="rraClearDay()" class="border px-4 py-2 rounded-lg text-sm">全日休息</button>
+          </div>
+          <div id="rra-hours" class="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-3"></div>
+          <div class="mt-4 text-sm font-semibold">未來已開放日子</div>
+          <div id="rra-upcoming" class="text-xs text-slate-600 mt-1 space-y-1 max-h-48 overflow-y-auto"></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h3 class="font-bold text-lg">📋 預約及申請</h3>
+            <select id="rra-filter" onchange="rraLoadBookings()" class="border rounded-lg p-2 text-sm"><option value="">全部</option><option>待確認</option><option>已確認</option><option>已完成</option><option>未能安排</option><option>已取消</option></select></div>
+          <div id="rra-bookings" class="space-y-2 max-h-[600px] overflow-y-auto"></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-lg mb-3">🎫 通行證</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+            <input id="rrp-code" placeholder="編號 e.g. PASS-001" class="border rounded-lg p-2 text-sm">
+            <input id="rrp-name" placeholder="持有人" class="border rounded-lg p-2 text-sm">
+            <input id="rrp-phone" placeholder="電話" class="border rounded-lg p-2 text-sm">
+            <select id="rrp-type" class="border rounded-lg p-2 text-sm"><option>1-Month Pass</option><option>1-Day Pass</option></select>
+            <input id="rrp-hours" type="number" value="10" class="border rounded-lg p-2 text-sm" placeholder="時數">
+            <button onclick="rraAddPass()" class="bg-amber-900 text-white rounded-lg text-sm font-semibold">新增</button>
+          </div>
+          <div id="rra-passes" class="mt-3 space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="sec-market" class="admin-section">
       <div class="space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
@@ -1542,7 +1580,7 @@ async function createAdminAccount(ev) {
 const ADMIN_TABS = [
   ['orders','訂單管理'],['stats','銷售統計'],['manual-receipt','手動新增收據'],['consignments','寄售管理'],
   ['payment-settings','收款設定／聯絡訊息'],['bookshops','實體書店'],['authors','本地作者'],['publishers','本地出版社'],
-  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['market','市集']
+  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['market','市集'],['reading-room','閱書室']
 ];
 window.MY_PERMS = null;
 function permOf(tab) { const p = window.MY_PERMS; if (!p || !Object.keys(p).length) return 'edit'; return p[tab] || 'none'; }
@@ -1798,6 +1836,7 @@ window.onload = async function () {
   if (secId === 'bookshops') {
     setTimeout(initAdminBookshopMap, 100);
   }
+  if (secId === 'reading-room') rraInit();
 }
 
 
@@ -3772,5 +3811,44 @@ longitude: longitude,
     }
   </script>
 <script>document.addEventListener('DOMContentLoaded',()=>setProductType('書籍',''));</script>
+<script>
+const rraPad=n=>String(n).padStart(2,'0');const rraEsc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let rraDaySlots=[];let rraB={};
+function rraInit(){const d=document.getElementById('rra-date');if(!d.value){const t=new Date();d.value=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());}rraLoadDay();rraLoadUpcoming();rraLoadBookings();rraLoadPasses();}
+async function rraLoadDay(){const ds=document.getElementById('rra-date').value;const {data}=await _supabase.from('reading_room_slots').select('*').eq('slot_date',ds);rraDaySlots=data||[];
+ if(rraDaySlots[0])document.getElementById('rra-cap').value=rraDaySlots[0].capacity;
+ let h='';for(let i=9;i<=22;i++){const on=rraDaySlots.some(x=>x.hour===i);h+=`<label class="border rounded-lg p-2 text-sm flex items-center gap-1 ${on?'bg-amber-50 border-amber-300':''}"><input type="checkbox" class="rra-hr" value="${i}" ${on?'checked':''}>${rraPad(i)}:00</label>`;}
+ document.getElementById('rra-hours').innerHTML=h;}
+async function rraSaveDay(){const ds=document.getElementById('rra-date').value;if(!ds)return;const cap=+document.getElementById('rra-cap').value;
+ const hrs=[...document.querySelectorAll('.rra-hr:checked')].map(c=>+c.value);
+ const del=rraDaySlots.filter(x=>!hrs.includes(x.hour)).map(x=>x.id);
+ if(del.length){const {error}=await _supabase.from('reading_room_slots').delete().in('id',del);if(error)return alert('儲存失敗：'+error.message);}
+ if(hrs.length){const {error}=await _supabase.from('reading_room_slots').upsert(hrs.map(h=>({slot_date:ds,hour:h,capacity:cap})),{onConflict:'slot_date,hour'});if(error)return alert('儲存失敗：'+error.message);}
+ alert('已儲存');rraLoadDay();rraLoadUpcoming();}
+async function rraClearDay(){document.querySelectorAll('.rra-hr').forEach(c=>c.checked=false);await rraSaveDay();}
+async function rraLoadUpcoming(){const t=new Date();const ds=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());
+ const {data}=await _supabase.from('reading_room_slots').select('slot_date,hour,capacity').gte('slot_date',ds).order('slot_date').order('hour');const g={};(data||[]).forEach(x=>{(g[x.slot_date]=g[x.slot_date]||[]).push(x.hour)});
+ document.getElementById('rra-upcoming').innerHTML=Object.keys(g).map(d=>`<div class="cursor-pointer hover:underline" onclick="document.getElementById('rra-date').value='${d}';rraLoadDay()">📅 ${d}：${g[d].map(h=>rraPad(h)+':00').join('、')}</div>`).join('')||'未有開放日子';}
+async function rraLoadBookings(){let q=_supabase.from('reading_room_bookings').select('*').order('booking_date',{ascending:false}).order('start_hour');const f=document.getElementById('rra-filter').value;if(f)q=q.eq('status',f);
+ const {data,error}=await q;const el=document.getElementById('rra-bookings');if(error){el.textContent='讀取失敗：'+error.message;return;}rraB={};
+ el.innerHTML=(data||[]).map(b=>{rraB[b.id]=b;const wa='https://wa.me/'+String(b.phone).replace(/\D/g,'').replace(/^(\d{8})$/,'852$1');
+  return `<div class="border rounded-xl p-3 text-sm ${b.is_request?'bg-yellow-50':''}"><div class="flex flex-wrap justify-between gap-2"><div class="font-bold">${b.is_request?'🟡 申請':'🟢 預約'} ${rraEsc(b.booking_date)} ${rraPad(b.start_hour)}:00–${rraPad(b.start_hour+b.hours)}:00・${b.people} 位</div><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100">${rraEsc(b.status)}</span></div>
+  <div class="text-xs text-slate-600 mt-1">${rraEsc(b.name)}・<a class="underline" target="_blank" href="${wa}">${rraEsc(b.phone)}</a>${b.email?'・'+rraEsc(b.email):''}<br>方案：${rraEsc(b.plan)}${b.pass_code?'（'+rraEsc(b.pass_code)+'）':''}・HK$${b.amount}・${rraEsc(b.payment_method||'')}${b.notes?'<br>備註：'+rraEsc(b.notes):''}</div>
+  <div class="flex flex-wrap gap-1 mt-2">${['已確認','已完成','未能安排','已取消'].map(s=>`<button onclick="rraSetStatus(${b.id},'${s}')" class="border rounded px-2 py-1 text-xs">${s}</button>`).join('')}<button onclick="rraDelBooking(${b.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button></div></div>`;}).join('')||'<div class="text-sm text-slate-500">暫無紀錄</div>';}
+async function rraSetStatus(id,s){const b=rraB[id];const {error}=await _supabase.from('reading_room_bookings').update({status:s}).eq('id',id);if(error)return alert(error.message);
+ if(s==='已完成'&&b&&b.pass_code&&b.plan==='使用已有 Pass'&&confirm(`喺通行證 ${b.pass_code} 扣減 ${b.hours*b.people} 小時？`)){
+  const {data:p}=await _supabase.from('reading_room_passes').select('*').eq('pass_code',b.pass_code).maybeSingle();
+  if(!p)alert('搵唔到此通行證');else{const upd={remaining_hours:Math.max(0,p.remaining_hours-b.hours*b.people)};if(!p.expires_on){const e=new Date();e.setDate(e.getDate()+(p.pass_type==='1-Day Pass'?0:60));upd.expires_on=e.toISOString().slice(0,10);}await _supabase.from('reading_room_passes').update(upd).eq('id',p.id);rraLoadPasses();}}
+ rraLoadBookings();}
+async function rraDelBooking(id){if(!confirm('確定刪除？'))return;const {error}=await _supabase.from('reading_room_bookings').delete().eq('id',id);if(error)alert(error.message);rraLoadBookings();}
+async function rraLoadPasses(){const {data}=await _supabase.from('reading_room_passes').select('*').order('id',{ascending:false});
+ document.getElementById('rra-passes').innerHTML=(data||[]).map(p=>`<div class="border rounded-xl p-3 text-sm flex flex-wrap justify-between gap-2"><div><b>${rraEsc(p.pass_code)}</b>・${rraEsc(p.holder_name)} ${rraEsc(p.holder_phone||'')}<br><span class="text-xs text-slate-600">${rraEsc(p.pass_type)}・剩 ${p.remaining_hours}/${p.total_hours} 小時${p.expires_on?'・到期 '+p.expires_on:'・未開始使用'}</span></div>
+ <div class="flex gap-1 items-center"><button onclick="rraAdjPass(${p.id},${p.remaining_hours})" class="border rounded px-2 py-1 text-xs">改時數</button><button onclick="rraDelPass(${p.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button></div></div>`).join('')||'<div class="text-sm text-slate-500">暫無通行證</div>';}
+async function rraAddPass(){const code=document.getElementById('rrp-code').value.trim(),name=document.getElementById('rrp-name').value.trim();if(!code||!name)return alert('請填編號及持有人');
+ const hrs=+document.getElementById('rrp-hours').value||10;const {error}=await _supabase.from('reading_room_passes').insert({pass_code:code,holder_name:name,holder_phone:document.getElementById('rrp-phone').value.trim()||null,pass_type:document.getElementById('rrp-type').value,total_hours:hrs,remaining_hours:hrs});
+ if(error)return alert('新增失敗：'+error.message);['rrp-code','rrp-name','rrp-phone'].forEach(i=>document.getElementById(i).value='');rraLoadPasses();}
+async function rraAdjPass(id,cur){const v=prompt('剩餘時數',cur);if(v===null)return;const {error}=await _supabase.from('reading_room_passes').update({remaining_hours:+v}).eq('id',id);if(error)alert(error.message);rraLoadPasses();}
+async function rraDelPass(id){if(!confirm('確定刪除通行證？'))return;await _supabase.from('reading_room_passes').delete().eq('id',id);rraLoadPasses();}
+</script>
 </body>
 </html>

@@ -142,6 +142,7 @@
         <button onclick="switchTab('map')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> 書店地圖</button>
         <button onclick="switchTab('directory')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-book-open"></i> 文化檔案</button>
         <button onclick="switchTab('shop')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-store"></i> 網上商店</button>
+        <button onclick="switchTab('reading')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-couch"></i> 閱書室 <span style="font-size:10px;background:var(--bookshop);color:var(--primary-contrast);border-radius:999px;padding:0 6px">預約制</span></button>
         <button onclick="switchTab('eco')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-leaf"></i> 農業/環保</button>
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
       </nav>
@@ -402,6 +403,77 @@
         <p class="text-faint italic col-span-full">載入資料中...</p>
       </div><div class="dir-rail"><span class="dir-thumb"></span></div>
 </div>
+    </section>
+
+    <!-- 閱書室 Tab -->
+    <section id="tab-reading" class="tab-content">
+      <style>
+        .rr-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
+        .rr-badge{display:inline-block;background:var(--bookshop-soft);color:var(--bookshop);border:1px solid var(--bookshop-line);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+        .rr-day{border:1px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center;font-size:12px;background:var(--paper);color:var(--faint)}
+        .rr-day.open{background:var(--bookshop-soft);color:var(--ink);border-color:var(--bookshop-line);cursor:pointer;font-weight:600}
+        .rr-day.sel{background:var(--primary);color:var(--primary-contrast)}
+        .rr-hour{border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;background:var(--surface);color:var(--ink);cursor:pointer}
+        .rr-hour.full{opacity:.45;cursor:not-allowed;text-decoration:line-through}
+        .rr-hour.sel{background:var(--primary);color:var(--primary-contrast);border-color:var(--primary)}
+        .rr-input{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);color:var(--ink);font-size:14px}
+        .rr-btn{background:var(--primary);color:var(--primary-contrast);border-radius:10px;padding:10px 16px;font-weight:600;font-size:14px}
+        .rr-btn-ghost{background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px}
+      </style>
+      <div class="space-y-6">
+        <div class="rr-card text-center py-10" style="background:var(--bookshop-soft)">
+          <span class="rr-badge">籌備整理中・敬請期待 Coming Soon</span>
+          <h2 class="text-3xl font-bold mt-3" style="color:var(--ink)">閱書室 <span class="text-lg font-normal" style="color:var(--muted-ink)">Reading Room</span></h2>
+          <p class="mt-4 leading-8 text-sm sm:text-base" style="color:var(--muted-ink)">百呎私密角落，每次只容兩三讀者。<br>遠離鬧市喧囂，放下手機與日常牽絆，<br>在這裡，時間只留給紙頁翻動的安靜時光。</p>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="rr-card"><div class="text-2xl">🕯️</div><h3 class="font-bold mt-2" style="color:var(--ink)">極致私密・安靜</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">100 呎專屬天地，每小時最多 2–3 位讀者，杜絕干擾與喧嘩。</p></div>
+          <div class="rr-card"><div class="text-2xl">📚</div><h3 class="font-bold mt-2" style="color:var(--ink)">店長精選藏書</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">獨立出版、文學小說、香港地方誌等私藏書籍，自由翻閱。</p></div>
+          <div class="rr-card"><div class="text-2xl">🛋️</div><h3 class="font-bold mt-2" style="color:var(--ink)">專屬閱讀席位</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">閱讀座椅與獨立燈光，享受專心看書的平靜節奏。</p></div>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">⏱️ 時鐘計</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$20 <span class="text-sm font-normal">/ 小時</span></p><p class="text-sm mt-2" style="color:var(--muted-ink)">自選開始時間及時數，即揀即預約。</p></div>
+          <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎟️ 1-Day Pass 單日漫讀證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$50</p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・當日最多 4 小時</li><li>・室內藏書自由翻閱</li></ul></div>
+          <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎫 1-Month Pass 月度漫步證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$160 <span class="text-sm font-normal">/ 10 小時</span></p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・首次使用起 60 日內用完</li><li>・每次按實際時數扣減</li><li>・優先預約時段</li><li>・購書專屬折扣</li><li>・店長每月推薦書籍展示分享</li></ul></div>
+        </div>
+        <div class="rr-card">
+          <h3 class="font-bold text-lg" style="color:var(--ink)">📅 預約到訪</h3>
+          <p class="text-xs mt-1" style="color:var(--muted-ink)">💡 空間由店長一人打理，開放時段以店長在場時間為準。亮起的日子可直接預約；想約其他時間，可撳下面「申請其他時段」。</p>
+          <div class="flex items-center justify-between mt-4">
+            <button class="rr-btn-ghost" onclick="rrShiftMonth(-1)">‹</button>
+            <div id="rr-month-label" class="font-bold" style="color:var(--ink)"></div>
+            <button class="rr-btn-ghost" onclick="rrShiftMonth(1)">›</button>
+          </div>
+          <div class="grid grid-cols-7 gap-1 mt-3 text-center text-xs" style="color:var(--faint)"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+          <div id="rr-cal" class="grid grid-cols-7 gap-1 mt-1"></div>
+          <div id="rr-hours-wrap" class="mt-4 hidden">
+            <div class="text-sm font-semibold mb-2" style="color:var(--ink)">選擇開始時間（<span id="rr-sel-date"></span>）</div>
+            <div id="rr-hours" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+          </div>
+          <div class="mt-4"><button class="rr-btn-ghost" onclick="rrOpenForm(true)">✉️ 申請其他時段</button></div>
+          <form id="rr-form" class="mt-5 space-y-3 hidden" onsubmit="rrSubmit(event)">
+            <div id="rr-form-title" class="font-bold" style="color:var(--ink)"></div>
+            <div id="rr-req-fields" class="grid grid-cols-2 gap-2 hidden">
+              <label class="text-xs" style="color:var(--muted-ink)">日期<input type="date" id="rr-req-date" class="rr-input"></label>
+              <label class="text-xs" style="color:var(--muted-ink)">開始時間<select id="rr-req-hour" class="rr-input"></select></label>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="text-xs" style="color:var(--muted-ink)">方案<select id="rr-plan" class="rr-input" onchange="rrUpdatePrice()"><option value="時鐘計">時鐘計 $20/小時</option><option value="1-Day Pass">1-Day Pass $50</option><option value="1-Month Pass（購買）">購買 1-Month Pass $160</option><option value="使用已有 Pass">使用已有 Pass</option></select></label>
+              <label class="text-xs" style="color:var(--muted-ink)">時數<select id="rr-hours-n" class="rr-input" onchange="rrUpdatePrice()"></select></label>
+              <label class="text-xs" style="color:var(--muted-ink)">人數<select id="rr-people" class="rr-input" onchange="rrUpdatePrice()"></select></label>
+              <label class="text-xs" id="rr-pass-wrap" style="color:var(--muted-ink);display:none">通行證編號<input id="rr-pass" class="rr-input" maxlength="40"></label>
+            </div>
+            <input id="rr-name" class="rr-input" placeholder="姓名 *" required maxlength="100">
+            <input id="rr-phone" class="rr-input" placeholder="電話 / WhatsApp *" required maxlength="50">
+            <input id="rr-email" type="email" class="rr-input" placeholder="電郵（選填）" maxlength="255">
+            <select id="rr-pay" class="rr-input"><option>現場付款</option><option>PayMe</option><option>FPS 轉數快</option><option>銀行轉帳</option></select>
+            <textarea id="rr-notes" class="rr-input" rows="2" placeholder="備註（選填）" maxlength="1000"></textarea>
+            <div class="flex items-center justify-between"><div class="font-bold" style="color:var(--ink)">金額：HK$<span id="rr-amount">0</span></div><button type="submit" class="rr-btn">送出預約</button></div>
+            <p class="text-xs" style="color:var(--faint)">送出後店長會經 WhatsApp / 電郵確認，付款資料亦會同時提供。</p>
+          </form>
+          <div id="rr-done" class="hidden mt-4 p-4 rounded-xl text-sm" style="background:var(--eco-soft);color:var(--eco)"></div>
+        </div>
+      </div>
     </section>
 
     <!-- 5. 劇團 Tab -->
@@ -844,6 +916,7 @@
       const targetEl = document.getElementById(realTabId);
       if (targetEl) targetEl.classList.add('active');
 
+      if (tabId === 'reading') rrInit();
       if (tabId === 'map') {
         setTimeout(() => { if(map) map.invalidateSize(); }, 200);
       }
@@ -1675,5 +1748,51 @@
 
     function closeTheatreModal() { document.getElementById('theatre-modal').classList.add('hidden'); }
   </script>
+<script>
+let rrMonth=new Date();rrMonth.setDate(1);let rrAvail=[];let rrSel={date:null,hour:null};let rrIsReq=false;let rrLoaded=false;
+const rrPad=n=>String(n).padStart(2,'0');const rrFmt=d=>d.getFullYear()+'-'+rrPad(d.getMonth()+1)+'-'+rrPad(d.getDate());
+function rrInit(){if(!rrLoaded){rrLoaded=true;const h=document.getElementById('rr-req-hour');for(let i=9;i<=22;i++)h.innerHTML+=`<option value="${i}">${rrPad(i)}:00</option>`;}rrLoad();}
+function rrShiftMonth(n){rrMonth.setMonth(rrMonth.getMonth()+n);rrLoad();}
+async function rrLoad(){const y=rrMonth.getFullYear(),m=rrMonth.getMonth();document.getElementById('rr-month-label').textContent=`${y} 年 ${m+1} 月`;
+ const {data}=await _supabase.rpc('reading_room_availability',{_from:rrFmt(new Date(y,m,1)),_to:rrFmt(new Date(y,m+1,0))});rrAvail=data||[];rrRenderCal();}
+function rrSlotsOf(d){return rrAvail.filter(a=>a.slot_date===d);}
+function rrRenderCal(){const y=rrMonth.getFullYear(),m=rrMonth.getMonth();const first=new Date(y,m,1).getDay();const days=new Date(y,m+1,0).getDate();const today=rrFmt(new Date());let h='';
+ for(let i=0;i<first;i++)h+='<div></div>';
+ for(let d=1;d<=days;d++){const ds=`${y}-${rrPad(m+1)}-${rrPad(d)}`;const open=ds>=today&&rrSlotsOf(ds).some(a=>a.capacity-a.booked>0);
+  h+=`<div class="rr-day ${open?'open':''} ${rrSel.date===ds?'sel':''}" ${open?`onclick="rrPickDate('${ds}')"`:''}>${d}</div>`;}
+ document.getElementById('rr-cal').innerHTML=h;}
+function rrPickDate(ds){rrSel={date:ds,hour:null};rrRenderCal();document.getElementById('rr-hours-wrap').classList.remove('hidden');document.getElementById('rr-sel-date').textContent=ds;
+ const now=new Date();document.getElementById('rr-hours').innerHTML=rrSlotsOf(ds).map(a=>{const left=a.capacity-a.booked;const past=ds===rrFmt(now)&&a.hour<=now.getHours();const full=left<=0||past;
+  return `<button type="button" class="rr-hour ${full?'full':''}" ${full?'disabled':`onclick="rrPickHour(${a.hour})"`} id="rr-h-${a.hour}">${rrPad(a.hour)}:00<br><span style="font-size:11px">${full?'已額滿':'餘 '+left+' 位'}</span></button>`;}).join('');
+ document.getElementById('rr-form').classList.add('hidden');}
+function rrLeft(ds,h){const a=rrAvail.find(x=>x.slot_date===ds&&x.hour===h);return a?a.capacity-a.booked:0;}
+function rrPickHour(h){rrSel.hour=h;document.querySelectorAll('.rr-hour').forEach(b=>b.classList.remove('sel'));document.getElementById('rr-h-'+h).classList.add('sel');rrOpenForm(false);}
+function rrOpenForm(isReq){rrIsReq=isReq;const f=document.getElementById('rr-form');f.classList.remove('hidden');document.getElementById('rr-done').classList.add('hidden');
+ document.getElementById('rr-req-fields').classList.toggle('hidden',!isReq);
+ let maxH=8,maxP=3;
+ if(!isReq){maxH=0;let p=3;for(let h=rrSel.hour;;h++){const l=rrLeft(rrSel.date,h);if(l<=0)break;maxH++;p=Math.min(p,l);if(maxH===1)maxP=l;}
+  document.getElementById('rr-form-title').textContent=`預約 ${rrSel.date} ${rrPad(rrSel.hour)}:00 開始`;}
+ else document.getElementById('rr-form-title').textContent='申請其他時段（需店長確認）';
+ const hs=document.getElementById('rr-hours-n');hs.innerHTML='';for(let i=1;i<=maxH;i++)hs.innerHTML+=`<option value="${i}">${i} 小時</option>`;
+ const ps=document.getElementById('rr-people');ps.innerHTML='';for(let i=1;i<=Math.max(1,maxP);i++)ps.innerHTML+=`<option value="${i}">${i} 位</option>`;
+ hs.onchange=()=>{if(!rrIsReq){let mp=3;for(let h=rrSel.hour;h<rrSel.hour+ +hs.value;h++)mp=Math.min(mp,rrLeft(rrSel.date,h));const cur=+ps.value;ps.innerHTML='';for(let i=1;i<=mp;i++)ps.innerHTML+=`<option value="${i}" ${i===cur?'selected':''}>${i} 位</option>`;}rrUpdatePrice();};
+ rrUpdatePrice();f.scrollIntoView({behavior:'smooth',block:'center'});}
+function rrUpdatePrice(){const plan=document.getElementById('rr-plan').value;const h=+document.getElementById('rr-hours-n').value||1;const p=+document.getElementById('rr-people').value||1;
+ document.getElementById('rr-pass-wrap').style.display=plan==='使用已有 Pass'?'block':'none';
+ let amt=0;if(plan==='時鐘計')amt=20*h*p;else if(plan==='1-Day Pass')amt=50*p;else if(plan.startsWith('1-Month'))amt=160;
+ document.getElementById('rr-amount').textContent=amt;}
+async function rrSubmit(e){e.preventDefault();const plan=document.getElementById('rr-plan').value;const hours=+document.getElementById('rr-hours-n').value;
+ if(plan==='1-Day Pass'&&hours>4){alert('1-Day Pass 每日最多 4 小時');return;}
+ if(plan==='使用已有 Pass'&&!document.getElementById('rr-pass').value.trim()){alert('請輸入通行證編號');return;}
+ const date=rrIsReq?document.getElementById('rr-req-date').value:rrSel.date;const hour=rrIsReq?+document.getElementById('rr-req-hour').value:rrSel.hour;
+ if(!date){alert('請選擇日期');return;}
+ const row={name:document.getElementById('rr-name').value.trim(),phone:document.getElementById('rr-phone').value.trim(),email:document.getElementById('rr-email').value.trim()||null,
+  booking_date:date,start_hour:hour,hours,people:+document.getElementById('rr-people').value,plan,pass_code:document.getElementById('rr-pass').value.trim()||null,
+  is_request:rrIsReq,payment_method:document.getElementById('rr-pay').value,amount:+document.getElementById('rr-amount').textContent,notes:document.getElementById('rr-notes').value.trim()||null,status:'待確認'};
+ const {error}=await _supabase.from('reading_room_bookings').insert(row);
+ if(error){alert('送出失敗：'+error.message);return;}
+ document.getElementById('rr-form').classList.add('hidden');const d=document.getElementById('rr-done');d.classList.remove('hidden');
+ d.textContent=`✅ 已收到你的${rrIsReq?'到訪申請':'預約'}（${date} ${rrPad(hour)}:00，${hours} 小時）。店長會盡快經 WhatsApp / 電郵確認。`;e.target.reset();rrLoad();}
+</script>
 </body>
 </html>
