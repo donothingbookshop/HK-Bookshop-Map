@@ -188,11 +188,15 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
           <h3 class="font-bold text-amber-900 mb-3 border-b pb-2 text-sm">每月總成交金額</h3>
-          <div id="stats-monthly" class="text-xs"><p class="text-slate-400 italic">載入中…</p></div>
+          <div id="stats-monthly" class="text-xs max-h-96 overflow-y-auto"><p class="text-slate-400 italic">載入中…</p></div>
         </div>
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
           <h3 class="font-bold text-amber-900 mb-3 border-b pb-2 text-sm">每本書 / 商品銷量與餘數</h3>
-          <div id="stats-products" class="text-xs"><p class="text-slate-400 italic">載入中…</p></div>
+          <div class="flex flex-wrap items-center gap-2 mb-2 text-xs">
+            <input id="st-search" oninput="filterStatsProducts()" placeholder="🔍 搜尋書名" class="flex-1 min-w-[140px] border rounded-lg px-3 py-1.5">
+            <label class="flex items-center gap-1 text-slate-600"><input type="checkbox" id="st-low" onchange="filterStatsProducts()"> 只看售罄／低庫存</label>
+          </div>
+          <div id="stats-products" class="text-xs max-h-96 overflow-y-auto"><p class="text-slate-400 italic">載入中…</p></div>
         </div>
       </div>
     </section>
@@ -967,8 +971,15 @@
           </form>
         </div>
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
-          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已上架網店商品清單</h2>
-          <div id="admin-product-list" class="space-y-3"></div>
+          <h2 class="text-lg font-bold text-slate-800 mb-3 border-b pb-2">已上架網店商品清單</h2>
+          <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
+            <input id="ap-search" oninput="filterAdminProducts()" placeholder="🔍 搜尋書名／作者／創作者／ISBN" class="flex-1 min-w-[180px] border rounded-lg px-3 py-1.5">
+            <button type="button" data-t="ALL" onclick="setAdminProductType('ALL')" class="ap-type-btn px-2.5 py-1 rounded-full border bg-amber-900 text-white border-amber-900">全部</button>
+            <button type="button" data-t="書籍" onclick="setAdminProductType('書籍')" class="ap-type-btn px-2.5 py-1 rounded-full border bg-white text-slate-600">📚 書籍</button>
+            <button type="button" data-t="文創周邊" onclick="setAdminProductType('文創周邊')" class="ap-type-btn px-2.5 py-1 rounded-full border bg-white text-slate-600">🎨 文創</button>
+            <span id="ap-count" class="text-slate-400"></span>
+          </div>
+          <div id="admin-product-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
         </div>
       </div>
     </section>
@@ -2018,9 +2029,9 @@ window.onload = async function () {
       prodEl.innerHTML = rows.length === 0
         ? `<p class="text-slate-400 italic">暫無商品資料。</p>`
         : `<table class="w-full text-left">
-            <thead><tr class="text-slate-500 border-b"><th class="py-1.5">書籍 / 商品</th><th class="py-1.5">賣出</th><th class="py-1.5">餘數</th><th class="py-1.5 text-right">銷售額</th></tr></thead>
+            <thead class="sticky top-0 bg-white z-10"><tr class="text-slate-500 border-b"><th class="py-1.5">書籍 / 商品</th><th class="py-1.5">賣出</th><th class="py-1.5">餘數</th><th class="py-1.5 text-right">銷售額</th></tr></thead>
             <tbody>${rows.map(r => `
-              <tr class="border-b last:border-0">
+              <tr class="border-b last:border-0" data-search="${String(r.name).toLowerCase().replace(/"/g, '')}" data-low="${r.remain !== null && r.remain <= 2 ? '1' : '0'}">
                 <td class="py-1.5 font-semibold text-slate-700">${r.name}
                   ${Object.keys(r.stocks).length ? `<span class="block text-[10px] text-slate-400">${Object.entries(r.stocks).map(([b, q]) => b + ' ' + q).join(' ｜ ')}</span>` : ''}
                 </td>
@@ -2030,6 +2041,7 @@ window.onload = async function () {
               </tr>`).join('')}
             </tbody>
           </table>`;
+      filterStatsProducts();
     }
 
     async function deleteOrder(id) {
@@ -3082,12 +3094,39 @@ longitude: longitude,
     }
 
     // --- 7. 網店商品管理 ---
+    window._apType = 'ALL';
+    function setAdminProductType(t) {
+      window._apType = t;
+      document.querySelectorAll('.ap-type-btn').forEach(b => {
+        const on = b.dataset.t === t;
+        b.className = 'ap-type-btn px-2.5 py-1 rounded-full border ' + (on ? 'bg-amber-900 text-white border-amber-900' : 'bg-white text-slate-600');
+      });
+      filterAdminProducts();
+    }
+    function filterAdminProducts() {
+      const q = (document.getElementById('ap-search')?.value || '').trim().toLowerCase();
+      let shown = 0;
+      document.querySelectorAll('#admin-product-list > [data-search]').forEach(el => {
+        const ok = (!q || el.dataset.search.includes(q)) && (window._apType === 'ALL' || el.dataset.type === window._apType);
+        el.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      const c = document.getElementById('ap-count'); if (c) c.innerText = `顯示 ${shown} 件`;
+    }
+    function filterStatsProducts() {
+      const q = (document.getElementById('st-search')?.value || '').trim().toLowerCase();
+      const low = document.getElementById('st-low')?.checked;
+      document.querySelectorAll('#stats-products tbody tr').forEach(tr => {
+        const ok = (!q || (tr.dataset.search || '').includes(q)) && (!low || tr.dataset.low === '1');
+        tr.style.display = ok ? '' : 'none';
+      });
+    }
     async function fetchProducts() {
       const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
       const el = document.getElementById('admin-product-list');
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無商品</p>`; return; }
       el.innerHTML = data.map(p => `
-        <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
+        <div data-type="${p.product_type === '文創周邊' ? '文創周邊' : '書籍'}" data-search="${[p.name, p.author, p.creator, p.publisher, p.isbn].filter(Boolean).join(' ').toLowerCase().replace(/"/g, '')}" class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
             ${p.product_type === '文創周邊' ? '<span class="mr-1 px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">🎨 文創</span>' : '<span class="mr-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">📚 書籍</span>'}
             <span class="font-bold text-slate-800">${p.name}</span>
@@ -3109,6 +3148,7 @@ longitude: longitude,
           </div>
         </div>
       `).join('');
+      filterAdminProducts();
     }
 
     // --- ISBN 掃描 + 自動填資料 ---
@@ -3489,7 +3529,8 @@ longitude: longitude,
       document.getElementById('p-creator-fb').value = p.creator_fb || '';
       document.getElementById('p-creator-web').value = p.creator_website || '';
       setProductType(p.product_type === '文創周邊' || (p.category || '').includes('文創') ? '文創周邊' : '書籍', p.category || '');
-      document.getElementById('product-form-title').innerText = "編輯網店商品";
+      document.getElementById('product-form-title').innerText = "✏️ 正在編輯：" + (p.name || '');
+      document.getElementById('product-form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     const BOOK_CATS = [['文學小說（文學／散文／愛情）','📖 文學小說（文學／散文／愛情）'],['類型小說（推理／懸疑／科幻／奇幻／歷史）','🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）'],['Zine／雜誌','📰 Zine／雜誌'],['童書繪本','🎨 童書繪本'],['漫畫','💬 漫畫'],['詩集','📜 詩集'],['心理勵志','🧠 心理勵志'],['人文社科','🏛️ 人文社科'],['藝術設計','🎨 藝術設計'],['生活風格','🌱 生活風格'],['其他','其他']];
     const MERCH_CATS = [['明信片／卡片','💌 明信片／卡片'],['貼紙／紙膠帶','🎨 貼紙／紙膠帶'],['布袋／Tote Bag','👜 布袋／Tote Bag'],['文具／筆記簿','✏️ 文具／筆記簿'],['飾品／徽章','💍 飾品／徽章'],['手作生活','🌿 手作生活'],['其他文創','🎁 其他文創']];
