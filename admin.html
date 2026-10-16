@@ -959,6 +959,14 @@
             <div>
               <label class="block font-bold text-slate-700 mb-1">書籍 / 商品圖片</label>
               <input type="file" id="p-image-file" accept="image/*" class="w-full border rounded p-1">
+              <p class="text-xs text-slate-500 mt-1">上載前會自動壓縮至約 1600px，節省空間。</p>
+            </div>
+            <div class="merch-only hidden bg-purple-50 border border-purple-200 rounded p-3">
+              <label class="block font-bold text-slate-700 mb-2">🎨 額外細節相片（最多 2 張，例如背面、包裝、擺放效果）</label>
+              <div class="grid grid-cols-2 gap-3">
+                <div id="p-extra-box-0" class="space-y-1"><img id="p-extra-prev-0" class="hidden h-24 w-full object-cover rounded border"><input type="file" id="p-extra-file-0" accept="image/*" class="w-full text-xs" onchange="previewExtra(0)"><button type="button" onclick="removeExtra(0)" class="text-xs text-red-600">移除相片 1</button></div>
+                <div id="p-extra-box-1" class="space-y-1"><img id="p-extra-prev-1" class="hidden h-24 w-full object-cover rounded border"><input type="file" id="p-extra-file-1" accept="image/*" class="w-full text-xs" onchange="previewExtra(1)"><button type="button" onclick="removeExtra(1)" class="text-xs text-red-600">移除相片 2</button></div>
+              </div>
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">書籍簡介 / 書評</label>
@@ -3436,17 +3444,51 @@ longitude: longitude,
 
 6. 政策更新
 本政策可能不時更新，最新版本以本頁為準。`;
+    let pExtraUrls = [null, null];
+    function setExtraUrls(arr) {
+      pExtraUrls = [arr[0] || null, arr[1] || null];
+      [0,1].forEach(i => { const im = document.getElementById('p-extra-prev-' + i); const f = document.getElementById('p-extra-file-' + i); if (f) f.value = ''; if (im) { im.src = pExtraUrls[i] || ''; im.classList.toggle('hidden', !pExtraUrls[i]); } });
+    }
+    function previewExtra(i) {
+      const f = document.getElementById('p-extra-file-' + i).files[0]; const im = document.getElementById('p-extra-prev-' + i);
+      if (f) { im.src = URL.createObjectURL(f); im.classList.remove('hidden'); }
+    }
+    function removeExtra(i) {
+      pExtraUrls[i] = null; document.getElementById('p-extra-file-' + i).value = '';
+      const im = document.getElementById('p-extra-prev-' + i); im.src = ''; im.classList.add('hidden');
+    }
+    async function compressImage(file, maxSide = 1600, quality = 0.82) {
+      if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+      try {
+        const bmp = await createImageBitmap(file);
+        const s = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+        const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', quality));
+        return blob && blob.size < file.size ? new File([blob], 'img.jpg', { type: 'image/jpeg' }) : file;
+      } catch (_) { return file; }
+    }
+    async function uploadCompressed(file, prefix) {
+      const f = await compressImage(file);
+      const ext = f.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg');
+      const fileName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,7)}.${ext}`;
+      const { error } = await _supabase.storage.from('images').upload(fileName, f, { contentType: f.type });
+      if (error) { alert('相片上載失敗：' + error.message); return null; }
+      return _supabase.storage.from('images').getPublicUrl(fileName).data.publicUrl;
+    }
+
     async function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('p-id').value;
       const file = document.getElementById('p-image-file').files[0];
       let imageUrl = null;
 
-      if (file) {
-        const fileName = `product_${Date.now()}.${file.name.split('.').pop()}`;
-        await _supabase.storage.from('images').upload(fileName, file);
-        const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
-        imageUrl = publicUrl;
+      if (file) imageUrl = await uploadCompressed(file, 'product');
+      const extraImages = [];
+      for (const i of [0,1]) {
+        const f = document.getElementById('p-extra-file-' + i).files[0];
+        if (f) extraImages.push(await uploadCompressed(f, 'product_extra'));
+        else if (pExtraUrls[i]) extraImages.push(pExtraUrls[i]);
       }
 
       const branchStocks = {
@@ -3484,7 +3526,7 @@ longitude: longitude,
       if (payload.product_type === '文創周邊') { Object.assign(payload, { author: null, translator: null, publisher: null, isbn: null, weight: null, is_second_hand: false, original_price: null, book_condition: null }); payload.price = Number(document.getElementById('p-price').value); }
       if (!imageUrl) imageUrl = document.getElementById('p-image-url').value || null;
       if (imageUrl) payload.image_url = imageUrl;
-
+      payload.extra_images = payload.product_type === '文創周邊' ? extraImages.filter(Boolean) : [];
 
       if (id) await _supabase.from('shop_products').update(payload).eq('id', id);
       else await _supabase.from('shop_products').insert([payload]);
@@ -3496,6 +3538,7 @@ longitude: longitude,
 
     function editProduct(p) {
       clearIsbnCover();
+      setExtraUrls(Array.isArray(p.extra_images) ? p.extra_images : []);
 
       document.getElementById('p-id').value = p.id;
       document.getElementById('p-name').value = p.name;
@@ -3567,6 +3610,7 @@ longitude: longitude,
       document.getElementById('ai-cover-preview').classList.add('hidden');
 
       document.getElementById('product-form').reset();
+      setExtraUrls([]);
       document.getElementById('p-region-other').classList.add('hidden');
       document.getElementById('p-id').value = '';
       document.getElementById('product-form-title').innerText = "新增網店書籍 / 商品";
