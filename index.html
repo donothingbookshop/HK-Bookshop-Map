@@ -723,16 +723,16 @@
   </section>
 
   <section id="donate" class="max-w-3xl mx-auto w-full px-4 pb-8 hidden">
-    <div class="bg-theatre-soft rounded-2xl border border-theatre-line p-6 text-center">
+    <div class="bg-paper rounded-2xl border border-line shadow-sm p-6 text-center">
       <h2 class="text-lg font-bold text-theatre mb-1">☕ 隨緣樂助</h2>
       <p class="text-xs text-muted-ink mb-4">如果你鍾意香港獨立文化地圖，歡迎隨心支持我哋繼續營運。</p>
       <div id="donate-options" class="flex flex-wrap justify-center gap-6"></div>
     </div>
   </section>
 
-  <footer class="bg-ink text-faint text-xs py-6 text-center mt-auto">
+  <footer class="bg-ink text-xs py-6 text-center mt-auto" style="color:oklch(0.82 0.02 80)">
     <p>© 香港獨立文化地圖 · Independent Culture Guide</p>
-    <p class="mt-2"><button type="button" onclick="openPrivacy()" class="underline hover:text-primary-contrast">私隱政策</button></p>
+    <p class="mt-2"><button type="button" onclick="openPrivacy()" class="underline underline-offset-4 font-semibold text-sm hover:opacity-100" style="color:oklch(0.95 0.015 85)">🔒 私隱政策</button></p>
   </footer>
   <div id="privacy-modal" class="hidden fixed inset-0 z-[3000] bg-ink/60 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="bg-surface rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 relative">
@@ -769,8 +769,9 @@
       const opts = [['PayMe', data.donate_payme_link, data.donate_payme_img_url], ['Buy Me a Coffee', data.donate_bmc_link, data.donate_bmc_img_url]]
         .filter(o => safe(o[1]) || safe(o[2]))
         .map(([n, l, img]) => {
-          const inner = `${safe(img) ? `<img src="${safe(img)}" alt="${n}" class="w-36 h-36 object-contain bg-surface rounded-lg border mx-auto">` : ''}<div class="mt-2 text-sm font-bold text-theatre">${n}</div>`;
-          return safe(l) ? `<a href="${safe(l)}" target="_blank" rel="noopener" class="block hover:opacity-80">${inner}</a>` : `<div>${inner}</div>`;
+          const inner = `${safe(img) ? `<img src="${safe(img)}" alt="${n}" class="w-36 h-36 object-contain bg-surface rounded-lg mx-auto">` : ''}<div class="mt-3 text-sm font-bold text-ink">${n}</div><div class="text-[11px] text-muted-ink mt-0.5">${safe(l) ? '點擊或掃碼支持' : '掃碼支持'}</div>`;
+          const card = 'block bg-surface border border-line rounded-xl shadow-sm p-5 w-52 transition hover:border-theatre-line hover:shadow-md';
+          return safe(l) ? `<a href="${safe(l)}" target="_blank" rel="noopener" class="${card}">${inner}</a>` : `<div class="${card}">${inner}</div>`;
         });
       if (!opts.length) return;
       document.getElementById('donate-options').innerHTML = opts.join('');
