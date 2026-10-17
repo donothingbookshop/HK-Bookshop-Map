@@ -1404,29 +1404,34 @@ async function searchBookshopAddress(event) {
     button.innerHTML =
       '<i class="fa-solid fa-spinner fa-spin mr-1"></i>搜尋中';
 
-    const query = encodeURIComponent(address);
+    const clean = address.replace(/香港|九龍|新界/g, ' ').replace(/[，,]/g, ' ').trim();
+    const candidates = [address];
+    const bldg = clean.match(/號\s*(.+)$/);
+    const bldgName = bldg ? bldg[1].replace(/\d+\s*(樓|字樓|室|座|舖|號舖|F)\S*/gi, '').replace(/(地下|\d+[A-Z]?室|[A-Z]?\d*座).*$/i, '').trim() : '';
+    const district = (clean.match(/^([^\d]{2,3}?)(?=[^\d]*[街道路里])/) || [])[1] || '';
+    if (bldgName) { if (district) candidates.push(district + ' ' + bldgName); candidates.push(bldgName); candidates.push(bldgName + ' 香港'); }
+    const street = clean.match(/([^\d\s]+?[街道路里徑])\s*(\d+)/);
+    if (street) candidates.push(street[2] + ' ' + street[1] + ' 香港');
+    candidates.push(clean + ' 香港');
 
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`,
-      {
-        headers: {
-          'Accept-Language': 'zh-HK,zh-TW,zh,en'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('地址搜尋服務暫時未能使用。');
+    let results = [];
+    for (const q of [...new Set(candidates.filter(Boolean))]) {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`,
+        { headers: { 'Accept-Language': 'zh-HK,zh-TW,zh,en' } }
+      );
+      if (!response.ok) throw new Error('地址搜尋服務暫時未能使用。');
+      results = await response.json();
+      if (results.length) break;
     }
-
-    const results = await response.json();
 
     if (!results.length) {
       alert(
-        '未能找到這個地址。請將地址寫得更完整，或直接在地圖上點擊正確位置。'
+        '未能找到這個地址。可試只輸入大廈名稱，或直接在地圖上點擊正確位置。'
       );
       return;
     }
+
 
     initAdminBookshopMap();
 
@@ -3849,6 +3854,36 @@ async function rraAddPass(){const code=document.getElementById('rrp-code').value
  if(error)return alert('新增失敗：'+error.message);['rrp-code','rrp-name','rrp-phone'].forEach(i=>document.getElementById(i).value='');rraLoadPasses();}
 async function rraAdjPass(id,cur){const v=prompt('剩餘時數',cur);if(v===null)return;const {error}=await _supabase.from('reading_room_passes').update({remaining_hours:+v}).eq('id',id);if(error)alert(error.message);rraLoadPasses();}
 async function rraDelPass(id){if(!confirm('確定刪除通行證？'))return;await _supabase.from('reading_room_passes').delete().eq('id',id);rraLoadPasses();}
+</script>
+<script>
+(function(){
+  const ids = {'admin-bookshop-list':'搜尋書店名稱／地址','admin-author-list':'搜尋作者','admin-publisher-list':'搜尋出版社','admin-eco-list':'搜尋農業／環保機構','admin-theatre-list':'搜尋劇團'};
+  Object.entries(ids).forEach(([id, ph]) => {
+    const list = document.getElementById(id);
+    if (!list) return;
+    list.classList.add('max-h-[600px]','overflow-y-auto','pr-1');
+    list.style.maxHeight = '600px'; list.style.overflowY = 'auto';
+    const wrap = document.createElement('div');
+    wrap.className = 'mb-3 flex items-center gap-2';
+    wrap.innerHTML = '<input type="search" class="w-full border rounded px-3 py-2 text-sm bg-white" placeholder="🔍 '+ph+'"><span class="text-xs text-slate-500 whitespace-nowrap"></span>';
+    list.parentNode.insertBefore(wrap, list);
+    const input = wrap.querySelector('input'), count = wrap.querySelector('span');
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0, total = 0;
+      Array.from(list.children).forEach(el => {
+        total++;
+        const hit = !q || el.textContent.toLowerCase().includes(q);
+        el.style.display = hit ? '' : 'none';
+        if (hit) shown++;
+      });
+      count.textContent = total ? (q ? shown + ' / ' + total : total + ' 項') : '';
+    };
+    input.addEventListener('input', apply);
+    new MutationObserver(apply).observe(list, {childList:true});
+    apply();
+  });
+})();
 </script>
 </body>
 </html>
