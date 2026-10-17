@@ -1114,6 +1114,7 @@
                 <option value="香港島">香港島</option>
                 <option value="九龍">九龍</option>
                 <option value="新界">新界</option>
+                <option value="沒有">沒有</option>
               </select>
             </div>
             <div>
@@ -3757,7 +3758,7 @@ longitude: longitude,
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800">${t.name}</span>
-            <span class="ml-2 bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-semibold">${t.region || '劇團'}</span>
+            <span class="ml-2 bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-semibold">${(t.region && t.region!=='沒有') ? t.region : '沒有地區'}</span>
             <p class="text-slate-500 mt-0.5">${t.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">

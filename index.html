@@ -1712,7 +1712,7 @@
           <div>
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-base text-ink group-hover:text-theatre transition">${t.name}</h3>
-              ${t.region ? `<span class="bg-theatre-soft text-theatre text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
+              ${(t.region && t.region!=='沒有') ? `<span class="bg-theatre-soft text-theatre text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
             </div>
             <p class="text-xs text-muted-ink mb-1"><i class="fa-solid fa-location-dot mr-1 text-theatre"></i>${t.address || '無地址'}</p>
             ${t.phone ? `<p class="text-xs text-muted-ink mb-2"><i class="fa-solid fa-phone mr-1 text-theatre"></i>${t.phone}</p>` : ''}
@@ -1735,7 +1735,7 @@
       const t = allTheatre.find(x => x.id === id);
       if (!t) return;
 
-      document.getElementById('theatre-modal-tag').innerText = t.region || '劇團';
+      document.getElementById('theatre-modal-tag').innerText = (t.region && t.region!=='沒有') ? t.region : '劇團';
       document.getElementById('theatre-modal-title').innerText = t.name;
       document.querySelector('#theatre-modal-address span').innerText = t.address || '暫未提供地址';
       document.querySelector('#theatre-modal-phone span').innerText = t.phone || '暫未提供電話';
