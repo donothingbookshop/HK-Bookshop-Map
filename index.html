@@ -121,6 +121,19 @@
       .bookshop-map-panel, .bookshop-list-panel { height: 100%; }
       .bookshop-list-panel { padding-right: 0; }
       .bookshop-workspace[data-view="map"] .bookshop-list-panel, .bookshop-workspace[data-view="list"] .bookshop-map-panel { display: none; }
+      .bookshop-workspace[data-mode="memory"] { height: auto; }
+      .bookshop-workspace[data-mode="memory"] .bookshop-list-panel { display: flex !important; height: min(600px, 65vh); }
+      .memory-board { display: none !important; }
+    }
+    .memory-board { display: none; }
+    .bookshop-workspace[data-mode="memory"] .bookshop-map-panel { display: none !important; }
+    .bookshop-workspace[data-mode="memory"] .memory-board { display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 40px; background: var(--paper, #f7f2e8); border-left: 1px solid var(--line); color: var(--muted-ink, #6b6257); font-size: 14px; line-height: 1.9; }
+    .memory-board h3 { font-weight: 700; color: var(--ink, #2b2620); font-size: 18px; }
+    .memory-card { opacity: .92; }
+    .memory-card .shop-card-image { filter: grayscale(1); }
+    .memory-tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--muted, #ece6db); color: var(--muted-ink, #6b6257); margin-left: 6px; vertical-align: middle; font-weight: 500; }
+    .memory-mode-active .map-view-toggle { display: none !important; }
+    @media (max-width: 767px) {
       .shop-card-image { width: 82px; height: 96px; }
       .shop-quick-preview .preview-image { height: 70px; }
     }
@@ -198,7 +211,12 @@
         <button onclick="filterRegion('新界')" class="bg-surface hover:bg-bookshop-soft px-3 py-1.5 rounded-full text-xs font-medium border transition">新界</button>
         <button onclick="filterRegion('離島')" class="bg-surface hover:bg-bookshop-soft px-3 py-1.5 rounded-full text-xs font-medium border transition">離島</button>
         <button onclick="filterRegion('外國香港書店/圖書館')" class="bg-bookshop-soft hover:bg-bookshop-soft text-bookshop px-3 py-1.5 rounded-full text-xs font-semibold border border-bookshop-line transition">🌐 外國香港書店/圖書館</button>
-        <button onclick="filterRegion('已結業書店')" class="bg-muted hover:bg-muted text-muted-ink px-3 py-1.5 rounded-full text-xs font-medium transition">🕯️ 已結業書店</button>
+        <span class="hidden md:inline-block w-px bg-line mx-1" aria-hidden="true"></span>
+        <button id="memory-mode-btn" onclick="filterRegion('已結業書店')" class="bg-muted text-muted-ink px-3 py-1.5 rounded-full text-xs font-medium border border-line transition">🕯️ 書店記憶（已結業）</button>
+      </div>
+      <div id="memory-mode-bar" class="hidden bg-muted border border-line rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-ink">
+        <span>🕯️ 正在瀏覽「書店記憶」：曾經存在過的書店，按結業年份由新到舊排列。</span>
+        <button onclick="filterRegion('ALL')" class="bg-primary text-primary-contrast px-3 py-1.5 rounded-full font-semibold">← 返回營業中地圖</button>
       </div>
 
       <div id="country-filter-bar" class="hidden bg-bookshop-soft p-3 rounded-xl border border-bookshop-line mb-6 flex flex-wrap items-center gap-2 text-xs">
@@ -222,6 +240,11 @@
           <div id="bookshop-list"><p class="text-faint italic">載入資料中...</p></div>
         </div>
         <div class="bookshop-map-panel"><div id="bookstoreMap" aria-label="互動書店地圖"></div></div>
+        <aside class="memory-board" aria-label="書店記憶導言">
+          <h3>🕯️ 書店記憶</h3>
+          <p>每間書店都是一個時代的坐標。即使鐵閘拉下，那些翻書的聲音、人與人的相遇依然留在城市之中。</p>
+          <p>若你記得任何曾經存在過、此處未收錄的書店，歡迎<a href="#contact-us" class="underline text-ink">聯絡我</a>補充。</p>
+        </aside>
       </div>
     </section>
 
@@ -973,7 +996,20 @@
     function renderBookshops(list) {
       const container = document.getElementById('bookshop-list');
       document.getElementById('bookshop-result-count').textContent = `${list.length} 間`;
-      if (!list.length) { container.innerHTML = '<p class="empty-shops">暫無符合條件的書店。</p>'; return; }
+      if (!list.length) { container.innerHTML = `<p class="empty-shops">${currentBookshopRegion === '已結業書店' ? '書店記憶仍在整理中，歡迎聯絡我分享你記得的書店。' : '暫無符合條件的書店。'}</p>`; return; }
+      if (currentBookshopRegion === '已結業書店') {
+        container.innerHTML = list.map(shop => `
+        <article class="bookshop-card memory-card" data-shop-id="${escapeShop(shop.id)}">
+          <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
+          <div class="shop-card-copy">
+            <h3>${escapeShop(shop.name)}<span class="memory-tag">🕯️ 已結業</span></h3>
+            <p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '?')}</p>
+            <p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
+            <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
+          </div>
+        </article>`).join('');
+        return;
+      }
       container.innerHTML = list.map(shop => `
         <article class="bookshop-card ${String(shop.id) === selectedShopId ? 'selected' : ''}" data-shop-id="${escapeShop(shop.id)}" tabindex="0" role="button" aria-label="${escapeShop(shop.name)}，查看地圖位置">
           <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
@@ -1010,9 +1046,18 @@
     function applyBookshopFilters() {
       let filtered = allBookshops;
 
-      if (currentBookshopRegion !== 'ALL') {
+      const memory = currentBookshopRegion === '已結業書店';
+      const isClosed = b => b.region === '已結業書店' || !!b.closed_year;
+      filtered = filtered.filter(b => memory ? isClosed(b) : !isClosed(b));
+      if (currentBookshopRegion !== 'ALL' && !memory) {
         filtered = filtered.filter(b => b.region === currentBookshopRegion);
       }
+      const ws = document.querySelector('.bookshop-workspace');
+      ws.dataset.mode = memory ? 'memory' : 'open';
+      document.getElementById('tab-map').classList.toggle('memory-mode-active', memory);
+      document.getElementById('memory-mode-bar').classList.toggle('hidden', !memory);
+      document.querySelector('.list-caption span').textContent = memory ? '書店記憶' : '書店名冊';
+      if (memory) filtered = [...filtered].sort((a, b) => (Number(b.closed_year) || 0) - (Number(a.closed_year) || 0));
 
       if (currentBookshopRegion === '外國香港書店/圖書館' && currentBookshopCountry !== 'ALL_OVERSEAS') {
         filtered = filtered.filter(b => b.country === currentBookshopCountry);
@@ -1027,7 +1072,7 @@
       }
 
       renderBookshops(filtered);
-      updateMapMarkers(filtered);
+      if (!memory) { updateMapMarkers(filtered); setTimeout(() => map?.invalidateSize(), 50); }
     }
 
     // --- 作者 & 出版社 ---
