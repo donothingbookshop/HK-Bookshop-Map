@@ -635,7 +635,7 @@
                 <option value="新界">新界</option>
                 <option value="離島">離島</option>
                 <option value="外國香港書店/圖書館">外國香港書店/圖書館</option>
-                <option value="已結業書店">已結業書店</option>
+                <option value="已結業書店">已結業書店（舊資料）</option>
               </select>
             </div>
             <div id="bs-country-box" class="hidden">
@@ -654,14 +654,22 @@
               <label class="block font-bold text-slate-700 mb-1">營業時間</label>
               <input type="text" id="bs-hours" class="w-full border rounded px-3 py-2" placeholder="例：週一至週日 12:00-20:00">
             </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">營業狀態 *</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1"><input type="radio" name="bs-status" value="open" checked onchange="toggleBsClosed()"> 營業中</label>
+                <label class="flex items-center gap-1"><input type="radio" name="bs-status" value="closed" onchange="toggleBsClosed()"> 🕯️ 已結業</label>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">已結業書店會移入網站「書店記憶」，唔會出現喺地圖。</p>
+            </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block font-bold text-slate-700 mb-1">開業年份</label>
                 <input type="number" id="bs-opened" min="1800" max="2100" class="w-full border rounded px-3 py-2" placeholder="例：2015">
               </div>
               <div>
-                <label class="block font-bold text-slate-700 mb-1">結業年份（仍營業留空）</label>
-                <input type="number" id="bs-closed" min="1800" max="2100" class="w-full border rounded px-3 py-2" placeholder="例：2024">
+                <label class="block font-bold text-slate-700 mb-1">結業年份</label>
+                <input type="number" id="bs-closed" min="1800" max="2100" disabled class="w-full border rounded px-3 py-2 bg-slate-100" placeholder="例：2024">
               </div>
             </div>
                     <!-- 書店地圖位置：不需手動輸入經緯度 -->
@@ -2842,7 +2850,8 @@ if (
         phone: document.getElementById('bs-phone').value,
         opening_hours: document.getElementById('bs-hours').value,
         opened_year: Number(document.getElementById('bs-opened').value) || null,
-        closed_year: Number(document.getElementById('bs-closed').value) || null,
+        status: bsStatus(),
+        closed_year: bsStatus() === 'closed' ? (Number(document.getElementById('bs-closed').value) || null) : null,
         latitude: latitude,
 longitude: longitude,
         description: document.getElementById('bs-desc').value,
@@ -2866,6 +2875,9 @@ longitude: longitude,
       else { resetBookshopForm(); fetchBookshops(); alert("儲存成功！"); }
     }
 
+    function bsStatus() { return document.querySelector('input[name="bs-status"]:checked')?.value || 'open'; }
+    function setBsStatus(v) { document.querySelectorAll('input[name="bs-status"]').forEach(r => r.checked = r.value === v); toggleBsClosed(); }
+    function toggleBsClosed() { const el = document.getElementById('bs-closed'); const closed = bsStatus() === 'closed'; el.disabled = !closed; el.classList.toggle('bg-slate-100', !closed); if (!closed) el.value = ''; }
     function editBookshop(b) {
       document.getElementById('bs-id').value = b.id;
       document.getElementById('bs-name').value = b.name;
@@ -2876,6 +2888,7 @@ longitude: longitude,
       document.getElementById('bs-hours').value = b.opening_hours || '';
       document.getElementById('bs-opened').value = b.opened_year || '';
       document.getElementById('bs-closed').value = b.closed_year || '';
+      setBsStatus((b.status === 'closed' || b.region === '已結業書店') ? 'closed' : 'open');
       setTimeout(() => {
   initAdminBookshopMap();
 
@@ -2920,6 +2933,7 @@ longitude: longitude,
   document.getElementById('bs-lng').value = '';
   document.getElementById('bookshop-form-title').innerText = '新增實體書店';
   document.getElementById('bs-country-box').classList.add('hidden');
+  setBsStatus('open');
 
   const status = document.getElementById('bs-location-status');
   if (status) {

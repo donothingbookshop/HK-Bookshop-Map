@@ -1047,7 +1047,7 @@
       let filtered = allBookshops;
 
       const memory = currentBookshopRegion === '已結業書店';
-      const isClosed = b => b.region === '已結業書店' || !!b.closed_year;
+      const isClosed = b => b.status === 'closed' || b.region === '已結業書店';
       filtered = filtered.filter(b => memory ? isClosed(b) : !isClosed(b));
       if (currentBookshopRegion !== 'ALL' && !memory) {
         filtered = filtered.filter(b => b.region === currentBookshopRegion);
