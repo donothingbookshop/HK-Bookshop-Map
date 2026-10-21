@@ -390,15 +390,17 @@
               <input type="text" id="cust-phone" class="w-full border border-line rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-bookshop" placeholder="聯絡電話 *">
             </div>
             <div>
-              <label class="block text-[11px] text-muted-ink mb-1">付款方式</label>
+              <label class="block text-[11px] text-muted-ink mb-1">確認後方便使用的付款方式</label>
               <select id="payment-method" class="w-full border border-line rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-bookshop bg-surface">
+                <option value="待店主聯絡時確認">稍後與店主確認</option>
                 <option value="FPS">轉數快 (FPS)</option>
                 <option value="PayMe">PayMe</option>
                 <option value="BankTransfer">銀行帳戶轉帳</option>
               </select>
             </div>
+            <p class="text-[11px] text-muted-ink leading-relaxed">提交後店主會以電話／WhatsApp 聯絡你確認庫存、付款及交收；庫存以店主確認為準。</p>
             <button onclick="submitOrder()" class="w-full bg-primary hover:bg-primary text-primary-contrast font-bold py-2.5 rounded-lg transition text-xs shadow flex items-center justify-center gap-1.5 mt-2">
-              <i class="fa-solid fa-paper-plane"></i> 提交訂單並取得付款資料
+              <i class="fa-solid fa-paper-plane"></i> 提交訂單，等待店主聯絡
             </button>
           </div>
         </div>
@@ -546,28 +548,16 @@
         <div class="w-12 h-12 bg-eco-soft text-eco rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
           <i class="fa-solid fa-check"></i>
         </div>
-        <h3 class="text-lg font-bold text-ink">訂單已成功提交！</h3>
-        <p class="text-xs text-muted-ink mt-0.5">請依照以下資料完成轉帳付款，上傳截圖後店家將儘快處理。</p>
+        <h3 class="text-lg font-bold text-ink">訂單已收到！</h3>
+        <p class="text-xs text-muted-ink mt-0.5">店主會盡快以電話／WhatsApp 聯絡你。</p>
       </div>
 
       <div id="payment-details-box" class="bg-paper p-4 rounded-xl border border-line text-xs space-y-3 mb-4">
       </div>
 
-      <div class="bg-archive-soft border border-archive-line p-4 rounded-xl mb-4 space-y-2">
-        <h4 class="text-xs font-bold text-archive flex items-center gap-1.5">
-          <i class="fa-solid fa-cloud-arrow-up"></i> 上傳入數紙 / 付款截圖
-        </h4>
-        <p class="text-[11px] text-archive">完成付款後，請在此上傳相片，以加速對帳流程：</p>
-        <input type="file" id="customer-proof-file" accept="image/*" class="w-full text-xs text-muted-ink border border-archive-line rounded p-1 bg-surface">
-        <button onclick="uploadPaymentProof()" id="upload-proof-btn" class="w-full bg-primary hover:bg-primary text-primary-contrast font-bold py-1.5 rounded text-xs transition">
-          上傳付款相片
-        </button>
-        <p id="proof-upload-status" class="text-[11px] text-eco font-medium hidden text-center mt-1"></p>
-      </div>
-
       <div class="bg-bookshop-soft border border-bookshop-line p-3 rounded-lg text-[11px] text-bookshop leading-relaxed mb-4">
-        <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-info mr-1"></i>付款完成後提示：</p>
-        <p>上傳相片後，亦可將訂單編號連同截圖 WhatsApp 或 Telegram 傳送給我們確認。</p>
+        <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-info mr-1"></i>請留意：</p>
+        <p>提交訂單不代表已完成購買。店主會先確認庫存，再聯絡你安排付款及交收；請暫時毋須付款。</p>
       </div>
 
       <button onclick="closePaymentModal()" class="w-full bg-primary hover:bg-primary text-primary-contrast py-2.5 rounded-xl text-xs font-bold transition">
@@ -1610,38 +1600,13 @@
 
     function showPaymentModal(method, amount) {
       const box = document.getElementById('payment-details-box');
-      let html = `<p class="font-bold text-ink text-sm mb-2 border-b pb-1">應付總金額：<span class="text-bookshop font-extrabold text-base">HK$ ${Number(amount || 0).toFixed(2)}</span></p>`;
-
-      if (!paymentSettings) {
-        html += `<p class="text-muted-ink">暫未設定詳細收款資料，請等待店家專人聯絡。</p>`;
-      } else if (method === 'FPS') {
-        html += `
-          <p><span class="font-bold text-ink">付款方式：</span>轉數快 (FPS)</p>
-          <p><span class="font-bold text-ink">FPS 識別碼 / 電話：</span><span class="font-mono text-bookshop font-bold bg-bookshop-soft px-1.5 py-0.5 rounded">${paymentSettings.fps_number || '未提供'}</span></p>
-          ${paymentSettings.fps_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-muted-ink mb-1">FPS QR Code 掃瞄付款：</p><img src="${paymentSettings.fps_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-surface rounded shadow-sm"></div>` : ''}
-        `;
-      } else if (method === 'PayMe') {
-        html += `
-          <p><span class="font-bold text-ink">付款方式：</span>PayMe</p>
-          ${paymentSettings.payme_link ? `<p><span class="font-bold text-ink">PayMe 連結：</span><a href="${paymentSettings.payme_link}" target="_blank" class="text-archive underline break-all">${paymentSettings.payme_link}</a></p>` : ''}
-          ${paymentSettings.payme_qr_url ? `<div class="mt-2 text-center"><p class="text-[11px] text-muted-ink mb-1">PayMe QR Code 掃瞄付款：</p><img src="${paymentSettings.payme_qr_url}" class="w-36 h-36 mx-auto border p-1 bg-surface rounded shadow-sm"></div>` : ''}
-        `;
-      } else if (method === 'BankTransfer') {
-        html += `
-          <p><span class="font-bold text-ink">付款方式：</span>銀行轉帳</p>
-          <p><span class="font-bold text-ink">銀行名稱：</span>${paymentSettings.bank_name || '未提供'}</p>
-          <p><span class="font-bold text-ink">戶口號碼：</span><span class="font-mono text-bookshop font-bold">${paymentSettings.bank_account || '未提供'}</span></p>
-          <p><span class="font-bold text-ink">戶口持有人：</span>${paymentSettings.bank_holder || '未提供'}</p>
-        `;
-      }
-
-      if (paymentSettings && paymentSettings.instructions) {
-        html += `<div class="border-t pt-2 mt-2 text-[11px] text-muted-ink">${paymentSettings.instructions}</div>`;
-      }
-
-      box.innerHTML = html;
-      document.getElementById('proof-upload-status').classList.add('hidden');
-      document.getElementById('customer-proof-file').value = '';
+      const orderNo = currentOrderId ? `#${currentOrderId}` : '已記錄';
+      const payLabel = { FPS: '轉數快 (FPS)', PayMe: 'PayMe', BankTransfer: '銀行帳戶轉帳' }[method] || '稍後與店主確認';
+      box.innerHTML = `
+        <p><span class="font-bold text-ink">訂單編號：</span>${orderNo}</p>
+        <p><span class="font-bold text-ink">預計總金額：</span><span class="text-bookshop font-extrabold">HK$ ${Number(amount || 0).toFixed(2)}</span></p>
+        <p><span class="font-bold text-ink">付款方式意向：</span>${payLabel}</p>
+        <p class="text-muted-ink">如有需要，可保留訂單編號方便店主聯絡時核對。</p>`;
       document.getElementById('payment-modal').classList.remove('hidden');
     }
 
