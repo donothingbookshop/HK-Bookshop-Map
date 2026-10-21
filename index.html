@@ -398,7 +398,7 @@
                 <option value="BankTransfer">銀行帳戶轉帳</option>
               </select>
             </div>
-            <p class="text-[11px] text-muted-ink leading-relaxed">提交後店主會以電話／WhatsApp 聯絡你確認庫存、付款及交收；庫存以店主確認為準。</p>
+            <p class="text-[11px] text-muted-ink leading-relaxed">提交後店主會以電話／WhatsApp 聯絡你確認庫存、付款及交收；庫存以店主確認為準。詳情請參閱《<button type="button" onclick="openPolicy('order')" class="underline">訂購及交收說明</button>》、《<button type="button" onclick="openPolicy('refund')" class="underline">取消及退款安排</button>》及《<button type="button" onclick="openPolicy('privacy')" class="underline">私隱政策</button>》。</p>
             <button onclick="submitOrder()" class="w-full bg-primary hover:bg-primary text-primary-contrast font-bold py-2.5 rounded-lg transition text-xs shadow flex items-center justify-center gap-1.5 mt-2">
               <i class="fa-solid fa-paper-plane"></i> 提交訂單，等待店主聯絡
             </button>
@@ -729,6 +729,7 @@
         </div>
         <input id="ct-phone" maxlength="50" class="w-full border rounded px-3 py-2" placeholder="聯絡電話 / WhatsApp（選填）">
         <textarea id="ct-message" required maxlength="2000" rows="4" class="w-full border rounded px-3 py-2" placeholder="你的問題 *"></textarea>
+        <p class="text-[11px] text-muted-ink">你提供的資料只會用於回覆今次查詢，詳情請參閱《<button type="button" onclick="openPolicy('privacy')" class="underline">私隱政策</button>》。</p>
         <button id="ct-btn" type="submit" class="bg-primary hover:bg-primary text-primary-contrast font-bold px-5 py-2 rounded-lg">送出</button>
         <p id="ct-status" class="text-xs"></p>
       </form>
@@ -745,12 +746,16 @@
 
   <footer class="bg-ink text-xs py-6 text-center mt-auto" style="color:oklch(0.82 0.02 80)">
     <p>© 香港獨立文化地圖 · Independent Culture Guide</p>
-    <p class="mt-2"><button type="button" onclick="openPrivacy()" class="underline underline-offset-4 font-semibold text-sm hover:opacity-100" style="color:oklch(0.95 0.015 85)">🔒 私隱政策</button></p>
+    <p class="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1">
+      <button type="button" onclick="openPolicy('privacy')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">🔒 私隱政策</button>
+      <button type="button" onclick="openPolicy('order')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">📦 訂購及交收說明</button>
+      <button type="button" onclick="openPolicy('refund')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">↩️ 取消及退款安排</button>
+    </p>
   </footer>
   <div id="privacy-modal" class="hidden fixed inset-0 z-[3000] bg-ink/60 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="bg-surface rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 relative">
       <button type="button" onclick="document.getElementById('privacy-modal').classList.add('hidden')" class="absolute top-3 right-4 text-faint text-xl">×</button>
-      <h3 class="font-bold text-lg text-ink mb-3">🔒 私隱政策</h3>
+      <h3 id="privacy-title" class="font-bold text-lg text-ink mb-3">🔒 私隱政策</h3>
       <div id="privacy-text" class="text-sm text-muted-ink whitespace-pre-line leading-relaxed">載入中…</div>
     </div>
   </div>

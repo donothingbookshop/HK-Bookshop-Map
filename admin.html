@@ -603,6 +603,10 @@
             <textarea id="set-instructions" rows="3" class="w-full border rounded px-3 py-2" placeholder="例如：轉帳時請註明訂單號碼，並保留入數紙..."></textarea>
             <label class="block font-bold text-slate-700 mt-3 mb-1">🔒 私隱政策（網站頁尾顯示）</label>
             <textarea id="set-privacy" rows="10" class="w-full border rounded px-3 py-2 text-xs"></textarea>
+            <label class="block font-bold text-slate-700 mt-3 mb-1">📦 訂購及交收說明（網站頁尾及結帳顯示）</label>
+            <textarea id="set-order-policy" rows="8" class="w-full border rounded px-3 py-2 text-xs"></textarea>
+            <label class="block font-bold text-slate-700 mt-3 mb-1">↩️ 取消及退款安排（網站頁尾及結帳顯示）</label>
+            <textarea id="set-refund-policy" rows="8" class="w-full border rounded px-3 py-2 text-xs"></textarea>
           </div>
 
           <button type="submit" class="w-full bg-amber-900 hover:bg-amber-800 text-white font-bold py-2.5 rounded-xl transition shadow">
@@ -673,8 +677,9 @@
                 <input type="number" id="bs-closed" min="1800" max="2100" disabled class="w-full border rounded px-3 py-2 bg-slate-100" placeholder="例：2024">
               </div>
             </div>
+            <p id="bs-closed-note" class="hidden text-[11px] text-slate-600 bg-slate-50 border rounded-xl p-3">🕯️ 已結業書店喺網站以「書店記憶」卡片顯示，毋須設定地圖位置。地址欄可填舊址。</p>
                     <!-- 書店地圖位置：不需手動輸入經緯度 -->
-            <div class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
+            <div id="bs-map-box" class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <label class="block font-bold text-amber-900">
                   <i class="fa-solid fa-map-location-dot mr-1"></i>書店地圖位置
@@ -2712,6 +2717,8 @@ window.onload = async function () {
       document.getElementById('set-bank-account').value = data.bank_account || '';
       document.getElementById('set-instructions').value = data.instructions || '';
       document.getElementById('set-privacy').value = data.privacy_policy || DEFAULT_PRIVACY;
+      document.getElementById('set-order-policy').value = data.order_policy || DEFAULT_ORDER_POLICY;
+      document.getElementById('set-refund-policy').value = data.refund_policy || DEFAULT_REFUND_POLICY;
 
       if (data.fps_qr_url) {
         document.getElementById('preview-fps-qr').innerHTML = `<img src="${data.fps_qr_url}" class="w-24 h-24 object-contain border rounded">`;
@@ -2753,7 +2760,9 @@ window.onload = async function () {
         bank_holder: document.getElementById('set-bank-holder').value,
         bank_account: document.getElementById('set-bank-account').value,
         instructions: document.getElementById('set-instructions').value,
-        privacy_policy: document.getElementById('set-privacy').value
+        privacy_policy: document.getElementById('set-privacy').value,
+        order_policy: document.getElementById('set-order-policy').value,
+        refund_policy: document.getElementById('set-refund-policy').value
       };
 
       if (fpsQrUrl) payload.fps_qr_url = fpsQrUrl;
@@ -2828,23 +2837,25 @@ window.onload = async function () {
 
 const latitudeText = document.getElementById('bs-lat').value.trim();
 const longitudeText = document.getElementById('bs-lng').value.trim();
+const isClosedShop = bsStatus() === 'closed';
+const hasCoords = latitudeText !== '' && longitudeText !== '';
 
-if (latitudeText === '' || longitudeText === '') {
-  alert('請先在地圖上選擇書店位置，或按「搜尋地址」。');
+if (!hasCoords && !isClosedShop) {
+  alert('請先在地圖上選擇書店位置，或按「搜尋地址」。（已結業書店可不設定位置）');
   return;
 }
 
-const latitude = Number(latitudeText);
-const longitude = Number(longitudeText);
+const latitude = hasCoords ? Number(latitudeText) : null;
+const longitude = hasCoords ? Number(longitudeText) : null;
 
-if (
+if (hasCoords && (
   !Number.isFinite(latitude) ||
   !Number.isFinite(longitude) ||
   latitude < -90 ||
   latitude > 90 ||
   longitude < -180 ||
   longitude > 180
-) {
+)) {
   alert('地圖位置無效，請重新搜尋地址或在地圖上點選位置。');
   return;
 }      const payload = {
@@ -2882,7 +2893,14 @@ longitude: longitude,
 
     function bsStatus() { return document.querySelector('input[name="bs-status"]:checked')?.value || 'open'; }
     function setBsStatus(v) { document.querySelectorAll('input[name="bs-status"]').forEach(r => r.checked = r.value === v); toggleBsClosed(); }
-    function toggleBsClosed() { const el = document.getElementById('bs-closed'); const closed = bsStatus() === 'closed'; el.disabled = !closed; el.classList.toggle('bg-slate-100', !closed); if (!closed) el.value = ''; }
+    function toggleBsClosed() {
+      const el = document.getElementById('bs-closed'); const closed = bsStatus() === 'closed';
+      el.disabled = !closed; el.classList.toggle('bg-slate-100', !closed); if (!closed) el.value = '';
+      const mapBox = document.getElementById('bs-map-box'), note = document.getElementById('bs-closed-note');
+      if (mapBox) mapBox.classList.toggle('hidden', closed);
+      if (note) note.classList.toggle('hidden', !closed);
+      if (!closed && typeof initAdminBookshopMap === 'function') setTimeout(() => { try { initAdminBookshopMap(); } catch (e) {} }, 50);
+    }
     function editBookshop(b) {
       document.getElementById('bs-id').value = b.id;
       document.getElementById('bs-name').value = b.name;
@@ -3480,6 +3498,43 @@ longitude: longitude,
       setAiStatus('已填入表單，記住補上價格同庫存。');
       document.getElementById('ai-result-box').classList.add('hidden');
     }
+
+    const DEFAULT_ORDER_POLICY = `訂購及交收說明
+
+1. 提交訂單
+於網店選購後提交訂單，即代表你希望預留有關貨品。提交訂單不代表已完成購買，此時毋須付款。
+
+2. 確認庫存及聯絡
+店主會先確認庫存，然後以電話或 WhatsApp 聯絡你，確認貨品、金額、付款及交收安排。庫存以店主確認為準。
+
+3. 付款
+確認訂單後，店主會個別提供付款方式（例如 PayMe、FPS、銀行轉帳或現金）。如付款名稱與訂單名稱不同，請主動告知。
+
+4. 交收方式
+交收方式（例如面交、店內取書或本地郵寄）以店主與你確認的安排為準。如需郵寄，郵費及寄出時間會於確認時說明。
+
+5. 查詢
+如有任何疑問，歡迎透過網站「聯絡我」與我們聯絡。`;
+
+    const DEFAULT_REFUND_POLICY = `取消及退款安排
+
+1. 確認前取消
+訂單未經店主確認前，可隨時透過電話、WhatsApp 或「聯絡我」取消，毋須任何費用。
+
+2. 已確認但未付款
+如需取消，請盡早通知，以便釋放預留貨品。
+
+3. 缺貨或價格錯誤
+如確認後發現缺貨，店主會聯絡你安排全額退款或更換貨品。如網站價格有誤，店主會先聯絡你確認，你可選擇取消。
+
+4. 已付款後改變主意
+未交收前可與店主商討，按個別情況處理；已交收的貨品一般不設退款，除非貨品與描述嚴重不符。
+
+5. 二手書及寄售貨品
+二手書及寄售貨品以頁面描述為準，輕微歲月痕跡不構成退款理由。
+
+6. 退款方式
+如需退款，一般以原付款方式退回，店主會與你確認時間。`;
 
     function clearAiResult() {
       document.getElementById('ai-result-box').classList.add('hidden');
