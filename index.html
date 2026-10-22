@@ -752,7 +752,7 @@
       <button type="button" onclick="openPolicy('refund')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">↩️ 取消及退款安排</button>
     </p>
   </footer>
-  <div id="privacy-modal" class="hidden fixed inset-0 z-[3000] bg-ink/60 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div id="privacy-modal" class="hidden fixed inset-0 z-[9999] bg-ink/60 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="bg-surface rounded-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 relative">
       <button type="button" onclick="document.getElementById('privacy-modal').classList.add('hidden')" class="absolute top-3 right-4 text-faint text-xl">×</button>
       <h3 id="privacy-title" class="font-bold text-lg text-ink mb-3">🔒 私隱政策</h3>
@@ -796,11 +796,20 @@
       document.getElementById('donate').classList.remove('hidden');
     }
     loadDonate();
-    async function openPrivacy() {
+    const POLICIES = {
+      privacy: ['privacy_policy', '🔒 私隱政策'],
+      order: ['order_policy', '📦 訂購及交收說明'],
+      refund: ['refund_policy', '↩️ 取消及退款安排'],
+    };
+    async function openPolicy(kind) {
+      const [col, title] = POLICIES[kind] || POLICIES.privacy;
+      document.getElementById('privacy-title').textContent = title;
+      document.getElementById('privacy-text').textContent = '載入中…';
       document.getElementById('privacy-modal').classList.remove('hidden');
-      const { data } = await _supabase.from('payment_settings').select('privacy_policy').eq('id','default').maybeSingle();
-      document.getElementById('privacy-text').textContent = (data && data.privacy_policy) || '私隱政策暫未提供，如有查詢請透過「聯絡我」與我們聯絡。';
+      const { data } = await _supabase.from('payment_settings').select(col).eq('id','default').maybeSingle();
+      document.getElementById('privacy-text').textContent = (data && data[col]) || title.slice(2).trim() + '暫未提供，如有查詢請透過「聯絡我」與我們聯絡。';
     }
+    function openPrivacy() { return openPolicy('privacy'); }
 
 
     let map;
