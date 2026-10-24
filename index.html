@@ -1042,7 +1042,7 @@
             ${v.highlight ? `<p class="text-xs text-ink"><i class="fa-solid fa-star mr-1 text-bookshop"></i>推薦：${zEsc(v.highlight)}</p>` : ''}
             ${tags.length ? `<div class="flex flex-wrap gap-1">${tags.map(t => `<span class="border border-line text-muted-ink text-[11px] px-2 py-0.5 rounded-full">${zEsc(t)}</span>`).join('')}</div>` : ''}
             <div class="mt-auto pt-3 border-t border-line flex flex-wrap gap-3 text-xs">
-              ${voiceLink(v.spotify_url,'fa-brands fa-spotify','Spotify')}${voiceLink(v.apple_url,'fa-solid fa-podcast','Apple')}${voiceLink(v.instagram_url,'fa-brands fa-instagram','Instagram')}${voiceLink(v.website_url,'fa-solid fa-globe','網站')}
+              ${voiceLink(v.spotify_url,'fa-brands fa-spotify','Spotify')}${voiceLink(v.apple_url,'fa-solid fa-podcast','Apple')}${voiceLink(v.youtube_url,'fa-brands fa-youtube','YouTube')}${voiceLink(v.instagram_url,'fa-brands fa-instagram','Instagram')}${voiceLink(v.website_url,'fa-solid fa-globe','網站')}
             </div>
           </div></article>`;
       }).join('') : '<p class="text-faint italic col-span-full">暫無紀錄，敬請期待。</p>';
