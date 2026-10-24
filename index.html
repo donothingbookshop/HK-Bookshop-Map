@@ -53,6 +53,8 @@
       --danger: oklch(0.47 0.12 25); --danger-light: oklch(0.76 0.05 25); --danger-soft: oklch(0.94 0.02 25); --danger-line: oklch(0.83 0.04 25);
       --shadow: 0 4px 16px oklch(0.25 0.015 55 / 0.08);
     }
+    .trail-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: var(--primary); color: var(--primary-contrast); border: 2px solid var(--bookshop-light); font-size: 12px; font-weight: 700; }
+    .trail-marker { background: transparent; border: 0; }
     body { background: var(--paper); color: var(--ink); letter-spacing: 0; }
     header > div { max-width: 1440px !important; }
     header { background: var(--primary); box-shadow: none !important; border-bottom: 3px solid var(--bookshop); }
@@ -208,6 +210,15 @@
       <div class="map-view-toggle" role="group" aria-label="書店顯示方式">
         <button type="button" data-map-view="map" aria-pressed="true" onclick="setMapView('map')"><i class="fa-solid fa-map-location-dot"></i> 地圖 Map</button>
         <button type="button" data-map-view="list" aria-pressed="false" onclick="setMapView('list')"><i class="fa-solid fa-list"></i> 清單 List</button>
+      </div>
+
+      <!-- 主題文化散步路線 -->
+      <div id="trail-panel" class="mb-4 border border-bookshop-line bg-surface rounded-xl p-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-bold text-ink"><i class="fa-solid fa-person-walking text-bookshop mr-1"></i>主題文化散步路線</span>
+          <button type="button" id="trail-btn-wanchai" onclick="toggleTrail('wanchai')" class="border border-bookshop-line bg-bookshop-soft text-bookshop px-3 py-1 rounded-full text-xs font-semibold transition">灣仔街巷與人文漫步</button>
+        </div>
+        <div id="trail-detail" class="hidden mt-3"></div>
       </div>
 
       <!-- 地區篩選按鈕 -->
@@ -971,6 +982,58 @@
         mapMarkers.push(marker);
       });
       if (mapMarkers.length) map.fitBounds(L.featureGroup(mapMarkers).getBounds(), {padding: [40, 40], maxZoom: 14, animate: false});
+    }
+
+    // --- 主題文化散步路線 ---
+    const TRAILS = {
+      wanchai: {
+        name: '灣仔街巷與人文漫步',
+        intro: '由莊士敦道出發，穿過活道與克街，最後在富德樓高處閱讀作結。全程約 1.2 公里，步行約 25–30 分鐘。',
+        stops: [
+          {id: 18, note: '起點，近灣仔站 A3 出口，老牌綜合書店。', walk: ''},
+          {id: 4, note: '商場樓上的二手舊書天地，適合慢慢尋寶。', walk: '步行約 4 分鐘'},
+          {id: 3, note: '老字號二手書店，滿載舊書香。', walk: '步行約 3 分鐘'},
+          {id: 36, note: '走入克街內街，感受街坊老書局的人情味。', walk: '步行約 2 分鐘'},
+          {id: 14, note: '終點，富德樓高層的藝文閱讀空間，可遠眺電車路。', walk: '步行約 6 分鐘'}
+        ]
+      }
+    };
+    let trailLayer = null, activeTrail = null;
+    function toggleTrail(key) {
+      const detail = document.getElementById('trail-detail');
+      const btn = document.getElementById('trail-btn-' + key);
+      if (trailLayer) { map.removeLayer(trailLayer); trailLayer = null; }
+      if (activeTrail === key) {
+        activeTrail = null; detail.classList.add('hidden'); detail.innerHTML = '';
+        btn.className = btn.className.replace('bg-primary text-primary-contrast', 'bg-bookshop-soft text-bookshop');
+        return;
+      }
+      activeTrail = key;
+      btn.className = btn.className.replace('bg-bookshop-soft text-bookshop', 'bg-primary text-primary-contrast');
+      const t = TRAILS[key];
+      const stops = t.stops.map(s => ({...s, shop: allBookshops.find(b => b.id === s.id)})).filter(s => s.shop && s.shop.status !== 'closed');
+      detail.innerHTML = `<p class="text-xs text-muted-ink mb-2">${escapeShop(t.intro)}</p>
+        <ol class="flex flex-col gap-2">${stops.map((s, i) => `
+          <li>${s.walk ? `<p class="text-[11px] text-faint ml-8 mb-1"><i class="fa-solid fa-shoe-prints mr-1"></i>${escapeShop(s.walk)}</p>` : ''}
+          <button type="button" onclick="focusTrailStop(${s.id})" class="w-full text-left flex gap-2 items-start hover:bg-bookshop-soft rounded-lg p-1 transition">
+            <span class="trail-num">${i + 1}</span>
+            <span><span class="font-bold text-sm text-ink block">${escapeShop(s.shop.name)}</span><span class="text-xs text-muted-ink">${escapeShop(s.note)}</span></span>
+          </button></li>`).join('')}</ol>`;
+      detail.classList.remove('hidden');
+      if (!map) return;
+      if (typeof setMapView === 'function' && window.innerWidth < 768) setMapView('map');
+      const pts = stops.filter(s => s.shop.latitude && s.shop.longitude).map(s => [Number(s.shop.latitude), Number(s.shop.longitude)]);
+      const color = getComputedStyle(document.documentElement).getPropertyValue('--bookshop').trim();
+      const line = L.polyline(pts, {color, weight: 4, opacity: .85, dashArray: '8 8'});
+      const nums = pts.map((p, i) => L.marker(p, {icon: L.divIcon({className: 'trail-marker', html: `<span class="trail-num">${i + 1}</span>`, iconSize: [26, 26], iconAnchor: [13, 13]}), zIndexOffset: 1000})
+        .on('click', () => focusTrailStop(stops[i].id)));
+      trailLayer = L.featureGroup([line, ...nums]).addTo(map);
+      if (pts.length) map.fitBounds(trailLayer.getBounds(), {padding: [50, 50], maxZoom: 17});
+    }
+    function focusTrailStop(id) {
+      const m = mapMarkers.find(m => m.shopId === id);
+      if (m) { map.setView(m.getLatLng(), 17); m.openPopup(); }
+      highlightShop(id);
     }
 
     async function fetchPaymentSettings() {
