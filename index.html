@@ -63,6 +63,10 @@
     button:focus-visible, .bookshop-card:focus-visible { outline: 2px solid var(--bookshop); outline-offset: 3px; }
     .nav-btn { background: transparent !important; }
     .nav-btn:hover { background: var(--ink) !important; color: var(--primary-contrast) !important; }
+    .main-nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; max-width: 100%; }
+    .main-nav::-webkit-scrollbar { display: none; }
+    .main-nav .nav-btn { white-space: nowrap; flex-shrink: 0; padding: 6px 8px !important; }
+    @media (max-width: 1279px) { .main-nav { order: 3; width: 100%; } }
     #tab-directory, #directory-modal { --bookshop: var(--archive); --bookshop-soft: var(--archive-soft); --bookshop-line: var(--archive-line); }
     #dir-section-authors, #dir-section-publishers, #contact-us > div, #donate > div { background: transparent; box-shadow: none; border: 0; border-radius: 0; }
     .dir-scroll-wrap { position: relative; height: min(58vh, 520px); }
@@ -151,7 +155,7 @@
         <div><h1 class="text-lg font-bold">香港獨立文化地圖</h1><p class="brand-subtitle">Independent Culture Guide</p></div>
       </div>
 
-      <nav class="flex flex-wrap gap-1.5 text-xs sm:text-sm font-medium">
+      <nav class="main-nav flex gap-1 text-xs sm:text-sm font-medium">
         <button onclick="switchTab('map')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> 書店地圖</button>
         <button onclick="switchTab('directory')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-book-open"></i> 文化檔案</button>
         <button onclick="switchTab('shop')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-store"></i> 網上商店</button>
