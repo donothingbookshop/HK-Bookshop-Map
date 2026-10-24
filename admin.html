@@ -161,6 +161,9 @@
         <button onclick="switchAdminTab('voices', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-microphone-lines"></i> 文化之聲
         </button>
+        <button onclick="switchAdminTab('trails', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-person-walking"></i> 散步路線
+        </button>
       </div>
     </div>
 
@@ -669,6 +672,7 @@
               <label class="block font-bold text-slate-700 mb-1">營業狀態 *</label>
               <div class="flex gap-4">
                 <label class="flex items-center gap-1"><input type="radio" name="bs-status" value="open" checked onchange="toggleBsClosed()"> 營業中</label>
+                <label class="flex items-center gap-1"><input type="radio" name="bs-status" value="closing_soon" onchange="toggleBsClosed()"> ⏳ 準備結業</label>
                 <label class="flex items-center gap-1"><input type="radio" name="bs-status" value="closed" onchange="toggleBsClosed()"> 🕯️ 已結業</label>
               </div>
               <p class="text-[11px] text-slate-500 mt-1">已結業書店會移入網站「書店記憶」，唔會出現喺地圖。</p>
@@ -1239,6 +1243,34 @@
         </div>
       </div>
     </section>
+    <section id="sec-trails" class="admin-section">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border h-fit">
+          <h2 id="trail-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增散步路線</h2>
+          <form id="trail-form" onsubmit="saveTrail(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="t-id">
+            <div><label class="block font-bold text-slate-700 mb-1">路線名稱 *</label><input type="text" id="t-name" required class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">簡介</label><textarea id="t-intro" rows="3" class="w-full border rounded px-3 py-2"></textarea></div>
+            <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="t-sort" class="w-full border rounded px-3 py-2"></div>
+            <label class="flex items-center gap-2"><input type="checkbox" id="t-active" checked> 喺網站顯示</label>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">站點（按次序）</label>
+              <div id="t-stops" class="space-y-2"></div>
+              <button type="button" onclick="addTrailStop()" class="mt-2 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded w-full"><i class="fa-solid fa-plus mr-1"></i>加一站</button>
+              <p class="text-[11px] text-slate-500 mt-1">只可揀營業中／準備結業書店；已結業書店會自動喺網站路線隱藏。</p>
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button type="submit" class="flex-grow bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded transition">儲存</button>
+              <button type="button" onclick="resetTrailForm()" class="bg-slate-200 px-3 py-2 rounded">取消</button>
+            </div>
+          </form>
+        </div>
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
+          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已建立路線</h2>
+          <div id="admin-trail-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
 
   </main>
 
@@ -1672,7 +1704,7 @@ async function createAdminAccount(ev) {
 const ADMIN_TABS = [
   ['orders','訂單管理'],['stats','銷售統計'],['manual-receipt','手動新增收據'],['consignments','寄售管理'],
   ['payment-settings','收款設定／聯絡訊息'],['bookshops','實體書店'],['authors','本地作者'],['publishers','本地出版社'],
-  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['zine','小誌 Zine'],['voices','文化之聲'],['market','市集'],['reading-room','閱書室']
+  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['zine','小誌 Zine'],['voices','文化之聲'],['trails','散步路線'],['market','市集'],['reading-room','閱書室']
 ];
 window.MY_PERMS = null;
 function permOf(tab) { const p = window.MY_PERMS; if (!p || !Object.keys(p).length) return 'edit'; return p[tab] || 'none'; }
@@ -1895,6 +1927,7 @@ window.onload = async function () {
   fetchTheatre();
   fetchZine();
   fetchVoices();
+  fetchTrails();
   fetchConsignments();
   fetchMarket();
   loadManualProductPicker();
@@ -2888,7 +2921,7 @@ window.onload = async function () {
       el.innerHTML = open.length ? open.map(b => `
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
-            <span class="font-bold text-slate-800">${b.name}</span>
+            <span class="font-bold text-slate-800">${b.name}</span>${b.status === 'closing_soon' ? '<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-semibold">⏳ 準備結業</span>' : ''}
             <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${b.region}</span>
             <p class="text-slate-500 mt-0.5">${b.address || '無地址'}</p>
           </div>
@@ -3003,7 +3036,7 @@ longitude: longitude,
       document.getElementById('bs-hours').value = b.opening_hours || '';
       document.getElementById('bs-opened').value = b.opened_year || '';
       document.getElementById('bs-closed').value = b.closed_year || '';
-      setBsStatus((b.status === 'closed' || b.region === '已結業書店') ? 'closed' : 'open');
+      setBsStatus((b.status === 'closed' || b.region === '已結業書店') ? 'closed' : (b.status === 'closing_soon' ? 'closing_soon' : 'open'));
       setTimeout(() => {
   initAdminBookshopMap();
 
@@ -4017,6 +4050,81 @@ longitude: longitude,
     async function deleteVoice(id) {
       if (!confirm('確定刪除？')) return;
       await _supabase.from('culture_voices').delete().eq('id', id); fetchVoices();
+    }
+
+    // --- 文化散步路線管理 ---
+    let adminTrails = [], trailShopOptions = [];
+    async function loadTrailShops() {
+      const { data } = await _supabase.from('bookshops').select('id,name,region,status').order('region').order('name');
+      trailShopOptions = (data || []).filter(b => b.status !== 'closed' && b.region !== '已結業書店');
+    }
+    async function fetchTrails() {
+      await loadTrailShops();
+      const { data } = await _supabase.from('cultural_trails').select('*').order('sort_order').order('id');
+      adminTrails = data || [];
+      const el = document.getElementById('admin-trail-list');
+      if (!adminTrails.length) { el.innerHTML = `<p class="text-slate-400 italic">暫無路線</p>`; }
+      else el.innerHTML = adminTrails.map(t => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
+          <div><span class="font-bold text-slate-800">${zx(t.name)}</span>
+            <span class="ml-2 ${t.active ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded font-semibold">${t.active ? '顯示中' : '已隱藏'}</span>
+            <p class="text-slate-500 mt-0.5">${(t.stops || []).length} 站：${(t.stops || []).map(s => zx((trailShopOptions.find(b => b.id === s.id) || {}).name || '（已結業或已刪除）')).join(' → ')}</p></div>
+          <div class="flex gap-2">
+            <button onclick="editTrail(${t.id})" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded">編輯</button>
+            <button onclick="deleteTrail(${t.id})" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded">刪除</button>
+          </div></div>`).join('');
+      if (!document.querySelector('#t-stops .t-stop')) addTrailStop();
+    }
+    function addTrailStop(stop = {}) {
+      const box = document.getElementById('t-stops');
+      const row = document.createElement('div');
+      row.className = 't-stop border rounded p-2 space-y-1 bg-slate-50';
+      row.innerHTML = `<div class="flex gap-1 items-center"><span class="t-num font-bold w-5 text-amber-900"></span>
+          <select class="t-shop flex-grow border rounded px-2 py-1 bg-white"><option value="">揀書店…</option>${trailShopOptions.map(b => `<option value="${b.id}" ${b.id === stop.id ? 'selected' : ''}>${zx(b.name)}（${zx(b.region)}）</option>`).join('')}</select>
+          <button type="button" class="t-up px-1.5" title="上移">↑</button><button type="button" class="t-down px-1.5" title="下移">↓</button><button type="button" class="t-del px-1.5 text-red-600" title="移除">✕</button></div>
+        <input type="text" class="t-walk w-full border rounded px-2 py-1" placeholder="由上一站步行時間，例：步行約 4 分鐘（第一站留空）">
+        <input type="text" class="t-note w-full border rounded px-2 py-1" placeholder="此站簡介">`;
+      row.querySelector('.t-walk').value = stop.walk || '';
+      row.querySelector('.t-note').value = stop.note || '';
+      row.querySelector('.t-del').onclick = () => { row.remove(); renumberTrailStops(); };
+      row.querySelector('.t-up').onclick = () => { if (row.previousElementSibling) box.insertBefore(row, row.previousElementSibling); renumberTrailStops(); };
+      row.querySelector('.t-down').onclick = () => { if (row.nextElementSibling) box.insertBefore(row.nextElementSibling, row); renumberTrailStops(); };
+      box.appendChild(row); renumberTrailStops();
+    }
+    function renumberTrailStops() { document.querySelectorAll('#t-stops .t-num').forEach((n, i) => n.textContent = i + 1); }
+    async function saveTrail(e) {
+      e.preventDefault();
+      const stops = [...document.querySelectorAll('#t-stops .t-stop')].map(r => ({
+        id: Number(r.querySelector('.t-shop').value) || null, walk: r.querySelector('.t-walk').value.trim(), note: r.querySelector('.t-note').value.trim()
+      })).filter(s => s.id);
+      if (stops.length < 2) { alert('路線最少要有 2 站。'); return; }
+      const payload = { name: document.getElementById('t-name').value.trim(), intro: document.getElementById('t-intro').value.trim() || null,
+        sort_order: parseInt(document.getElementById('t-sort').value) || 0, active: document.getElementById('t-active').checked, stops };
+      const id = document.getElementById('t-id').value;
+      const { error } = id ? await _supabase.from('cultural_trails').update(payload).eq('id', id) : await _supabase.from('cultural_trails').insert([payload]);
+      if (error) { alert('儲存失敗：' + error.message); return; }
+      resetTrailForm(); fetchTrails(); alert('儲存成功！');
+    }
+    function editTrail(id) {
+      const t = adminTrails.find(x => x.id === id); if (!t) return;
+      document.getElementById('t-id').value = t.id;
+      document.getElementById('t-name').value = t.name;
+      document.getElementById('t-intro').value = t.intro || '';
+      document.getElementById('t-sort').value = t.sort_order ?? 0;
+      document.getElementById('t-active').checked = !!t.active;
+      document.getElementById('t-stops').innerHTML = '';
+      (t.stops || []).forEach(s => addTrailStop(s));
+      document.getElementById('trail-form-title').innerText = '編輯散步路線';
+      document.getElementById('trail-form').scrollIntoView({ behavior: 'smooth' });
+    }
+    function resetTrailForm() {
+      document.getElementById('trail-form').reset(); document.getElementById('t-id').value = '';
+      document.getElementById('t-stops').innerHTML = ''; addTrailStop();
+      document.getElementById('trail-form-title').innerText = '新增散步路線';
+    }
+    async function deleteTrail(id) {
+      if (!confirm('確定刪除呢條路線？')) return;
+      await _supabase.from('cultural_trails').delete().eq('id', id); fetchTrails();
     }
 
     // --- 9. 劇團管理 ---

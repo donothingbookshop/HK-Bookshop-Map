@@ -138,6 +138,7 @@
     .memory-card { opacity: .92; }
     .memory-card .shop-card-image { filter: grayscale(1); }
     .memory-tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--muted, #ece6db); color: var(--muted-ink, #6b6257); margin-left: 6px; vertical-align: middle; font-weight: 500; }
+    .closing-tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--bookshop-soft); color: var(--bookshop); border: 1px solid var(--bookshop-line); margin-left: 6px; vertical-align: middle; font-weight: 600; }
     .memory-mode-active .map-view-toggle { display: none !important; }
     @media (max-width: 767px) {
       .shop-card-image { width: 82px; height: 96px; }
@@ -213,10 +214,10 @@
       </div>
 
       <!-- 主題文化散步路線 -->
-      <div id="trail-panel" class="mb-4 border border-bookshop-line bg-surface rounded-xl p-3">
+      <div id="trail-panel" class="hidden mb-4 border border-bookshop-line bg-surface rounded-xl p-3">
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-sm font-bold text-ink"><i class="fa-solid fa-person-walking text-bookshop mr-1"></i>主題文化散步路線</span>
-          <button type="button" id="trail-btn-wanchai" onclick="toggleTrail('wanchai')" class="border border-bookshop-line bg-bookshop-soft text-bookshop px-3 py-1 rounded-full text-xs font-semibold transition">灣仔街巷與人文漫步</button>
+          <span id="trail-buttons" class="contents"></span>
         </div>
         <div id="trail-detail" class="hidden mt-3"></div>
       </div>
@@ -929,6 +930,7 @@
     window.onload = function() {
       initMap();
       fetchBookshops();
+      fetchTrails();
       fetchProducts();
       fetchAuthorsAndPublishers();
       fetchEco();
@@ -966,7 +968,7 @@
           .filter(([key]) => shopUrl(shop[key])).map(([key,label]) => `<a href="${shopUrl(shop[key])}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');
         const preview = `<div class="shop-quick-preview">
           ${shopUrl(shop.image_url) ? `<img class="preview-image" src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}">` : ''}
-          <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>
+          <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}
           <p>${escapeShop(shop.address || '未提供地址')}</p><p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
           ${shop.phone ? `<p>電話：${escapeShop(shop.phone)}</p>` : ''}
           ${shop.opened_year || shop.closed_year ? `<p>${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
@@ -985,24 +987,20 @@
     }
 
     // --- 主題文化散步路線 ---
-    const TRAILS = {
-      wanchai: {
-        name: '灣仔街巷與人文漫步',
-        intro: '由莊士敦道出發，穿過活道與克街，最後在富德樓高處閱讀作結。全程約 1.2 公里，步行約 25–30 分鐘。',
-        stops: [
-          {id: 18, note: '起點，近灣仔站 A3 出口，老牌綜合書店。', walk: ''},
-          {id: 4, note: '商場樓上的二手舊書天地，適合慢慢尋寶。', walk: '步行約 4 分鐘'},
-          {id: 3, note: '老字號二手書店，滿載舊書香。', walk: '步行約 3 分鐘'},
-          {id: 36, note: '走入克街內街，感受街坊老書局的人情味。', walk: '步行約 2 分鐘'},
-          {id: 14, note: '終點，富德樓高層的藝文閱讀空間，可遠眺電車路。', walk: '步行約 6 分鐘'}
-        ]
-      }
-    };
+    let TRAILS = {};
+    async function fetchTrails() {
+      const { data } = await _supabase.from('cultural_trails').select('*').eq('active', true).order('sort_order').order('id');
+      TRAILS = Object.fromEntries((data || []).map(t => [String(t.id), t]));
+      const wrap = document.getElementById('trail-buttons');
+      document.getElementById('trail-panel').classList.toggle('hidden', !(data || []).length);
+      wrap.innerHTML = (data || []).map(t => `<button type="button" id="trail-btn-${t.id}" onclick="toggleTrail('${t.id}')" class="border border-bookshop-line bg-bookshop-soft text-bookshop px-3 py-1 rounded-full text-xs font-semibold transition">${escapeShop(t.name)}</button>`).join('');
+    }
     let trailLayer = null, activeTrail = null;
     function toggleTrail(key) {
       const detail = document.getElementById('trail-detail');
       const btn = document.getElementById('trail-btn-' + key);
       if (trailLayer) { map.removeLayer(trailLayer); trailLayer = null; }
+      document.querySelectorAll('#trail-buttons button').forEach(b => { if (b !== btn) b.className = b.className.replace('bg-primary text-primary-contrast', 'bg-bookshop-soft text-bookshop'); });
       if (activeTrail === key) {
         activeTrail = null; detail.classList.add('hidden'); detail.innerHTML = '';
         btn.className = btn.className.replace('bg-primary text-primary-contrast', 'bg-bookshop-soft text-bookshop');
@@ -1011,8 +1009,8 @@
       activeTrail = key;
       btn.className = btn.className.replace('bg-bookshop-soft text-bookshop', 'bg-primary text-primary-contrast');
       const t = TRAILS[key];
-      const stops = t.stops.map(s => ({...s, shop: allBookshops.find(b => b.id === s.id)})).filter(s => s.shop && s.shop.status !== 'closed');
-      detail.innerHTML = `<p class="text-xs text-muted-ink mb-2">${escapeShop(t.intro)}</p>
+      const stops = (t.stops || []).map(s => ({...s, shop: allBookshops.find(b => b.id === s.id)})).filter(s => s.shop && s.shop.status !== 'closed');
+      detail.innerHTML = `<p class="text-xs text-muted-ink mb-2">${escapeShop(t.intro || '')}</p>
         <ol class="flex flex-col gap-2">${stops.map((s, i) => `
           <li>${s.walk ? `<p class="text-[11px] text-faint ml-8 mb-1"><i class="fa-solid fa-shoe-prints mr-1"></i>${escapeShop(s.walk)}</p>` : ''}
           <button type="button" onclick="focusTrailStop(${s.id})" class="w-full text-left flex gap-2 items-start hover:bg-bookshop-soft rounded-lg p-1 transition">
@@ -1198,7 +1196,7 @@
         <article class="bookshop-card ${String(shop.id) === selectedShopId ? 'selected' : ''}" data-shop-id="${escapeShop(shop.id)}" tabindex="0" role="button" aria-label="${escapeShop(shop.name)}，查看地圖位置">
           <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
           <div class="shop-card-copy"><span class="shop-region">${escapeShop(shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region)}</span>
-            <h3>${escapeShop(shop.name)}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
+            <h3>${escapeShop(shop.name)}${shop.status === 'closing_soon' ? '<span class="closing-tag">⏳ 準備結業</span>' : ''}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
             <p class="shop-hours">${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
             ${shop.opened_year || shop.closed_year ? `<p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
             <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
