@@ -167,6 +167,7 @@
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
         <button onclick="switchTab('zine')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-shapes"></i> 小誌 Zine</button>
         <button onclick="switchTab('voices')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-microphone-lines"></i> 文化之聲</button>
+        <button onclick="switchTab('passport')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-stamp"></i> 漫步手帳</button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -590,6 +591,67 @@
       <div id="voice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
     </section>
 
+    <!-- 8. 城市漫步手帳 Tab -->
+    <section id="tab-passport" class="tab-content">
+      <style>
+        .stamp-btn { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:4px 10px; font-size:12px; font-weight:700; border:1px solid var(--bookshop-line, var(--line)); color: var(--bookshop); background: var(--bookshop-soft); border-radius:999px; cursor:pointer; }
+        .stamp-btn.done { background: var(--muted); color: var(--muted-ink); }
+        .stamp-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+        @media (min-width:768px){ .stamp-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+        .stamp-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; cursor:pointer; background:none; border:none; padding:0; }
+        .stamp { width:92%; aspect-ratio:1; border-radius:50%; border:3px double var(--stamp-c); color:var(--stamp-c); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8%; opacity:.88; box-shadow: inset 0 0 0 2px var(--stamp-c); font-family: serif; position:relative; }
+        .stamp .s-top { font-size:9px; letter-spacing:2px; }
+        .stamp .s-name { font-size:14px; font-weight:800; line-height:1.15; margin:3px 0; overflow-wrap:anywhere; }
+        .stamp .s-date { font-size:9px; }
+        .stamp .s-farewell { position:absolute; bottom:-4px; right:-4px; font-size:9px; background:var(--surface); border:1px solid var(--stamp-c); padding:0 4px; border-radius:4px; }
+        .stamp.empty { border:2px dashed var(--line); box-shadow:none; color:var(--faint); opacity:1; }
+        .stamp.pop { animation: stampPop .45s ease-out; }
+        @keyframes stampPop { 0%{ transform:scale(1.8) rotate(-12deg); opacity:0 } 60%{ transform:scale(.92) } 100%{ transform:scale(1) } }
+        .pp-stat { border:1px solid var(--line); background:var(--surface); border-radius:6px; padding:12px; text-align:center; }
+        .pp-stat b { display:block; font-size:22px; color:var(--bookshop); }
+      </style>
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-2" style="border-left:3px solid var(--bookshop);padding-left:12px">📓 城市漫步手帳</h2>
+        <p class="text-muted-ink text-sm">走訪書店時按「蓋上漫步印章」，收集你的城市足跡。免註冊，資料只儲存在你自己的手機或電腦。</p>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="pp-stat"><b id="pp-count">0</b><span class="text-xs text-muted-ink">已走訪書店</span></div>
+        <div class="pp-stat"><b id="pp-regions">0</b><span class="text-xs text-muted-ink">涉足地區</span></div>
+        <div class="pp-stat"><b id="pp-trails">0</b><span class="text-xs text-muted-ink">走破路線</span></div>
+      </div>
+      <div class="bg-surface border border-line rounded-xl p-4 mb-4 text-sm">
+        <p>目前稱號：<b id="pp-title" class="text-bookshop">尚未出發</b></p>
+        <div id="pp-badges" class="flex flex-wrap gap-2 mt-2"></div>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-5">
+        <button type="button" onclick="ppSetView('grid')" id="pp-v-grid" class="border border-line px-3 py-1 rounded-full text-xs font-semibold">印章簿</button>
+        <button type="button" onclick="ppSetView('timeline')" id="pp-v-timeline" class="border border-line px-3 py-1 rounded-full text-xs font-semibold">足跡時間軸</button>
+        <span class="flex-1"></span>
+        <button type="button" onclick="ppShareImage()" class="border border-line px-3 py-1 rounded-full text-xs">🖼️ 下載足跡小卡</button>
+        <button type="button" onclick="ppCopyList()" class="border border-line px-3 py-1 rounded-full text-xs">📋 複製足跡清單</button>
+        <button type="button" onclick="ppExport()" class="border border-line px-3 py-1 rounded-full text-xs">備份代碼</button>
+        <button type="button" onclick="ppImport()" class="border border-line px-3 py-1 rounded-full text-xs">匯入</button>
+      </div>
+      <div id="pp-body"></div>
+      <p class="text-xs text-faint mt-6">提示：清除瀏覽器資料會令手帳消失，換手機前請先按「備份代碼」。</p>
+    </section>
+
+    <!-- 印章筆記 Modal -->
+    <div id="pp-modal" class="fixed inset-0 bg-ink/70 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)ppCloseNote()">
+      <div class="bg-surface rounded-xl max-w-sm w-full p-5 border border-line">
+        <h3 id="pp-modal-title" class="font-bold text-lg mb-1"></h3>
+        <p id="pp-modal-date" class="text-xs text-muted-ink mb-3"></p>
+        <label class="text-xs text-muted-ink">我的探訪小筆記（50 字內）</label>
+        <textarea id="pp-modal-note" maxlength="50" rows="3" class="w-full border border-line rounded p-2 text-sm mt-1 bg-surface"></textarea>
+        <div class="flex gap-2 mt-3">
+          <button type="button" onclick="ppSaveNote()" class="bg-primary text-primary-contrast px-3 py-1.5 rounded text-sm">儲存</button>
+          <button type="button" onclick="ppLocate()" class="border border-line px-3 py-1.5 rounded text-sm">地圖位置</button>
+          <span class="flex-1"></span>
+          <button type="button" onclick="ppRemove()" class="text-xs text-muted-ink underline">移除印章</button>
+        </div>
+      </div>
+    </div>
+
 
   </main>
 
@@ -973,7 +1035,7 @@
           ${shop.phone ? `<p>電話：${escapeShop(shop.phone)}</p>` : ''}
           ${shop.opened_year || shop.closed_year ? `<p>${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
           ${shop.description ? `<details><summary>書店簡介</summary><p>${escapeShop(shop.description)}</p></details>` : ''}
-          <div class="preview-links">${links}</div></div>`;
+          <div class="preview-links">${links}</div>${ppButton(shop.id)}</div>`;
         const marker = L.marker([lat, lng], {icon, title: shop.name}).addTo(map).bindPopup(preview, {maxWidth: 300, minWidth: 220, maxHeight: 360});
         marker.shopId = shop.id;
         marker.on('click', () => {
@@ -1032,6 +1094,121 @@
       const m = mapMarkers.find(m => m.shopId === id);
       if (m) { map.setView(m.getLatLng(), 17); m.openPopup(); }
       highlightShop(id);
+    }
+
+    // --- 城市漫步手帳（只存在訪客瀏覽器 localStorage）---
+    const PP_KEY = 'hkculture_stroll_passport_v1';
+    let ppView = 'grid', ppCurrent = null;
+    function ppLoad() { try { const d = JSON.parse(localStorage.getItem(PP_KEY) || '{}'); return d && typeof d.stamps === 'object' ? d : {stamps:{}}; } catch { return {stamps:{}}; } }
+    function ppSave(d) { try { localStorage.setItem(PP_KEY, JSON.stringify(d)); } catch {} }
+    function ppToday() { const d = new Date(); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; }
+    function ppColor(shop) {
+      const r = shop?.region || '';
+      if (r.includes('香港島')) return 'var(--archive)';
+      if (r.includes('九龍')) return 'var(--theatre)';
+      if (r.includes('新界')) return 'var(--eco)';
+      return 'var(--bookshop)';
+    }
+    function ppButton(id) {
+      const s = ppLoad().stamps[String(id)];
+      return s ? `<button type="button" class="stamp-btn done" onclick="event.stopPropagation();switchTab('passport')">✓ 已於 ${escapeShop(s.date)} 蓋章</button>`
+               : `<button type="button" class="stamp-btn" onclick="event.stopPropagation();ppStamp('${escapeShop(id)}', this)">💮 蓋上漫步印章</button>`;
+    }
+    function ppStamp(id, btn) {
+      const d = ppLoad(); const shop = allBookshops.find(b => String(b.id) === String(id));
+      if (d.stamps[id]) return;
+      d.stamps[id] = {date: ppToday(), ts: Date.now(), note: '', farewell: shop?.status === 'closing_soon'};
+      ppSave(d);
+      const n = Object.keys(d.stamps).length;
+      if (btn) { btn.outerHTML = ppButton(id); }
+      document.querySelectorAll(`.bookshop-card[data-shop-id="${id}"] .stamp-btn`).forEach(b => b.outerHTML = ppButton(id));
+      ppToast(`已為你蓋上第 ${n} 枚印章！`);
+    }
+    function ppToast(msg) {
+      const t = document.createElement('div'); t.textContent = msg;
+      t.style.cssText = 'position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:9999;background:var(--primary);color:var(--primary-contrast);padding:8px 16px;border-radius:999px;font-size:13px;';
+      document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+    }
+    function ppTitle(n) { return n >= 16 ? '文化行者' : n >= 9 ? '城中知書人' : n >= 4 ? '巷弄漫步者' : n >= 1 ? '初行書客' : '尚未出發'; }
+    function ppTrailsDone(stamps) {
+      return Object.values(TRAILS).filter(t => { const ids = (t.stops || []).map(s => String(s.id)); return ids.length && ids.every(i => stamps[i]); });
+    }
+    function ppSetView(v) { ppView = v; ppRender(); }
+    function ppRender() {
+      const d = ppLoad(), stamps = d.stamps;
+      const shops = allBookshops.filter(b => b.status !== 'closed' || stamps[String(b.id)]);
+      const visited = shops.filter(b => stamps[String(b.id)]);
+      const regions = new Set(visited.map(b => b.region));
+      const trails = ppTrailsDone(stamps);
+      document.getElementById('pp-count').textContent = visited.length;
+      document.getElementById('pp-regions').textContent = regions.size;
+      document.getElementById('pp-trails').textContent = trails.length;
+      document.getElementById('pp-title').textContent = ppTitle(visited.length);
+      const badges = trails.map(t => `🏅 ${escapeShop(t.name)} 走破`);
+      if (visited.some(b => stamps[String(b.id)].farewell)) badges.push('🕯️ 惜別留念');
+      document.getElementById('pp-badges').innerHTML = badges.map(b => `<span class="text-xs border border-bookshop-line bg-bookshop-soft text-bookshop px-2 py-0.5 rounded-full">${b}</span>`).join('') || '<span class="text-xs text-faint">走完一條散步路線即可解鎖走破徽章</span>';
+      ['grid','timeline'].forEach(v => document.getElementById('pp-v-' + v).classList.toggle('bg-bookshop-soft', ppView === v));
+      const body = document.getElementById('pp-body');
+      if (!allBookshops.length) { body.innerHTML = '<p class="text-faint italic">載入書店資料中…</p>'; return; }
+      if (ppView === 'timeline') {
+        const list = visited.map(b => ({b, s: stamps[String(b.id)]})).sort((a, c) => c.s.ts - a.s.ts);
+        if (!list.length) { body.innerHTML = '<p class="text-faint italic">未有足跡，去書店地圖蓋第一個印章吧。</p>'; return; }
+        const groups = {}; list.forEach(x => (groups[x.s.date] ||= []).push(x));
+        body.innerHTML = Object.entries(groups).map(([date, xs]) => `<div class="border-l-2 border-bookshop-line pl-4 pb-4"><p class="text-xs font-bold text-bookshop">${escapeShop(date)}</p>${xs.map(x => `<p class="text-sm mt-1">探訪了 <b>${escapeShop(x.b.name)}</b>${x.s.note ? `<span class="text-muted-ink">｜${escapeShop(x.s.note)}</span>` : ''}</p>`).join('')}</div>`).join('');
+        return;
+      }
+      const ordered = [...visited, ...shops.filter(b => !stamps[String(b.id)] && b.status !== 'closed')];
+      body.innerHTML = `<div class="stamp-grid">${ordered.map(b => { const s = stamps[String(b.id)];
+        return `<button type="button" class="stamp-cell" onclick="ppOpen('${escapeShop(b.id)}')" aria-label="${escapeShop(b.name)}">${s
+          ? `<span class="stamp" style="--stamp-c:${ppColor(b)};transform:rotate(${(Number(s.ts) % 7) - 3}deg)"><span class="s-top">城市漫步手帳</span><span class="s-name">${escapeShop(b.name)}</span><span class="s-date">${escapeShop(s.date)}</span>${s.farewell ? '<span class="s-farewell">惜別留念</span>' : ''}</span>`
+          : `<span class="stamp empty"><span class="s-name" style="font-size:12px;font-weight:500">${escapeShop(b.name)}</span></span>`}</button>`; }).join('')}</div>`;
+    }
+    function ppOpen(id) {
+      const s = ppLoad().stamps[id]; const shop = allBookshops.find(b => String(b.id) === String(id));
+      if (!s) { ppCurrent = null; switchTab('map'); setTimeout(() => focusTrailStop(shop?.id), 300); return; }
+      ppCurrent = id;
+      document.getElementById('pp-modal-title').textContent = shop?.name || '';
+      document.getElementById('pp-modal-date').textContent = `蓋章日期：${s.date}`;
+      document.getElementById('pp-modal-note').value = s.note || '';
+      const m = document.getElementById('pp-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function ppCloseNote() { const m = document.getElementById('pp-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    function ppSaveNote() { const d = ppLoad(); if (d.stamps[ppCurrent]) { d.stamps[ppCurrent].note = document.getElementById('pp-modal-note').value.slice(0, 50); ppSave(d); } ppCloseNote(); ppRender(); }
+    function ppRemove() { if (!confirm('確定移除這個印章？')) return; const d = ppLoad(); delete d.stamps[ppCurrent]; ppSave(d); ppCloseNote(); ppRender(); }
+    function ppLocate() { const id = ppCurrent; ppCloseNote(); switchTab('map'); const shop = allBookshops.find(b => String(b.id) === String(id)); setTimeout(() => focusTrailStop(shop?.id), 300); }
+    function ppVisitedText() {
+      const st = ppLoad().stamps;
+      const list = allBookshops.filter(b => st[String(b.id)]).sort((a, c) => st[String(a.id)].ts - st[String(c.id)].ts);
+      return `我的城市漫步手帳（${ppTitle(list.length)}）\n已走訪 ${list.length} 間書店：\n` + list.map(b => `・${st[String(b.id)].date} ${b.name}`).join('\n') + '\n\nhttps://hkcultureguide.com';
+    }
+    async function ppCopyList() { try { await navigator.clipboard.writeText(ppVisitedText()); ppToast('已複製足跡清單'); } catch { prompt('請複製以下內容：', ppVisitedText()); } }
+    function ppExport() { const code = btoa(unescape(encodeURIComponent(JSON.stringify(ppLoad())))); navigator.clipboard?.writeText(code).then(() => ppToast('備份代碼已複製'), () => {}); prompt('你的手帳備份代碼（請妥善保存）：', code); }
+    function ppImport() {
+      const code = prompt('貼上手帳備份代碼（會與現有印章合併）：'); if (!code) return;
+      try { const inc = JSON.parse(decodeURIComponent(escape(atob(code.trim())))); const d = ppLoad(); Object.assign(d.stamps, inc.stamps || {}); ppSave(d); ppRender(); ppToast('已匯入手帳'); }
+      catch { alert('代碼無效，請再檢查一次。'); }
+    }
+    function ppShareImage() {
+      const st = ppLoad().stamps, css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
+      const list = allBookshops.filter(b => st[String(b.id)]).sort((a, c) => st[String(a.id)].ts - st[String(c.id)].ts);
+      const cols = 4, rows = Math.max(1, Math.ceil(list.length / cols)), W = 1080, H = 360 + rows * 250 + 120;
+      const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+      x.fillStyle = v('--surface') || v('--background') || '#fdfbf7'; x.fillRect(0, 0, W, H);
+      x.fillStyle = v('--ink') || '#222'; x.textAlign = 'center';
+      x.font = 'bold 64px serif'; x.fillText('城市漫步手帳', W / 2, 130);
+      x.font = '36px serif'; x.fillText(`${ppTitle(list.length)}｜已走訪 ${list.length} 間書店`, W / 2, 200);
+      const colorOf = b => { const r = b.region || ''; return v(r.includes('香港島') ? '--archive' : r.includes('九龍') ? '--theatre' : r.includes('新界') ? '--eco' : '--bookshop') || '#b45309'; };
+      list.forEach((b, i) => {
+        const cx = 135 + (i % cols) * 270, cy = 360 + Math.floor(i / cols) * 250, col = colorOf(b);
+        x.save(); x.translate(cx, cy); x.rotate(((st[String(b.id)].ts % 7) - 3) * Math.PI / 180);
+        x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 6; x.beginPath(); x.arc(0, 0, 105, 0, Math.PI * 2); x.stroke();
+        x.lineWidth = 2; x.beginPath(); x.arc(0, 0, 92, 0, Math.PI * 2); x.stroke();
+        const name = b.name.length > 6 ? b.name.slice(0, 6) + '…' : b.name;
+        x.font = 'bold 30px serif'; x.fillText(name, 0, 8);
+        x.font = '18px serif'; x.fillText(st[String(b.id)].date, 0, 50); x.fillText('漫步手帳', 0, -45); x.restore();
+      });
+      x.fillStyle = v('--muted-ink') || '#666'; x.font = '28px serif'; x.fillText('hkcultureguide.com', W / 2, H - 60);
+      const a = document.createElement('a'); a.download = 'my-stroll-passport.png'; a.href = c.toDataURL('image/png'); a.click();
     }
 
     async function fetchPaymentSettings() {
@@ -1128,6 +1305,7 @@
       if (tabId === 'reading') rrInit();
       if (tabId === 'zine' && !zineLoaded) fetchZine();
       if (tabId === 'voices' && !voicesLoaded) fetchVoices();
+      if (tabId === 'passport') ppRender();
       if (tabId === 'map') {
         setTimeout(() => { if(map) map.invalidateSize(); }, 200);
       }
@@ -1200,6 +1378,7 @@
             <p class="shop-hours">${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
             ${shop.opened_year || shop.closed_year ? `<p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
             <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
+            ${ppButton(shop.id)}
           </div><i class="fa-solid fa-arrow-up-right-from-square shop-card-arrow" aria-hidden="true"></i>
         </article>`).join('');
       container.querySelectorAll('.bookshop-card').forEach(card => {
