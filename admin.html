@@ -158,6 +158,9 @@
         <button onclick="switchAdminTab('zine', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-shapes"></i> 小誌 Zine
         </button>
+        <button onclick="switchAdminTab('voices', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-microphone-lines"></i> 文化之聲
+        </button>
       </div>
     </div>
 
@@ -1183,7 +1186,8 @@
             <div><label class="block font-bold text-slate-700 mb-1">類別</label><select id="z-kind" class="w-full border rounded px-3 py-2 bg-white"><option value="space">小誌空間／書店</option><option value="fair">藝術書節／活動</option></select></div>
             <div><label class="block font-bold text-slate-700 mb-1">名稱 *</label><input type="text" id="z-name" required class="w-full border rounded px-3 py-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">英文名稱</label><input type="text" id="z-name-en" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">地區</label><select id="z-region" class="w-full border rounded px-3 py-2 bg-white"><option>香港</option><option>台灣</option><option>日本</option><option>亞洲其他</option><option>歐洲</option><option>美洲</option><option>其他</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">地區</label><select id="z-region" onchange="document.getElementById('z-region-other').classList.toggle('hidden', this.value!=='其他')" class="w-full border rounded px-3 py-2 bg-white"><option>香港</option><option>台灣</option><option>日本</option><option>亞洲其他</option><option>歐洲</option><option>美洲</option><option>其他</option></select>
+              <input type="text" id="z-region-other" placeholder="請輸入國家／地區，例如：韓國、英國、澳洲" class="hidden w-full border rounded px-3 py-2 mt-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">城市</label><input type="text" id="z-city" class="w-full border rounded px-3 py-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">舉辦時間（書節用，例如：每年秋季）</label><input type="text" id="z-period" class="w-full border rounded px-3 py-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">特色標籤（以逗號分隔）</label><input type="text" id="z-tags" class="w-full border rounded px-3 py-2"></div>
@@ -1201,6 +1205,36 @@
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
           <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已錄入小誌空間及書節</h2>
           <div id="admin-zine-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
+    <section id="sec-voices" class="admin-section">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border h-fit">
+          <h2 id="voice-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增 Podcast／藝文專頁</h2>
+          <form id="voice-form" onsubmit="saveVoice(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="v-id">
+            <div><label class="block font-bold text-slate-700 mb-1">類別</label><select id="v-kind" class="w-full border rounded px-3 py-2 bg-white"><option value="podcast">Podcast 聲音節目</option><option value="page">藝文專頁與專題</option><option value="column">個人寫作與專欄</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">名稱 *</label><input type="text" id="v-name" required class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">主持／作者</label><input type="text" id="v-host" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">簡介</label><textarea id="v-desc" rows="4" class="w-full border rounded px-3 py-2"></textarea></div>
+            <div><label class="block font-bold text-slate-700 mb-1">推薦單集／文章</label><input type="text" id="v-highlight" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">標籤（以逗號分隔）</label><input type="text" id="v-tags" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">網站</label><input type="url" id="v-web" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Spotify</label><input type="url" id="v-spotify" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Apple Podcasts</label><input type="url" id="v-apple" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Instagram</label><input type="url" id="v-ig" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">封面圖片網址</label><input type="url" id="v-img" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="v-sort" class="w-full border rounded px-3 py-2"></div>
+            <div class="flex gap-2 pt-2">
+              <button type="submit" class="flex-grow bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded transition">儲存</button>
+              <button type="button" onclick="resetVoiceForm()" class="bg-slate-200 px-3 py-2 rounded">取消</button>
+            </div>
+          </form>
+        </div>
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
+          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已錄入 Podcast 與藝文專頁</h2>
+          <div id="admin-voice-list" class="space-y-3"></div>
         </div>
       </div>
     </section>
@@ -1637,7 +1671,7 @@ async function createAdminAccount(ev) {
 const ADMIN_TABS = [
   ['orders','訂單管理'],['stats','銷售統計'],['manual-receipt','手動新增收據'],['consignments','寄售管理'],
   ['payment-settings','收款設定／聯絡訊息'],['bookshops','實體書店'],['authors','本地作者'],['publishers','本地出版社'],
-  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['zine','小誌 Zine'],['market','市集'],['reading-room','閱書室']
+  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['zine','小誌 Zine'],['voices','文化之聲'],['market','市集'],['reading-room','閱書室']
 ];
 window.MY_PERMS = null;
 function permOf(tab) { const p = window.MY_PERMS; if (!p || !Object.keys(p).length) return 'edit'; return p[tab] || 'none'; }
@@ -1859,6 +1893,7 @@ window.onload = async function () {
   fetchEco();
   fetchTheatre();
   fetchZine();
+  fetchVoices();
   fetchConsignments();
   fetchMarket();
   loadManualProductPicker();
@@ -3906,6 +3941,7 @@ longitude: longitude,
       const payload = {};
       for (const [k, id] of Object.entries(zineFields)) payload[k] = document.getElementById(id).value.trim() || null;
       payload.kind = payload.kind || 'space';
+      if (payload.region === '其他') payload.region = document.getElementById('z-region-other').value.trim() || '其他';
       payload.sort_order = parseInt(document.getElementById('z-sort').value) || 0;
       const id = document.getElementById('z-id').value;
       const { error } = id ? await _supabase.from('zine_entries').update(payload).eq('id', id) : await _supabase.from('zine_entries').insert([payload]);
@@ -3917,16 +3953,69 @@ longitude: longitude,
       document.getElementById('z-id').value = z.id;
       for (const [k, el] of Object.entries(zineFields)) document.getElementById(el).value = z[k] ?? '';
       document.getElementById('z-sort').value = z.sort_order ?? 0;
+      const zr = document.getElementById('z-region'), zo = document.getElementById('z-region-other');
+      const known = [...zr.options].map(o => o.value);
+      if (z.region && !known.includes(z.region)) { zr.value = '其他'; zo.value = z.region; } else zo.value = '';
+      zo.classList.toggle('hidden', zr.value !== '其他');
       document.getElementById('zine-form-title').innerText = '編輯小誌空間／書節';
       document.getElementById('zine-form').scrollIntoView({ behavior: 'smooth' });
     }
     function resetZineForm() {
       document.getElementById('zine-form').reset(); document.getElementById('z-id').value = '';
+      document.getElementById('z-region-other').classList.add('hidden');
       document.getElementById('zine-form-title').innerText = '新增小誌空間／書節';
     }
     async function deleteZine(id) {
       if (!confirm('確定刪除？')) return;
       await _supabase.from('zine_entries').delete().eq('id', id); fetchZine();
+    }
+
+
+    // --- 文化之聲管理 ---
+    let adminVoices = [];
+    const VOICE_KIND = {podcast:'Podcast', page:'藝文專頁', column:'專欄'};
+    const voiceFields = {kind:'v-kind',name:'v-name',host:'v-host',description:'v-desc',highlight:'v-highlight',tags:'v-tags',website_url:'v-web',spotify_url:'v-spotify',apple_url:'v-apple',instagram_url:'v-ig',image_url:'v-img'};
+    async function fetchVoices() {
+      const { data } = await _supabase.from('culture_voices').select('*').order('kind').order('sort_order').order('id');
+      adminVoices = data || [];
+      const el = document.getElementById('admin-voice-list');
+      if (!adminVoices.length) { el.innerHTML = `<p class="text-slate-400 italic">暫無資料</p>`; return; }
+      el.innerHTML = adminVoices.map(v => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
+          <div><span class="font-bold text-slate-800">${zx(v.name)}</span>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${VOICE_KIND[v.kind] || ''}</span>
+            <p class="text-slate-500 mt-0.5">${zx(v.host || '')}</p></div>
+          <div class="flex gap-2">
+            <button onclick="editVoice(${v.id})" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded">編輯</button>
+            <button onclick="deleteVoice(${v.id})" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded">刪除</button>
+          </div></div>`).join('');
+    }
+    async function saveVoice(e) {
+      e.preventDefault();
+      const payload = {};
+      for (const [k, id] of Object.entries(voiceFields)) payload[k] = document.getElementById(id).value.trim() || null;
+      payload.kind = payload.kind || 'podcast';
+      payload.sort_order = parseInt(document.getElementById('v-sort').value) || 0;
+      const id = document.getElementById('v-id').value;
+      const { error } = id ? await _supabase.from('culture_voices').update(payload).eq('id', id) : await _supabase.from('culture_voices').insert([payload]);
+      if (error) { alert('儲存失敗：' + error.message); return; }
+      resetVoiceForm(); fetchVoices();
+    }
+    function editVoice(id) {
+      const v = adminVoices.find(x => x.id === id); if (!v) return;
+      document.getElementById('v-id').value = v.id;
+      for (const [k, el] of Object.entries(voiceFields)) document.getElementById(el).value = v[k] ?? '';
+      document.getElementById('v-sort').value = v.sort_order ?? 0;
+      document.getElementById('voice-form-title').innerText = '編輯 Podcast／藝文專頁';
+      document.getElementById('voice-form').scrollIntoView({ behavior: 'smooth' });
+    }
+    function resetVoiceForm() {
+      document.getElementById('voice-form').reset(); document.getElementById('v-id').value = '';
+      document.getElementById('voice-form-title').innerText = '新增 Podcast／藝文專頁';
+    }
+    async function deleteVoice(id) {
+      if (!confirm('確定刪除？')) return;
+      await _supabase.from('culture_voices').delete().eq('id', id); fetchVoices();
     }
 
     // --- 9. 劇團管理 ---

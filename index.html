@@ -159,6 +159,7 @@
         <button onclick="switchTab('eco')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-leaf"></i> 農業/環保</button>
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
         <button onclick="switchTab('zine')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-shapes"></i> 小誌 Zine</button>
+        <button onclick="switchTab('voices')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-microphone-lines"></i> 文化之聲</button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -559,6 +560,20 @@
       <h3 class="text-lg font-bold mb-3">🗓️ 藝術書節日曆</h3>
       <div id="zine-fair-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
     </section>
+
+    <!-- 7. 文化之聲 Tab -->
+    <section id="tab-voices" class="tab-content">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-2" style="border-left:3px solid var(--bookshop);padding-left:12px">🎙️ 文化之聲</h2>
+        <p class="text-muted-ink text-sm">Podcast 與藝文專頁：讀完書之後，繼續聽、繼續讀。</p>
+      </div>
+      <div class="bg-surface border border-line rounded-xl p-5 mb-6 text-sm leading-relaxed text-ink">
+        <p>這裡收錄值得一聽的閱讀與文化 Podcast，以及用心記錄城市、歷史與藝術的專頁和專欄。每一個聲音，都是閱讀的延伸。</p>
+      </div>
+      <div id="voice-filter" class="flex flex-wrap gap-2 mb-4"></div>
+      <div id="voice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+    </section>
+
 
   </main>
 
@@ -996,6 +1011,40 @@
     }
     function filterZine(r) { zineRegion = r; renderZine(); }
 
+
+    // --- 文化之聲 ---
+    let allVoices = [], voiceKind = 'ALL', voicesLoaded = false;
+    const VOICE_KINDS = [['ALL','全部'],['podcast','Podcast 聲音節目'],['page','藝文專頁與專題'],['column','個人寫作與專欄']];
+    async function fetchVoices() {
+      const { data, error } = await _supabase.from('culture_voices').select('*').order('sort_order').order('id');
+      if (error) { document.getElementById('voice-list').innerHTML = '<p class="text-faint italic col-span-full">暫時未能載入，請稍後再試。</p>'; return; }
+      allVoices = data || []; voicesLoaded = true; renderVoices();
+    }
+    function voiceLink(url, icon, label) { return url ? `<a href="${zEsc(url)}" target="_blank" rel="noopener noreferrer" class="text-bookshop font-bold hover:underline"><i class="${icon} mr-1"></i>${label} ↗</a>` : ''; }
+    function renderVoices() {
+      document.getElementById('voice-filter').innerHTML = VOICE_KINDS.map(([k, l]) => `<button onclick="filterVoices('${k}')" class="${k === voiceKind ? 'bg-primary text-primary-contrast' : 'bg-surface border hover:bg-bookshop-soft'} px-3 py-1 rounded-full text-xs font-medium transition">${l}</button>`).join('');
+      const label = Object.fromEntries(VOICE_KINDS);
+      const shown = voiceKind === 'ALL' ? allVoices : allVoices.filter(v => v.kind === voiceKind);
+      document.getElementById('voice-list').innerHTML = shown.length ? shown.map(v => {
+        const tags = (v.tags || '').split(/[,，]/).map(t => t.trim()).filter(Boolean);
+        return `<article class="bg-surface border border-line rounded-xl overflow-hidden flex flex-col">
+          ${v.image_url ? `<img src="${zEsc(v.image_url)}" alt="${zEsc(v.name)}" loading="lazy" class="w-full h-36 object-cover">` : ''}
+          <div class="p-4 flex flex-col gap-2 flex-1">
+            <div class="flex justify-between items-start gap-2">
+              <div><h4 class="font-bold text-ink">${zEsc(v.name)}</h4>${v.host ? `<p class="text-xs text-faint">${zEsc(v.host)}</p>` : ''}</div>
+              <span class="bg-bookshop-soft text-bookshop text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap">${zEsc(label[v.kind] || '')}</span>
+            </div>
+            ${v.description ? `<p class="text-xs text-muted-ink leading-relaxed">${zEsc(v.description)}</p>` : ''}
+            ${v.highlight ? `<p class="text-xs text-ink"><i class="fa-solid fa-star mr-1 text-bookshop"></i>推薦：${zEsc(v.highlight)}</p>` : ''}
+            ${tags.length ? `<div class="flex flex-wrap gap-1">${tags.map(t => `<span class="border border-line text-muted-ink text-[11px] px-2 py-0.5 rounded-full">${zEsc(t)}</span>`).join('')}</div>` : ''}
+            <div class="mt-auto pt-3 border-t border-line flex flex-wrap gap-3 text-xs">
+              ${voiceLink(v.spotify_url,'fa-brands fa-spotify','Spotify')}${voiceLink(v.apple_url,'fa-solid fa-podcast','Apple')}${voiceLink(v.instagram_url,'fa-brands fa-instagram','Instagram')}${voiceLink(v.website_url,'fa-solid fa-globe','網站')}
+            </div>
+          </div></article>`;
+      }).join('') : '<p class="text-faint italic col-span-full">暫無紀錄，敬請期待。</p>';
+    }
+    function filterVoices(k) { voiceKind = k; renderVoices(); }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       
@@ -1013,6 +1062,7 @@
 
       if (tabId === 'reading') rrInit();
       if (tabId === 'zine' && !zineLoaded) fetchZine();
+      if (tabId === 'voices' && !voicesLoaded) fetchVoices();
       if (tabId === 'map') {
         setTimeout(() => { if(map) map.invalidateSize(); }, 200);
       }
