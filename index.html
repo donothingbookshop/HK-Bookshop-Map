@@ -158,6 +158,7 @@
         <button onclick="switchTab('reading')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-couch"></i> 閱書室 <span style="font-size:10px;background:var(--bookshop);color:var(--primary-contrast);border-radius:999px;padding:0 6px">預約制</span></button>
         <button onclick="switchTab('eco')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-leaf"></i> 農業/環保</button>
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
+        <button onclick="switchTab('zine')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-shapes"></i> 小誌 Zine</button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -190,6 +191,7 @@
         <div>
           <h2 class="text-2xl font-bold mb-1">香港與海外書店動態地圖索引</h2>
           <p class="text-muted-ink text-sm">香港的街角，世界的書店。</p>
+          <a href="https://www.xplorehk.com/signin.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 mt-2 border border-bookshop-line bg-bookshop-soft text-bookshop hover:bg-surface px-2.5 py-1 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-link"></i>探索更多本地活動：香港活動搜尋器 XploreHK ↗</a>
         </div>
         
         <div class="relative w-full md:w-64">
@@ -533,6 +535,29 @@
         <p class="text-faint italic col-span-full">載入資料中...</p>
       </div><div class="dir-rail"><span class="dir-thumb"></span></div>
 </div>
+    </section>
+
+    <!-- 6. 小誌 Zine Tab -->
+    <section id="tab-zine" class="tab-content">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-2" style="border-left:3px solid var(--bookshop);padding-left:12px">🏷️ 小誌 Zine</h2>
+        <p class="text-muted-ink text-sm">小量印刷、自資出版、人人皆可創作的紙上小宇宙。</p>
+      </div>
+      <div class="bg-surface border border-line rounded-xl p-5 mb-8 text-sm leading-relaxed text-ink">
+        <p class="mb-3">Zine 源自 Magazine，是由個人或小團隊自資製作、小量印刷的刊物。它們大多沒有 ISBN，題材由詩、插畫、攝影到生活日記都有，重點是親手製作與分享的樂趣。</p>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">Risograph 孔版印刷</span>
+          <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">影印手工裝訂</span>
+          <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">攝影誌</span>
+          <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">詩集</span>
+          <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">圖文插畫</span>
+        </div>
+      </div>
+      <h3 class="text-lg font-bold mb-3">📚 世界各地的小誌空間</h3>
+      <div id="zine-region-filter" class="flex flex-wrap gap-2 mb-4"></div>
+      <div id="zine-space-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+      <h3 class="text-lg font-bold mb-3">🗓️ 藝術書節日曆</h3>
+      <div id="zine-fair-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
     </section>
 
   </main>
@@ -934,6 +959,43 @@
       if (data) paymentSettings = data;
     }
 
+    // --- 小誌 Zine ---
+    let allZine = [], zineRegion = 'ALL', zineLoaded = false;
+    const zEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function fetchZine() {
+      const { data, error } = await _supabase.from('zine_entries').select('*').order('sort_order').order('id');
+      if (error) { document.getElementById('zine-space-list').innerHTML = '<p class="text-faint italic col-span-full">暫時未能載入，請稍後再試。</p>'; return; }
+      allZine = data || []; zineLoaded = true; renderZine();
+    }
+    function zineCard(z) {
+      const tags = (z.tags || '').split(/[,，]/).map(t => t.trim()).filter(Boolean);
+      return `<article class="bg-surface border border-line rounded-xl overflow-hidden flex flex-col">
+        ${z.image_url ? `<img src="${zEsc(z.image_url)}" alt="${zEsc(z.name)}" loading="lazy" class="w-full h-36 object-cover">` : ''}
+        <div class="p-4 flex flex-col gap-2 flex-1">
+          <div class="flex justify-between items-start gap-2">
+            <div><h4 class="font-bold text-ink">${zEsc(z.name)}</h4>${z.name_en && z.name_en !== z.name ? `<p class="text-xs text-faint">${zEsc(z.name_en)}</p>` : ''}</div>
+            ${z.region ? `<span class="bg-bookshop-soft text-bookshop text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap">${zEsc(z.region)}</span>` : ''}
+          </div>
+          <p class="text-xs text-muted-ink"><i class="fa-solid fa-location-dot mr-1 text-bookshop"></i>${zEsc(z.city || '')}${z.period ? ` · <i class="fa-regular fa-calendar mx-1 text-bookshop"></i>${zEsc(z.period)}` : ''}</p>
+          ${z.description ? `<p class="text-xs text-muted-ink leading-relaxed">${zEsc(z.description)}</p>` : ''}
+          ${tags.length ? `<div class="flex flex-wrap gap-1">${tags.map(t => `<span class="border border-line text-muted-ink text-[11px] px-2 py-0.5 rounded-full">${zEsc(t)}</span>`).join('')}</div>` : ''}
+          <div class="mt-auto pt-3 border-t border-line flex gap-3 text-xs">
+            ${z.website_url ? `<a href="${zEsc(z.website_url)}" target="_blank" rel="noopener noreferrer" class="text-bookshop font-bold hover:underline"><i class="fa-solid fa-globe mr-1"></i>官網 ↗</a>` : ''}
+            ${z.instagram_url ? `<a href="${zEsc(z.instagram_url)}" target="_blank" rel="noopener noreferrer" class="text-bookshop font-bold hover:underline"><i class="fa-brands fa-instagram mr-1"></i>Instagram ↗</a>` : ''}
+          </div>
+        </div></article>`;
+    }
+    function renderZine() {
+      const spaces = allZine.filter(z => z.kind !== 'fair');
+      const regions = ['ALL', ...new Set(spaces.map(z => z.region).filter(Boolean))];
+      document.getElementById('zine-region-filter').innerHTML = regions.map(r => `<button onclick="filterZine('${zEsc(r)}')" class="${r === zineRegion ? 'bg-primary text-primary-contrast' : 'bg-surface border hover:bg-bookshop-soft'} px-3 py-1 rounded-full text-xs font-medium transition">${r === 'ALL' ? '全部地區' : zEsc(r)}</button>`).join('');
+      const shown = zineRegion === 'ALL' ? spaces : spaces.filter(z => z.region === zineRegion);
+      document.getElementById('zine-space-list').innerHTML = shown.length ? shown.map(zineCard).join('') : '<p class="text-faint italic col-span-full">暫無紀錄。</p>';
+      const fairs = allZine.filter(z => z.kind === 'fair');
+      document.getElementById('zine-fair-list').innerHTML = fairs.length ? fairs.map(zineCard).join('') : '<p class="text-faint italic col-span-full">暫無紀錄。</p>';
+    }
+    function filterZine(r) { zineRegion = r; renderZine(); }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       
@@ -950,6 +1012,7 @@
       if (targetEl) targetEl.classList.add('active');
 
       if (tabId === 'reading') rrInit();
+      if (tabId === 'zine' && !zineLoaded) fetchZine();
       if (tabId === 'map') {
         setTimeout(() => { if(map) map.invalidateSize(); }, 200);
       }

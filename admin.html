@@ -155,6 +155,9 @@
         <button onclick="switchAdminTab('theatre', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-masks-theater"></i> 劇團
         </button>
+        <button onclick="switchAdminTab('zine', event)" class="admin-nav-btn bg-white hover:bg-slate-50 border text-slate-700 p-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-shapes"></i> 小誌 Zine
+        </button>
       </div>
     </div>
 
@@ -1170,6 +1173,38 @@
       </div>
     </section>
 
+    <!-- 10. 小誌與書節管理 -->
+    <section id="sec-zine" class="admin-section">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border h-fit">
+          <h2 id="zine-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增小誌空間／書節</h2>
+          <form id="zine-form" onsubmit="saveZine(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="z-id">
+            <div><label class="block font-bold text-slate-700 mb-1">類別</label><select id="z-kind" class="w-full border rounded px-3 py-2 bg-white"><option value="space">小誌空間／書店</option><option value="fair">藝術書節／活動</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">名稱 *</label><input type="text" id="z-name" required class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">英文名稱</label><input type="text" id="z-name-en" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">地區</label><select id="z-region" class="w-full border rounded px-3 py-2 bg-white"><option>香港</option><option>台灣</option><option>日本</option><option>亞洲其他</option><option>歐洲</option><option>美洲</option><option>其他</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">城市</label><input type="text" id="z-city" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">舉辦時間（書節用，例如：每年秋季）</label><input type="text" id="z-period" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">特色標籤（以逗號分隔）</label><input type="text" id="z-tags" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">簡介</label><textarea id="z-desc" rows="4" class="w-full border rounded px-3 py-2"></textarea></div>
+            <div><label class="block font-bold text-slate-700 mb-1">官方網站</label><input type="url" id="z-web" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">Instagram</label><input type="url" id="z-ig" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">封面圖片網址</label><input type="url" id="z-img" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="z-sort" class="w-full border rounded px-3 py-2"></div>
+            <div class="flex gap-2 pt-2">
+              <button type="submit" class="flex-grow bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded transition">儲存</button>
+              <button type="button" onclick="resetZineForm()" class="bg-slate-200 px-3 py-2 rounded">取消</button>
+            </div>
+          </form>
+        </div>
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
+          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已錄入小誌空間及書節</h2>
+          <div id="admin-zine-list" class="space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- 隱藏收據 PDF 模板 -->
@@ -1602,7 +1637,7 @@ async function createAdminAccount(ev) {
 const ADMIN_TABS = [
   ['orders','訂單管理'],['stats','銷售統計'],['manual-receipt','手動新增收據'],['consignments','寄售管理'],
   ['payment-settings','收款設定／聯絡訊息'],['bookshops','實體書店'],['authors','本地作者'],['publishers','本地出版社'],
-  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['market','市集'],['reading-room','閱書室']
+  ['products','網店商品'],['eco','農業/環保'],['theatre','劇團'],['zine','小誌 Zine'],['market','市集'],['reading-room','閱書室']
 ];
 window.MY_PERMS = null;
 function permOf(tab) { const p = window.MY_PERMS; if (!p || !Object.keys(p).length) return 'edit'; return p[tab] || 'none'; }
@@ -1823,6 +1858,7 @@ window.onload = async function () {
   fetchProducts();
   fetchEco();
   fetchTheatre();
+  fetchZine();
   fetchConsignments();
   fetchMarket();
   loadManualProductPicker();
@@ -3841,6 +3877,56 @@ longitude: longitude,
       if (!confirm("確定刪除？")) return;
       await _supabase.from('eco_farms').delete().eq('id', id);
       fetchEco();
+    }
+
+    // --- 10. 小誌與書節管理 ---
+    let adminZine = [];
+    const zx = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function fetchZine() {
+      const { data } = await _supabase.from('zine_entries').select('*').order('kind').order('sort_order').order('id');
+      adminZine = data || [];
+      const el = document.getElementById('admin-zine-list');
+      if (!adminZine.length) { el.innerHTML = `<p class="text-slate-400 italic">暫無資料</p>`; return; }
+      el.innerHTML = adminZine.map(z => `
+        <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-slate-800">${zx(z.name)}</span>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${z.kind === 'fair' ? '書節' : '空間'}</span>
+            <p class="text-slate-500 mt-0.5">${zx(z.region || '')} ${zx(z.city || '')}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editZine(${z.id})" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded">編輯</button>
+            <button onclick="deleteZine(${z.id})" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded">刪除</button>
+          </div>
+        </div>`).join('');
+    }
+    const zineFields = {kind:'z-kind',name:'z-name',name_en:'z-name-en',region:'z-region',city:'z-city',period:'z-period',tags:'z-tags',description:'z-desc',website_url:'z-web',instagram_url:'z-ig',image_url:'z-img'};
+    async function saveZine(e) {
+      e.preventDefault();
+      const payload = {};
+      for (const [k, id] of Object.entries(zineFields)) payload[k] = document.getElementById(id).value.trim() || null;
+      payload.kind = payload.kind || 'space';
+      payload.sort_order = parseInt(document.getElementById('z-sort').value) || 0;
+      const id = document.getElementById('z-id').value;
+      const { error } = id ? await _supabase.from('zine_entries').update(payload).eq('id', id) : await _supabase.from('zine_entries').insert([payload]);
+      if (error) { alert('儲存失敗：' + error.message); return; }
+      resetZineForm(); fetchZine();
+    }
+    function editZine(id) {
+      const z = adminZine.find(x => x.id === id); if (!z) return;
+      document.getElementById('z-id').value = z.id;
+      for (const [k, el] of Object.entries(zineFields)) document.getElementById(el).value = z[k] ?? '';
+      document.getElementById('z-sort').value = z.sort_order ?? 0;
+      document.getElementById('zine-form-title').innerText = '編輯小誌空間／書節';
+      document.getElementById('zine-form').scrollIntoView({ behavior: 'smooth' });
+    }
+    function resetZineForm() {
+      document.getElementById('zine-form').reset(); document.getElementById('z-id').value = '';
+      document.getElementById('zine-form-title').innerText = '新增小誌空間／書節';
+    }
+    async function deleteZine(id) {
+      if (!confirm('確定刪除？')) return;
+      await _supabase.from('zine_entries').delete().eq('id', id); fetchZine();
     }
 
     // --- 9. 劇團管理 ---
