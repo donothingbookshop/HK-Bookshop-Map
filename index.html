@@ -573,7 +573,12 @@
           <span class="bg-bookshop-soft text-bookshop px-2.5 py-1 rounded-full font-semibold">圖文插畫</span>
         </div>
       </div>
-      <h3 class="text-lg font-bold mb-3">📚 世界各地的小誌空間</h3>
+      <h3 class="text-lg font-bold mb-3">📚 紙上造誌：認識小誌的必讀書單</h3>
+      <div id="zine-book-list" class="grid gap-4 mb-10" style="grid-template-columns:repeat(auto-fill,minmax(150px,200px))"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+      <div id="zine-book-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:3000;background:rgba(30,24,20,.6)" onclick="if(event.target===this)closeZineBook()">
+        <div class="bg-surface rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative p-6" id="zine-book-modal-body"></div>
+      </div>
+      <h3 class="text-lg font-bold mb-3">🏬 世界各地的小誌空間、出版社與網店</h3>
       <div id="zine-region-filter" class="flex flex-wrap gap-2 mb-4"></div>
       <div id="zine-space-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10"><p class="text-faint italic col-span-full">載入資料中...</p></div>
       <h3 class="text-lg font-bold mb-3">🗓️ 藝術書節日曆</h3>
@@ -1254,7 +1259,7 @@
         <div class="p-4 flex flex-col gap-2 flex-1">
           <div class="flex justify-between items-start gap-2">
             <div><h4 class="font-bold text-ink">${zEsc(z.name)}</h4>${z.name_en && z.name_en !== z.name ? `<p class="text-xs text-faint">${zEsc(z.name_en)}</p>` : ''}</div>
-            ${z.region ? `<span class="bg-bookshop-soft text-bookshop text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap">${zEsc(z.region)}</span>` : ''}
+            <div class="flex flex-col items-end gap-1">${z.region ? `<span class="bg-bookshop-soft text-bookshop text-xs px-2 py-0.5 rounded-full font-bold whitespace-nowrap">${zEsc(z.region)}</span>` : ''}${z.kind === 'publisher' ? `<span class="border border-line text-muted-ink text-[11px] px-2 py-0.5 rounded-full whitespace-nowrap">出版社／網店</span>` : ''}</div>
           </div>
           <p class="text-xs text-muted-ink"><i class="fa-solid fa-location-dot mr-1 text-bookshop"></i>${zEsc(z.city || '')}${z.period ? ` · <i class="fa-regular fa-calendar mx-1 text-bookshop"></i>${zEsc(z.period)}` : ''}</p>
           ${z.description ? `<p class="text-xs text-muted-ink leading-relaxed">${zEsc(z.description)}</p>` : ''}
@@ -1265,8 +1270,32 @@
           </div>
         </div></article>`;
     }
+    function zineBookCard(b) {
+      return `<button onclick="openZineBook(${b.id})" class="text-left bg-surface border border-line rounded-xl overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition">
+        <div class="aspect-[3/4] bg-bookshop-soft flex items-center justify-center overflow-hidden" style="border-left:6px solid var(--bookshop)">
+          ${b.image_url ? `<img src="${zEsc(b.image_url)}" alt="${zEsc(b.name)}" loading="lazy" class="w-full h-full object-cover">` : `<span class="text-bookshop font-bold text-sm p-3 text-center">${zEsc(b.name)}</span>`}
+        </div>
+        <div class="p-3"><h4 class="font-bold text-sm text-ink line-clamp-2">${zEsc(b.name)}</h4>${b.name_en ? `<p class="text-[11px] text-faint mt-1">${zEsc(b.name_en)}</p>` : ''}<p class="text-[11px] text-bookshop font-bold mt-2">點擊閱讀介紹 →</p></div>
+      </button>`;
+    }
+    function openZineBook(id) {
+      const b = allZine.find(z => z.id === id); if (!b) return;
+      const tags = (b.tags || '').split(/[,，]/).map(t => t.trim()).filter(Boolean);
+      document.getElementById('zine-book-modal-body').innerHTML = `
+        <button onclick="closeZineBook()" class="absolute top-3 right-4 text-2xl text-faint" aria-label="關閉">×</button>
+        ${b.image_url ? `<img src="${zEsc(b.image_url)}" alt="${zEsc(b.name)}" class="w-full max-h-96 object-contain rounded-lg mb-4 bg-bookshop-soft">` : ''}
+        <h3 class="text-xl font-bold text-ink pr-6">${zEsc(b.name)}</h3>
+        ${b.name_en ? `<p class="text-sm text-muted-ink mt-1">創作者：${zEsc(b.name_en)}</p>` : ''}
+        ${tags.length ? `<div class="flex flex-wrap gap-1 mt-3">${tags.map(t => `<span class="bg-bookshop-soft text-bookshop text-xs px-2 py-0.5 rounded-full font-semibold">${zEsc(t)}</span>`).join('')}</div>` : ''}
+        ${b.description ? `<p class="text-sm text-ink leading-relaxed mt-4 whitespace-pre-line">${zEsc(b.description)}</p>` : ''}
+        ${b.website_url ? `<a href="${zEsc(b.website_url)}" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 text-bookshop font-bold text-sm hover:underline">參考連結 ↗</a>` : ''}`;
+      const m=document.getElementById('zine-book-modal'); if(m.parentElement!==document.body) document.body.appendChild(m); m.classList.remove('hidden');
+    }
+    function closeZineBook() { document.getElementById('zine-book-modal').classList.add('hidden'); }
     function renderZine() {
-      const spaces = allZine.filter(z => z.kind !== 'fair');
+      const books = allZine.filter(z => z.kind === 'book');
+      document.getElementById('zine-book-list').innerHTML = books.length ? books.map(zineBookCard).join('') : '<p class="text-faint italic col-span-full">暫無書單。</p>';
+      const spaces = allZine.filter(z => z.kind === 'space' || z.kind === 'publisher');
       const regions = ['ALL', ...new Set(spaces.map(z => z.region).filter(Boolean))];
       document.getElementById('zine-region-filter').innerHTML = regions.map(r => `<button onclick="filterZine('${zEsc(r)}')" class="${r === zineRegion ? 'bg-primary text-primary-contrast' : 'bg-surface border hover:bg-bookshop-soft'} px-3 py-1 rounded-full text-xs font-medium transition">${r === 'ALL' ? '全部地區' : zEsc(r)}</button>`).join('');
       const shown = zineRegion === 'ALL' ? spaces : spaces.filter(z => z.region === zineRegion);

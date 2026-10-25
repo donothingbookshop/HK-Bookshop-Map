@@ -1190,9 +1190,9 @@
           <h2 id="zine-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增小誌空間／書節</h2>
           <form id="zine-form" onsubmit="saveZine(event)" class="space-y-3 text-xs">
             <input type="hidden" id="z-id">
-            <div><label class="block font-bold text-slate-700 mb-1">類別</label><select id="z-kind" class="w-full border rounded px-3 py-2 bg-white"><option value="space">小誌空間／書店</option><option value="fair">藝術書節／活動</option></select></div>
-            <div><label class="block font-bold text-slate-700 mb-1">名稱 *</label><input type="text" id="z-name" required class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">英文名稱</label><input type="text" id="z-name-en" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">類別</label><select id="z-kind" onchange="zineKindLabels()" class="w-full border rounded px-3 py-2 bg-white"><option value="space">小誌空間／書店</option><option value="publisher">出版社／網店</option><option value="fair">藝術書節／活動</option><option value="book">小誌指南書籍（紙上造誌書單）</option></select></div>
+            <div><label id="z-name-label" class="block font-bold text-slate-700 mb-1">名稱 *</label><input type="text" id="z-name" required class="w-full border rounded px-3 py-2"></div>
+            <div><label id="z-name-en-label" class="block font-bold text-slate-700 mb-1">英文名稱</label><input type="text" id="z-name-en" class="w-full border rounded px-3 py-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">地區</label><select id="z-region" onchange="document.getElementById('z-region-other').classList.toggle('hidden', this.value!=='其他')" class="w-full border rounded px-3 py-2 bg-white"><option>香港</option><option>台灣</option><option>日本</option><option>亞洲其他</option><option>歐洲</option><option>美洲</option><option>其他</option></select>
               <input type="text" id="z-region-other" placeholder="請輸入國家／地區，例如：韓國、英國、澳洲" class="hidden w-full border rounded px-3 py-2 mt-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">城市</label><input type="text" id="z-city" class="w-full border rounded px-3 py-2"></div>
@@ -3995,7 +3995,7 @@ longitude: longitude,
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800">${zx(z.name)}</span>
-            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${z.kind === 'fair' ? '書節' : '空間'}</span>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${({fair:'書節',book:'書單',publisher:'出版社／網店'})[z.kind] || '空間'}</span>
             <p class="text-slate-500 mt-0.5">${zx(z.region || '')} ${zx(z.city || '')}</p>
           </div>
           <div class="flex gap-2">
@@ -4026,13 +4026,20 @@ longitude: longitude,
       const known = [...zr.options].map(o => o.value);
       if (z.region && !known.includes(z.region)) { zr.value = '其他'; zo.value = z.region; } else zo.value = '';
       zo.classList.toggle('hidden', zr.value !== '其他');
-      document.getElementById('zine-form-title').innerText = '編輯小誌空間／書節';
+      document.getElementById('zine-form-title').innerText = '編輯小誌資料';
+      zineKindLabels();
       document.getElementById('zine-form').scrollIntoView({ behavior: 'smooth' });
+    }
+    function zineKindLabels() {
+      const book = document.getElementById('z-kind').value === 'book';
+      document.getElementById('z-name-label').innerText = book ? '書名 *' : '名稱 *';
+      document.getElementById('z-name-en-label').innerText = book ? '創作者／作者' : '英文名稱';
     }
     function resetZineForm() {
       document.getElementById('zine-form').reset(); document.getElementById('z-id').value = '';
       document.getElementById('z-region-other').classList.add('hidden');
       document.getElementById('zine-form-title').innerText = '新增小誌空間／書節';
+      zineKindLabels();
     }
     async function deleteZine(id) {
       if (!confirm('確定刪除？')) return;
