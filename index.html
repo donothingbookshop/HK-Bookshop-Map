@@ -167,7 +167,8 @@
         <button onclick="switchTab('theatre')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-masks-theater"></i> 劇團</button>
         <button onclick="switchTab('zine')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-shapes"></i> 小誌 Zine</button>
         <button onclick="switchTab('voices')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-microphone-lines"></i> 文化之聲</button>
-        <button onclick="switchTab('passport')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-stamp"></i> 漫步手帳</button>
+         <button onclick="switchTab('passport')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-stamp"></i> 漫步手帳</button>
+        <button onclick="switchTab('cards')" class="nav-btn hover:text-bookshop-light bg-primary/40 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-bookmark"></i> 閱讀解憂籤</button>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -589,6 +590,24 @@
       </div>
       <div id="voice-filter" class="flex flex-wrap gap-2 mb-4"></div>
       <div id="voice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+    </section>
+
+    <!-- 閱讀解憂籤 Tab -->
+    <section id="tab-cards" class="tab-content">
+      <style>
+        .rc-card { max-width:440px; margin:0 auto; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:28px 26px 22px; position:relative; box-shadow:0 8px 24px -14px var(--ink); font-family:serif; }
+        .rc-card:before { content:''; position:absolute; top:-10px; left:50%; width:14px; height:22px; transform:translateX(-50%); background:var(--bookshop); border-radius:0 0 3px 3px; }
+        .rc-card.flip { animation: rcFlip .55s ease-out; }
+        @keyframes rcFlip { 0%{ transform:rotateY(80deg); opacity:0 } 100%{ transform:rotateY(0); opacity:1 } }
+        .rc-quote { font-size:18px; line-height:1.9; color:var(--ink); }
+      </style>
+      <div class="mb-6 text-center">
+        <h2 class="text-2xl font-bold mb-2">🔖 閱讀解憂籤</h2>
+        <p class="text-muted-ink text-sm">揀一個此刻的心境，或者直接抽一枚。書頁之間，總有一句留給你。</p>
+      </div>
+      <div id="rc-moods" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+      <div class="text-center mb-6"><button type="button" onclick="rcDraw()" class="bg-primary text-primary-contrast px-6 py-2 rounded-full text-sm font-bold">抽一枚解憂籤</button></div>
+      <div id="rc-result"><p class="text-center text-faint italic text-sm">輕按上面的按鈕，翻開今日的籤。</p></div>
     </section>
 
     <!-- 8. 城市漫步手帳 Tab -->
@@ -1287,6 +1306,44 @@
     }
     function filterVoices(k) { voiceKind = k; renderVoices(); }
 
+    // --- 閱讀解憂籤 ---
+    const RC_MOODS = [['ALL','🎲 隨緣'],['calm','☁️ 尋求平靜'],['comfort','🌧️ 溫柔撫慰'],['lost','🌿 迷惘釋懷'],['walk','🚶 渴望散步'],['night','🌙 深夜獨處']];
+    const RC_TYPES = { excerpt:'📕 書籍節錄', author:'✍️ 作者駐足寄語', walker:'📮 漫步者手記' };
+    let rcCards = null, rcMood = 'ALL', rcLastId = null;
+    async function rcInit() {
+      rcRenderMoods();
+      if (rcCards) return;
+      const { data, error } = await _supabase.from('reading_cards').select('*').eq('active', true).order('sort_order');
+      if (error) { document.getElementById('rc-result').innerHTML = '<p class="text-center text-faint italic">暫時未能載入，請稍後再試。</p>'; return; }
+      rcCards = data || [];
+    }
+    function rcRenderMoods() {
+      document.getElementById('rc-moods').innerHTML = RC_MOODS.map(([k, l]) => `<button type="button" onclick="rcSetMood('${k}')" class="${k === rcMood ? 'bg-primary text-primary-contrast' : 'bg-surface border border-line hover:bg-bookshop-soft'} px-3 py-1 rounded-full text-xs font-medium transition">${l}</button>`).join('');
+    }
+    function rcSetMood(k) { rcMood = k; rcRenderMoods(); }
+    async function rcDraw() {
+      if (!rcCards) await rcInit();
+      if (!rcCards) return;
+      let pool = rcMood === 'ALL' ? rcCards : rcCards.filter(c => c.mood === rcMood);
+      if (!pool.length) { document.getElementById('rc-result').innerHTML = '<p class="text-center text-faint italic text-sm">呢個心境暫時未有籤文，試下「隨緣」。</p>'; return; }
+      if (pool.length > 1) pool = pool.filter(c => c.id !== rcLastId);
+      const c = pool[Math.floor(Math.random() * pool.length)]; rcLastId = c.id;
+      const author = c.author_id && typeof allAuthors !== 'undefined' ? allAuthors.find(a => a.id === c.author_id) : null;
+      const sign = c.signature || (author ? author.name : '');
+      const moodLabel = (RC_MOODS.find(m => m[0] === c.mood) || [,''])[1];
+      document.getElementById('rc-result').innerHTML = `<div class="rc-card flip">
+        <div class="flex justify-between items-center text-xs text-muted-ink mb-4"><span>${RC_TYPES[c.card_type] || ''}</span><span>${zEsc(moodLabel)}</span></div>
+        ${c.card_type === 'author' ? '<p class="text-xs font-bold text-bookshop mb-2">✨ 客席寄語</p>' : ''}
+        <p class="rc-quote">「${zEsc(c.content)}」</p>
+        ${(sign || c.source_title) ? `<p class="text-right text-sm text-muted-ink mt-4">—— ${zEsc(sign)}${c.source_title ? `《${zEsc(c.source_title)}》` : ''}</p>` : ''}
+        ${c.note ? `<p class="text-xs text-ink mt-5 pt-3 border-t border-line">🍵 伴讀小語：${zEsc(c.note)}</p>` : ''}
+        <div class="flex flex-wrap justify-center gap-2 mt-5 text-xs">
+          <button type="button" onclick="rcDraw()" class="border border-line px-3 py-1 rounded-full">再翻一張</button>
+          ${author ? `<button type="button" onclick="switchTab('directory'); setTimeout(()=>openDirectoryModal('author', ${author.id}), 150)" class="border border-line px-3 py-1 rounded-full text-bookshop font-bold">認識作者 ${zEsc(author.name)}</button>` : ''}
+          <button type="button" onclick="switchTab('map')" class="border border-line px-3 py-1 rounded-full">去書店地圖走走</button>
+        </div></div>`;
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       
@@ -1306,6 +1363,7 @@
       if (tabId === 'zine' && !zineLoaded) fetchZine();
       if (tabId === 'voices' && !voicesLoaded) fetchVoices();
       if (tabId === 'passport') ppRender();
+      if (tabId === 'cards') rcInit();
       if (tabId === 'map') {
         setTimeout(() => { if(map) map.invalidateSize(); }, 200);
       }
