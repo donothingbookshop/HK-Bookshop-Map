@@ -1268,7 +1268,11 @@
           </form>
         </div>
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
-          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已錄入籤文</h2>
+          <h2 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">已錄入籤文 <span id="c-count" class="text-xs text-slate-400 font-normal"></span></h2>
+          <div class="flex gap-2 mb-3 text-xs">
+            <input type="text" id="c-search" oninput="renderCards()" placeholder="搜尋籤文、署名…" class="flex-grow border rounded px-3 py-2">
+            <select id="c-filter-mood" onchange="renderCards()" class="border rounded px-2 py-2 bg-white"><option value="">全部心境</option><option value="calm">尋求平靜</option><option value="comfort">溫柔撫慰</option><option value="lost">迷惘釋懷</option><option value="walk">渴望散步</option><option value="night">深夜獨處</option></select>
+          </div>
           <div id="admin-card-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
         </div>
       </div>
@@ -4095,9 +4099,16 @@ longitude: longitude,
       adminCards = data || [];
       const sel = document.getElementById('c-author'); const cur = sel.value;
       sel.innerHTML = '<option value="">（不關聯）</option>' + (au || []).map(a => `<option value="${a.id}">${zx(a.name)}</option>`).join(''); sel.value = cur;
+      renderCards();
+    }
+    function renderCards() {
       const el = document.getElementById('admin-card-list');
-      if (!adminCards.length) { el.innerHTML = `<p class="text-slate-400 italic">暫無籤文</p>`; return; }
-      el.innerHTML = adminCards.map(c => `
+      const q = (document.getElementById('c-search')?.value || '').trim().toLowerCase();
+      const m = document.getElementById('c-filter-mood')?.value || '';
+      const list = adminCards.filter(c => (!m || c.mood === m) && (!q || [c.content, c.signature, c.source_title, c.note].join(' ').toLowerCase().includes(q)));
+      const cnt = document.getElementById('c-count'); if (cnt) cnt.innerText = `${list.length} / ${adminCards.length}`;
+      if (!list.length) { el.innerHTML = `<p class="text-slate-400 italic">暫無籤文</p>`; return; }
+      el.innerHTML = list.map(c => `
         <div class="border p-3 rounded-lg flex justify-between items-start gap-3 text-xs ${c.active ? '' : 'opacity-50'}">
           <div><p class="text-slate-800">${zx(c.content)}</p>
             <p class="mt-1"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${CARD_TYPE[c.card_type] || ''}</span>
@@ -4105,6 +4116,7 @@ longitude: longitude,
             <span class="ml-1 text-slate-500">${zx(c.signature || '')}</span>${c.active ? '' : ' <span class="text-red-600">（已暫停）</span>'}</p></div>
           <div class="flex gap-2 shrink-0">
             <button onclick="editCard(${c.id})" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded">編輯</button>
+            <button onclick="toggleCard(${c.id})" class="bg-amber-50 text-amber-900 hover:bg-amber-100 px-3 py-1.5 rounded">${c.active ? '停用' : '啟用'}</button>
             <button onclick="deleteCard(${c.id})" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded">刪除</button>
           </div></div>`).join('');
     }
@@ -4113,10 +4125,18 @@ longitude: longitude,
       const v = id => document.getElementById(id).value.trim() || null;
       const payload = { card_type: v('c-type') || 'excerpt', mood: v('c-mood') || 'calm', content: v('c-content'), source_title: v('c-source'), signature: v('c-sign'), note: v('c-note'),
         author_id: v('c-author') ? parseInt(v('c-author')) : null, sort_order: parseInt(document.getElementById('c-sort').value) || 0, active: document.getElementById('c-active').checked };
+      if (!payload.content) { alert('請填寫籤文內容。'); return; }
       const id = document.getElementById('c-id').value;
-      const { error } = id ? await _supabase.from('reading_cards').update(payload).eq('id', id) : await _supabase.from('reading_cards').insert([payload]);
+      const { data, error } = id ? await _supabase.from('reading_cards').update(payload).eq('id', id).select() : await _supabase.from('reading_cards').insert([payload]).select();
       if (error) { alert('儲存失敗：' + error.message); return; }
-      resetCardForm(); fetchCards();
+      if (!data || !data.length) { alert('儲存失敗：你冇權限修改解憂籤。'); return; }
+      resetCardForm(); await fetchCards(); alert(id ? '已更新籤文！' : '已新增籤文！');
+    }
+    async function toggleCard(id) {
+      const c = adminCards.find(x => x.id === id); if (!c) return;
+      const { data, error } = await _supabase.from('reading_cards').update({ active: !c.active }).eq('id', id).select();
+      if (error || !data || !data.length) { alert('更改失敗：' + (error ? error.message : '冇權限')); return; }
+      await fetchCards();
     }
     function editCard(id) {
       const c = adminCards.find(x => x.id === id); if (!c) return;
@@ -4132,8 +4152,11 @@ longitude: longitude,
       document.getElementById('card-form-title').innerText = '新增解憂籤';
     }
     async function deleteCard(id) {
-      if (!confirm('確定刪除呢條籤文？')) return;
-      await _supabase.from('reading_cards').delete().eq('id', id); fetchCards();
+      if (!confirm('確定刪除呢條籤文？刪除後無法復原。')) return;
+      const { data, error } = await _supabase.from('reading_cards').delete().eq('id', id).select();
+      if (error || !data || !data.length) { alert('刪除失敗：' + (error ? error.message : '冇權限')); return; }
+      if (document.getElementById('c-id').value == id) resetCardForm();
+      await fetchCards(); alert('已刪除籤文。');
     }
 
     // --- 文化散步路線管理 ---

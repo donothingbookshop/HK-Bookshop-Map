@@ -1312,9 +1312,8 @@
     let rcCards = null, rcMood = 'ALL', rcLastId = null;
     async function rcInit() {
       rcRenderMoods();
-      if (rcCards) return;
       const { data, error } = await _supabase.from('reading_cards').select('*').eq('active', true).order('sort_order');
-      if (error) { document.getElementById('rc-result').innerHTML = '<p class="text-center text-faint italic">暫時未能載入，請稍後再試。</p>'; return; }
+      if (error) { if (!rcCards) document.getElementById('rc-result').innerHTML = '<p class="text-center text-faint italic">暫時未能載入，請稍後再試。</p>'; return; }
       rcCards = data || [];
     }
     function rcRenderMoods() {
