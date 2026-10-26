@@ -576,13 +576,17 @@
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <h3 class="text-lg font-bold">📚 紙上造誌：認識小誌的必讀書單</h3>
-        <button onclick="openFoldZine()" class="border border-bookshop-line bg-bookshop-soft text-bookshop hover:bg-surface px-3 py-1 rounded-lg text-xs font-semibold transition">✂️ 一張 A4 摺出 8 頁小誌</button>
+        <button onclick="openFoldZine()" class="border border-bookshop-line bg-bookshop-soft text-bookshop hover:bg-surface px-3 py-1 rounded-lg text-xs font-semibold transition">✂️ 動手造誌：小誌摺法圖解指南（6 款）</button>
       </div>
       <div id="zine-book-filter" class="flex flex-wrap gap-2 mb-4"></div>
-      <div id="zine-book-list" class="grid gap-4 mb-10" style="grid-template-columns:repeat(auto-fill,minmax(150px,200px))"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+      <style>.h-scroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 12px;-webkit-overflow-scrolling:touch}.h-scroll>*{scroll-snap-align:start;flex:0 0 auto}.h-scroll::-webkit-scrollbar{height:6px}.h-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}.h-books>*{width:clamp(120px,38vw,150px)}.h-cards>*{width:min(78vw,300px)}</style>
+      <div id="zine-book-list" class="h-scroll h-books mb-10"><p class="text-faint italic col-span-full">載入資料中...</p></div>
       <div id="fold-zine-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:3000;background:rgba(30,24,20,.6)" onclick="if(event.target===this)closeFoldZine()">
         <div class="bg-surface rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative p-6">
           <button onclick="closeFoldZine()" class="absolute top-3 right-4 text-2xl text-faint" aria-label="關閉">×</button>
+          <p class="text-xs font-semibold text-bookshop mb-2">✂️ 動手造誌：小誌摺法圖解指南（6 款）</p>
+          <div id="fold-tabs" class="flex gap-2 overflow-x-auto pb-2 mb-3" style="scrollbar-width:none"></div>
+          <div data-fold-panel="0">
           <h3 class="text-xl font-bold text-ink pr-6">✂️ 一張 A4，剪一刀摺出 8 頁小誌</h3>
           <p class="text-sm text-muted-ink mt-1">準備：A4 紙一張、剪刀、筆。五分鐘就有你第一本小誌。</p>
           <svg viewBox="0 0 320 160" class="w-full mt-4 rounded-lg bg-bookshop-soft" role="img" aria-label="A4 紙摺成八格，中間剪一刀">
@@ -603,6 +607,8 @@
             <li>推到底後壓平，摺成小冊子，整理好封面就完成。</li>
             <li>按上圖頁碼畫畫、寫字、拼貼；上排要倒轉寫。做好後可拿去影印分享。</li>
           </ol>
+          </div>
+          <div id="fold-extra-panels"></div>
         </div>
       </div>
       <div id="zine-book-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:3000;background:rgba(30,24,20,.6)" onclick="if(event.target===this)closeZineBook()">
@@ -610,7 +616,7 @@
       </div>
       <h3 class="text-lg font-bold mb-3">🏬 世界各地的小誌空間、出版社與網店</h3>
       <div id="zine-region-filter" class="flex flex-wrap gap-2 mb-4"></div>
-      <div id="zine-space-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+      <div id="zine-space-list" class="h-scroll h-cards mb-10"><p class="text-faint italic col-span-full">載入資料中...</p></div>
       <h3 class="text-lg font-bold mb-3">🗓️ 藝術書節日曆</h3>
       <div id="zine-fair-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
     </section>
@@ -625,7 +631,7 @@
         <p>這裡收錄值得一聽的閱讀與文化 Podcast，以及用心記錄城市、歷史與藝術的專頁和專欄。每一個聲音，都是閱讀的延伸。</p>
       </div>
       <div id="voice-filter" class="flex flex-wrap gap-2 mb-4"></div>
-      <div id="voice-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><p class="text-faint italic col-span-full">載入資料中...</p></div>
+      <div id="voice-list" class="h-scroll h-cards"><p class="text-faint italic col-span-full">載入資料中...</p></div>
     </section>
 
   <!-- 閱讀解憂籤 Tab -->
@@ -1322,7 +1328,46 @@
       const m=document.getElementById('zine-book-modal'); if(m.parentElement!==document.body) document.body.appendChild(m); m.classList.remove('hidden');
     }
     function closeZineBook() { document.getElementById('zine-book-modal').classList.add('hidden'); }
-    function openFoldZine() { const m=document.getElementById('fold-zine-modal'); if(m.parentElement!==document.body) document.body.appendChild(m); m.classList.remove('hidden'); }
+    const S='stroke="var(--ink, #2c2420)"', D='stroke-dasharray="4 4"', C='stroke="var(--bookshop, #b5651d)" stroke-width="3"', P='fill="var(--paper, #fbf9f4)"';
+    const FOLD_GUIDES = [
+      { tab:'經典 8 頁誌', sub:'入門首選 · 1 刀' },
+      { tab:'16 頁迷宮誌', sub:'長篇故事 · 3 刀', title:'🌀 16 頁蛇腹迷宮小誌（Maze Zine）', paper:'A3（或 A4）一張', level:'★★★', tools:'剪刀、間尺、骨夾或匙羹背', fit:'長篇圖文故事、短篇小說、連載漫畫',
+        svg:`<rect x="40" y="10" width="240" height="140" ${P} ${S} stroke-width="2"/><g ${S} ${D}><line x1="100" y1="10" x2="100" y2="150"/><line x1="160" y1="10" x2="160" y2="150"/><line x1="220" y1="10" x2="220" y2="150"/><line x1="40" y1="45" x2="280" y2="45"/><line x1="40" y1="80" x2="280" y2="80"/><line x1="40" y1="115" x2="280" y2="115"/></g><g ${C}><line x1="40" y1="45" x2="220" y2="45"/><line x1="100" y1="80" x2="280" y2="80"/><line x1="40" y1="115" x2="220" y2="115"/></g>`,
+        steps:['紙橫放，摺出 4 × 4 共 16 格，打開。','按圖剪 3 刀：第一刀由左邊剪到右邊尾格前停；第二刀由右邊剪到左邊尾格前停；第三刀再由左邊剪，形成一條 S 型長紙帶。','由第一格開始，沿著紙帶方向一格一格山摺、谷摺交替，像手風琴般收起。','轉彎位要順著紙帶方向摺，壓平後就成為一本 16 頁小冊。','用骨夾壓實摺線，必要時在封面封底貼一張卡紙加固。'],
+        tip:'先用廢紙試摺一次，在每格寫上頁碼再拆開，就知道每頁的位置同方向，不會印錯。' },
+      { tab:'海報折頁誌', sub:'雙面驚喜', title:'🗺️ 海報折頁誌（Poster Fold）', paper:'A4 或 A3，雙面印刷', level:'★★', tools:'剪刀、筆', fit:'城市漫步地圖、插畫海報、展覽導覽',
+        svg:`<rect x="20" y="20" width="130" height="120" ${P} ${S} stroke-width="2"/><g ${S} ${D}><line x1="52" y1="20" x2="52" y2="140"/><line x1="85" y1="20" x2="85" y2="140"/><line x1="117" y1="20" x2="117" y2="140"/><line x1="20" y1="80" x2="150" y2="80"/></g><line x1="52" y1="80" x2="117" y2="80" ${C}/><text x="85" y="155" font-size="11" text-anchor="middle" fill="var(--ink, #2c2420)">正面：8 頁</text><rect x="170" y="20" width="130" height="120" fill="var(--bookshop, #b5651d)" opacity=".18" ${S} stroke-width="2"/><text x="235" y="85" font-size="13" text-anchor="middle" fill="var(--ink, #2c2420)" font-weight="bold">完整大海報</text><text x="235" y="155" font-size="11" text-anchor="middle" fill="var(--ink, #2c2420)">背面：攤開</text>`,
+        steps:['正面按「經典 8 頁誌」頁碼排版，每格一頁內容。','背面整張設計成一幅完整海報或地圖（唔使理格線）。','雙面印好後，跟 8 頁誌一樣摺、剪中間一刀、推成小冊。','讀者翻完 8 頁，拆開攤平，背面就是大海報。'],
+        tip:'背面海報避免把重要文字放在中間剪刀位；正面上排同樣要倒轉排版。' },
+      { tab:'手風琴摺本', sub:'免剪 · 可站立', title:'🪗 手風琴摺本（Accordion Fold）', paper:'長條紙（或 2–3 張 A4 橫切後黏合）', level:'★', tools:'膠水、間尺；封面可加厚卡紙', fit:'時間軸、全景街景、菲林式攝影誌',
+        svg:`<polyline points="30,120 70,40 110,120 150,40 190,120 230,40 270,120" fill="none" ${S} stroke-width="2"/><g font-size="11" fill="var(--ink, #2c2420)" text-anchor="middle"><text x="70" y="32">山</text><text x="110" y="138">谷</text><text x="150" y="32">山</text><text x="190" y="138">谷</text><text x="230" y="32">山</text></g>`,
+        steps:['將長條紙平均分成 6–12 格，輕輕畫線。','第一條線向後摺（山摺），下一條向前摺（谷摺），一正一反交替。','如需加長，把紙條末格塗膠疊上另一張紙條接駁。','前後各貼一塊厚卡紙做封面封底，就可以翻閱或拉開站立展示。'],
+        tip:'全景圖可以跨格連續畫；接駁位盡量留在摺線上，會更整齊。' },
+      { tab:'法式對摺誌', sub:'雙層厚感 · 防透墨', title:'📄 法式對摺小誌（French Fold）', paper:'多張 A4，只印單面', level:'★★', tools:'釘書機或針線、骨夾', fit:'Risograph 孔版印刷、深色滿版插畫',
+        svg:`<rect x="30" y="30" width="120" height="100" ${P} ${S} stroke-width="2"/><line x1="30" y1="80" x2="150" y2="80" ${S} ${D}/><line x1="90" y1="30" x2="90" y2="130" ${S} ${D}/><text x="90" y="148" font-size="11" text-anchor="middle" fill="var(--ink, #2c2420)">單面印刷</text><path d="M200 40 h70 v80 h-70 z" ${P} ${S} stroke-width="2"/><path d="M200 40 l8 6 v80 l-8 -6" fill="none" ${S}/><text x="235" y="148" font-size="11" text-anchor="middle" fill="var(--ink, #2c2420)">摺口在外 · 雙層頁</text>`,
+        steps:['每張 A4 只印一面，空白面向內。','先上下對摺，令印刷面朝外、空白面藏在夾層。','再左右對摺，摺口留在頁邊外側（唔使裁開）。','把多份摺好的紙疊好，在中縫用釘書機或線裝固定。'],
+        tip:'排版時記得每頁其實是「半張紙的一面」；先摺樣本再標頁碼最穩陣。' },
+      { tab:'土耳其地圖摺', sub:'拉角綻放', title:'🌸 土耳其地圖摺（Turkish Map Fold）', paper:'正方形紙一張（例如 21 × 21 cm）', level:'★★★', tools:'骨夾、耐性', fit:'藏寶圖、集章驚喜頁、詩句小卡',
+        svg:`<rect x="90" y="10" width="140" height="140" ${P} ${S} stroke-width="2"/><g ${S} ${D}><line x1="90" y1="10" x2="230" y2="150"/><line x1="230" y1="10" x2="90" y2="150"/><line x1="160" y1="10" x2="160" y2="150"/><line x1="90" y1="80" x2="230" y2="80"/></g><g font-size="10" fill="var(--bookshop, #b5651d)"><text x="96" y="76">谷</text><text x="164" y="24">谷</text><text x="120" y="40">山</text></g>`,
+        steps:['正方形紙沿兩條對角線摺（谷摺），打開。','翻面，沿十字中線各摺一次（山摺），打開。','按住摺痕，把四邊向中心收，壓成一個小正方形（像紙鶴起手的「正方基」）。','把每一角再向中心摺細，壓平成小方塊。','拉開對角時，整張紙會一下子向外展開，像花開。'],
+        tip:'中心是展開後最先看到的位置，適合放主角圖案或驚喜一句話。' }
+    ];
+    function renderFoldGuides(){
+      const tabs=document.getElementById('fold-tabs'), extra=document.getElementById('fold-extra-panels');
+      if(tabs.dataset.ready) return; tabs.dataset.ready='1';
+      tabs.innerHTML=FOLD_GUIDES.map((g,i)=>`<button type="button" data-fold-tab="${i}" onclick="showFold(${i})" class="shrink-0 border border-bookshop-line px-3 py-1 rounded-lg text-xs font-semibold text-left transition"><span class="block">${g.tab}</span><span class="block font-normal opacity-75">${g.sub}</span></button>`).join('');
+      extra.innerHTML=FOLD_GUIDES.slice(1).map((g,j)=>`<div data-fold-panel="${j+1}" class="hidden">
+        <h3 class="text-xl font-bold text-ink pr-6">${g.title}</h3>
+        <div class="grid grid-cols-2 gap-2 mt-2 text-xs text-muted-ink"><div>📄 用紙：${g.paper}</div><div>難度：${g.level}</div><div>🛠️ 工具：${g.tools}</div><div>✨ 適合：${g.fit}</div></div>
+        <svg viewBox="0 0 320 160" class="w-full mt-4 rounded-lg bg-bookshop-soft" role="img" aria-label="${g.title}圖解">${g.svg}</svg>
+        <ol class="list-decimal pl-5 mt-4 space-y-2 text-sm text-ink leading-relaxed">${g.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        <p class="mt-3 text-xs bg-bookshop-soft text-ink rounded-lg p-3">💡 排版提示：${g.tip}</p></div>`).join('');
+    }
+    function showFold(i){
+      document.querySelectorAll('#fold-zine-modal [data-fold-panel]').forEach(p=>p.classList.toggle('hidden', p.dataset.foldPanel!=String(i)));
+      document.querySelectorAll('#fold-tabs [data-fold-tab]').forEach(b=>{const on=b.dataset.foldTab==String(i); b.classList.toggle('bg-bookshop-soft',on); b.classList.toggle('text-bookshop',on); b.classList.toggle('text-muted-ink',!on);});
+    }
+    function openFoldZine() { const m=document.getElementById('fold-zine-modal'); if(m.parentElement!==document.body) document.body.appendChild(m); renderFoldGuides(); showFold(0); m.classList.remove('hidden'); }
     function closeFoldZine() { document.getElementById('fold-zine-modal').classList.add('hidden'); }
     const ZINE_BOOK_CATS = [
       { key: 'ALL', label: '全部' },
