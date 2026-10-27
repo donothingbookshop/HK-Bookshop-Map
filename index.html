@@ -462,11 +462,12 @@
       <div class="flex flex-wrap gap-2 mb-6">
         <button onclick="filterEco('ALL')" class="bg-primary text-primary-contrast px-3 py-1 rounded-full text-xs font-medium transition">全部分類</button>
         <button onclick="filterEco('農業/平台/大自然/教育')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🌿 農業/平台/大自然/教育</button>
-        <button onclick="filterEco('回收/環保')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">♻️ 回收/環保</button>
+        <button onclick="filterEco('回收/環保/店')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">♻️ 回收/環保/店</button>
         <button onclick="filterEco('陶藝')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🏺 陶藝</button>
         <button onclick="filterEco('醬園')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🫙 醬園</button>
         <button onclick="filterEco('酒')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🍶 酒</button>
         <button onclick="filterEco('咖啡')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">☕ 咖啡</button>
+        <button onclick="filterEco('茶')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🍵 茶</button>
         <button onclick="filterEco('麵')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🍜 麵</button>
         <button onclick="filterEco('養蜂場')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🐝 養蜂場</button>
         <button onclick="filterEco('漁產')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-eco-soft transition">🐟 漁產</button>
@@ -2298,12 +2299,12 @@
       `).join('');
     }
 
-    const ECO_KNOWN_CATS = ['農業/平台/大自然/教育','回收/環保','陶藝','醬園','酒','咖啡','麵','養蜂場','漁產'];
+    const ECO_KNOWN_CATS = ['農業/平台/大自然/教育','回收/環保/店','回收/環保','陶藝','醬園','酒','咖啡','茶','麵','養蜂場','漁產'];
 
     function filterEco(cat) {
       if (cat === 'ALL') renderEco(allEco);
       else if (cat === '其他') renderEco(allEco.filter(e => e.category && !ECO_KNOWN_CATS.includes(e.category)));
-      else renderEco(allEco.filter(e => e.category === cat));
+      else renderEco(allEco.filter(e => e.category === cat || (cat === '回收/環保/店' && e.category === '回收/環保')));
     }
 
     function openEcoModal(id) {
