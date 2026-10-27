@@ -388,7 +388,7 @@
               <div>
                 <label class="block font-bold text-slate-700 mb-1">寄售人分成比例 (%) *</label>
                 <input type="number" id="c-share" value="70" min="0" max="100" oninput="applyDefaultShare()" class="w-full border rounded-lg px-3 py-2">
-                <p class="text-[10px] text-slate-500 mt-1">書店抽成 = 100% − 此比例；個別項目可獨立調整。</p>
+                <p class="text-[10px] text-slate-500 mt-1">書店抽成 = 100% − 此比例；個別項目可另行調整。</p>
               </div>
               <div>
                 <label class="block font-bold text-slate-700 mb-1">結算狀態 *</label>
@@ -446,6 +446,21 @@
     <section id="sec-reading-room" class="admin-section">
       <div class="space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-lg mb-1">📝 閱書室頁面文字</h3>
+          <p class="text-xs text-slate-500 mb-3">修改網站「閱書室」頁上面嘅文字，儲存後即時更新。留空會用返預設文字。</p>
+          <div class="grid gap-2 text-sm">
+            <label>狀態標籤<input id="rrt-badge" maxlength="60" class="w-full border rounded-lg px-3 py-2"></label>
+            <label>介紹文字（可分行）<textarea id="rrt-intro" rows="3" maxlength="400" class="w-full border rounded-lg px-3 py-2"></textarea></label>
+            <div class="grid md:grid-cols-3 gap-2">
+              <div class="border rounded-lg p-2 space-y-1"><b class="text-xs">特色 1</b><input id="rrt-f1i" maxlength="4" placeholder="圖示" class="w-full border rounded px-2 py-1"><input id="rrt-f1t" maxlength="30" placeholder="標題" class="w-full border rounded px-2 py-1"><textarea id="rrt-f1d" rows="2" maxlength="120" placeholder="說明" class="w-full border rounded px-2 py-1"></textarea></div>
+              <div class="border rounded-lg p-2 space-y-1"><b class="text-xs">特色 2</b><input id="rrt-f2i" maxlength="4" placeholder="圖示" class="w-full border rounded px-2 py-1"><input id="rrt-f2t" maxlength="30" placeholder="標題" class="w-full border rounded px-2 py-1"><textarea id="rrt-f2d" rows="2" maxlength="120" placeholder="說明" class="w-full border rounded px-2 py-1"></textarea></div>
+              <div class="border rounded-lg p-2 space-y-1"><b class="text-xs">特色 3</b><input id="rrt-f3i" maxlength="4" placeholder="圖示" class="w-full border rounded px-2 py-1"><input id="rrt-f3t" maxlength="30" placeholder="標題" class="w-full border rounded px-2 py-1"><textarea id="rrt-f3d" rows="2" maxlength="120" placeholder="說明" class="w-full border rounded px-2 py-1"></textarea></div>
+            </div>
+            <label>預約提示<textarea id="rrt-note" rows="2" maxlength="300" class="w-full border rounded-lg px-3 py-2"></textarea></label>
+            <div class="flex gap-2 items-center"><button type="button" onclick="rrtSave()" class="bg-amber-900 text-white px-4 py-2 rounded-lg font-bold">儲存頁面文字</button><button type="button" onclick="rrtFill(RRT_DEFAULT)" class="border px-3 py-2 rounded-lg">填入預設文字</button><span id="rrt-msg" class="text-xs text-emerald-700"></span></div>
+          </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
           <h3 class="font-bold text-lg mb-1">🛋️ 開放時段設定</h3>
           <p class="text-xs text-slate-500 mb-3">揀日子，再剔你會喺場嘅小時。未剔嘅時間前台唔會顯示。</p>
           <div class="flex flex-wrap gap-2 items-end">
@@ -482,7 +497,7 @@
       <div class="space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
           <h2 class="text-lg font-bold text-amber-950 mb-1"><i class="fa-solid fa-tents mr-1"></i> 市集擺檔</h2>
-          <p class="text-xs text-slate-500 mb-3">只喺後台使用，唔會顯示喺網站。市集數量獨立計算，唔會影響網店庫存。</p>
+          <p class="text-xs text-slate-500 mb-3">只喺後台使用，唔會顯示喺網站。市集數量另外計算，唔會影響網店庫存。</p>
           <form id="mk-event-form" onsubmit="saveMarketEvent(event)" class="grid md:grid-cols-4 gap-2">
             <input id="mk-ev-name" required maxlength="100" placeholder="市集名稱 *" class="border rounded-lg px-3 py-2 text-sm md:col-span-2">
             <input id="mk-ev-date" type="date" class="border rounded-lg px-3 py-2 text-sm">
@@ -4312,7 +4327,11 @@ longitude: longitude,
 <script>
 const rraPad=n=>String(n).padStart(2,'0');const rraEsc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let rraDaySlots=[];let rraB={};
-function rraInit(){const d=document.getElementById('rra-date');if(!d.value){const t=new Date();d.value=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());}rraLoadDay();rraLoadUpcoming();rraLoadBookings();rraLoadPasses();}
+function rraInit(){const d=document.getElementById('rra-date');if(!d.value){const t=new Date();d.value=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());}rraLoadDay();rraLoadUpcoming();rraLoadBookings();rraLoadPasses();rrtLoad();}
+const RRT_DEFAULT={badge:'籌備整理中・敬請期待 Coming Soon',intro:'百呎私密角落，每次只容兩三讀者。\n遠離鬧市喧囂，放下手機與日常牽絆，\n在這裡，時間只留給紙頁翻動的安靜時光。',features:[{i:'🕯️',t:'極致私密・安靜',d:'100 呎專屬天地，每小時最多 2–3 位讀者，杜絕干擾與喧嘩。'},{i:'📚',t:'店長精選藏書',d:'自資刊物、文學小說、香港地方誌等私藏書籍，自由翻閱。'},{i:'🛋️',t:'專屬閱讀席位',d:'舒適閱讀座椅與專屬燈光，享受專心看書的平靜節奏。'}],note:'💡 空間由店長一人打理，開放時段以店長在場時間為準。亮起的日子可直接預約；想約其他時間，可撳下面「申請其他時段」。'};
+function rrtFill(c){const g=id=>document.getElementById(id);g('rrt-badge').value=c.badge||'';g('rrt-intro').value=c.intro||'';g('rrt-note').value=c.note||'';[0,1,2].forEach(k=>{const f=(c.features||[])[k]||{};g('rrt-f'+(k+1)+'i').value=f.i||'';g('rrt-f'+(k+1)+'t').value=f.t||'';g('rrt-f'+(k+1)+'d').value=f.d||'';});}
+async function rrtLoad(){const {data}=await _supabase.from('payment_settings').select('instructions').eq('id','reading_room').maybeSingle();let c=RRT_DEFAULT;try{if(data&&data.instructions)c=JSON.parse(data.instructions);}catch(e){}rrtFill(c);}
+async function rrtSave(){const g=id=>document.getElementById(id).value.trim();const c={badge:g('rrt-badge'),intro:g('rrt-intro'),note:g('rrt-note'),features:[1,2,3].map(k=>({i:g('rrt-f'+k+'i'),t:g('rrt-f'+k+'t'),d:g('rrt-f'+k+'d')}))};const {error}=await _supabase.from('payment_settings').upsert({id:'reading_room',instructions:JSON.stringify(c)});const m=document.getElementById('rrt-msg');if(error){m.className='text-xs text-red-600';m.textContent='儲存失敗：'+error.message;}else{m.className='text-xs text-emerald-700';m.textContent='✓ 已儲存，網站已更新';}}
 async function rraLoadDay(){const ds=document.getElementById('rra-date').value;const {data}=await _supabase.from('reading_room_slots').select('*').eq('slot_date',ds);rraDaySlots=data||[];
  if(rraDaySlots[0])document.getElementById('rra-cap').value=rraDaySlots[0].capacity;
  let h='';for(let i=9;i<=22;i++){const on=rraDaySlots.some(x=>x.hour===i);h+=`<label class="border rounded-lg p-2 text-sm flex items-center gap-1 ${on?'bg-amber-50 border-amber-300':''}"><input type="checkbox" class="rra-hr" value="${i}" ${on?'checked':''}>${rraPad(i)}:00</label>`;}
