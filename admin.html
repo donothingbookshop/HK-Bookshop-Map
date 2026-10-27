@@ -1921,7 +1921,7 @@ async function saveMarketItem(ev) {
   const f = document.getElementById('mk-it-img').files[0];
   if (f) {
     const fn = `market_${Date.now()}_${Math.random().toString(36).slice(2)}.${(f.name.split('.').pop() || 'jpg')}`;
-    const up = await _supabase.storage.from('images').upload(fn, f);
+    const up = await _supabase.storage.from('images').upload(fn, await compressImage(f, 1200));
     if (up.error) return alert('圖片上載失敗：' + up.error.message);
     image_url = _supabase.storage.from('images').getPublicUrl(fn).data.publicUrl;
   }
@@ -2990,7 +2990,7 @@ window.onload = async function () {
 
       if (file) {
         const fileName = `bs_${Date.now()}.${file.name.split('.').pop()}`;
-        await _supabase.storage.from('images').upload(fileName, file);
+        await _supabase.storage.from('images').upload(fileName, await compressImage(file, 1200));
         const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
         imageUrl = publicUrl;
       }
@@ -3178,7 +3178,7 @@ longitude: longitude,
         if (file) {
           const extension = file.name.split('.').pop();
           const fileName = `author_book_${Date.now()}_${index}.${extension}`;
-          const { error } = await _supabase.storage.from('images').upload(fileName, file);
+          const { error } = await _supabase.storage.from('images').upload(fileName, await compressImage(file, 1200));
           if (error) throw error;
           imageUrl = _supabase.storage.from('images').getPublicUrl(fileName).data.publicUrl;
         }
@@ -3214,7 +3214,7 @@ longitude: longitude,
       try {
         if (file) {
           const fileName = `author_${Date.now()}.${file.name.split('.').pop()}`;
-          const { error } = await _supabase.storage.from('images').upload(fileName, file);
+          const { error } = await _supabase.storage.from('images').upload(fileName, await compressImage(file, 1200));
           if (error) throw error;
           const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
           imageUrl = publicUrl;
@@ -3297,7 +3297,7 @@ longitude: longitude,
 
       if (file) {
         const fileName = `pub_${Date.now()}.${file.name.split('.').pop()}`;
-        await _supabase.storage.from('images').upload(fileName, file);
+        await _supabase.storage.from('images').upload(fileName, await compressImage(file, 1200));
         const { data: { publicUrl } } = _supabase.storage.from('images').getPublicUrl(fileName);
         imageUrl = publicUrl;
       }

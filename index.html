@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>香港獨立文化地圖 | Independent Culture Guide</title>
+  <title>香港藝文生活指南 | HK Culture Guide</title>
   <meta name="description" content="探索香港獨立書店、文化檔案、本地劇團與農業環保機構，連結城市中的獨立文化。">
-  <meta property="og:title" content="香港獨立文化地圖 | Independent Culture Guide">
+  <meta property="og:title" content="香港藝文生活指南 | HK Culture Guide">
   <meta property="og:description" content="探索香港獨立書店、文化檔案、本地劇團與農業環保機構。">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
@@ -147,6 +147,27 @@
     }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
   </style>
+<script>
+/* 全站圖片優化：Supabase 圖片自動縮圖，失敗時退回原圖 */
+(function(){
+  const RX=/\/storage\/v1\/object\/public\//;
+  function opt(img){
+    if(img.dataset.optDone) return; img.dataset.optDone='1';
+    img.decoding='async';
+    const src=img.getAttribute('src')||'';
+    if(!RX.test(src)||/\.(gif|svg)(\?|$)/i.test(src)) return;
+    const big=/max-h-96|preview-image/.test(img.className)||img.closest('[role="dialog"],.modal,.lightbox');
+    const w=big?1000:480;
+    img.dataset.origSrc=src;
+    img.addEventListener('error',function f(){img.removeEventListener('error',f);img.src=img.dataset.origSrc;});
+    img.src=src.replace(RX,'/storage/v1/render/image/public/')+(src.includes('?')?'&':'?')+'width='+w+'&quality=80&resize=contain';
+  }
+  function scan(root){ if(root.tagName==='IMG') opt(root); else if(root.querySelectorAll) root.querySelectorAll('img').forEach(opt); }
+  new MutationObserver(ms=>ms.forEach(m=>{ if(m.type==='attributes'){ const i=m.target; if(i.getAttribute('src')!==i.dataset.origSrc && !String(i.getAttribute('src')).includes('/render/image/')){delete i.dataset.optDone;opt(i);} } else m.addedNodes.forEach(scan); }))
+    .observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
+  document.addEventListener('DOMContentLoaded',()=>scan(document.body));
+})();
+</script>
 </head>
 <body class="bg-paper text-ink flex flex-col min-h-screen font-sans">
 
@@ -156,7 +177,7 @@
 
       <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('map')">
         <i class="fa-solid fa-book-bookmark text-2xl text-bookshop-light"></i>
-        <div><h1 class="text-lg font-bold">香港獨立文化地圖</h1><p class="brand-subtitle">Independent Culture Guide</p></div>
+        <div><h1 class="text-lg font-bold">香港藝文生活指南</h1><p class="brand-subtitle">HK Culture Guide</p></div>
       </div>
 
       <nav class="main-nav flex gap-1 text-xs sm:text-sm font-medium">
@@ -921,13 +942,13 @@
   <section id="donate" class="max-w-3xl mx-auto w-full px-4 pb-8 hidden">
     <div class="bg-paper rounded-2xl border border-line shadow-sm p-6 text-center">
       <h2 class="text-lg font-bold text-theatre mb-1">☕ 隨緣樂助</h2>
-      <p class="text-xs text-muted-ink mb-4">如果你鍾意香港獨立文化地圖，歡迎隨心支持我哋繼續營運。</p>
+      <p class="text-xs text-muted-ink mb-4">如果你鍾意香港藝文生活指南，歡迎隨心支持我哋繼續營運。</p>
       <div id="donate-options" class="flex flex-wrap justify-center gap-6"></div>
     </div>
   </section>
 
   <footer class="bg-ink text-xs py-6 text-center mt-auto" style="color:oklch(0.82 0.02 80)">
-    <p>© 香港獨立文化地圖 · Independent Culture Guide</p>
+    <p>© 香港藝文生活指南 · HK Culture Guide</p>
     <p class="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1">
       <button type="button" onclick="openPolicy('privacy')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">🔒 私隱政策</button>
       <button type="button" onclick="openPolicy('order')" class="underline underline-offset-4 font-semibold text-sm" style="color:oklch(0.95 0.015 85)">📦 訂購及交收說明</button>
