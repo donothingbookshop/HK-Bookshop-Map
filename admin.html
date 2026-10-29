@@ -2960,7 +2960,7 @@ window.onload = async function () {
 
     // --- 4. 實體書店管理 ---
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('bookshops').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       const el = document.getElementById('admin-bookshop-list');
       const elC = document.getElementById('admin-closed-bookshop-list');
       window._bsMap = Object.fromEntries((data||[]).map(b => [b.id, b]));
@@ -2973,7 +2973,7 @@ window.onload = async function () {
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800">${b.name}</span>${b.status === 'closing_soon' ? '<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-semibold">⏳ 準備結業</span>' : ''}
-            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${b.region}</span>
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${b.region}</span>${b.place_type === 'reading_corner' ? '<span class="ml-2 bg-orange-50 text-orange-800 px-2 py-0.5 rounded">☕ 閱讀角</span>' : b.place_type === 'book_crossing' ? '<span class="ml-2 bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">📦 漂書點</span>' : ''}${b.sort_order != null ? `<span class="ml-2 text-slate-400">排序 ${b.sort_order}</span>` : ''}
             <p class="text-slate-500 mt-0.5">${b.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
@@ -3052,6 +3052,7 @@ longitude: longitude,
         facebook_url: document.getElementById('bs-fb').value,
         google_map_url: document.getElementById('bs-gmap').value
       };
+      Object.assign(payload, extraFields('bs'));
       if (imageUrl) payload.image_url = imageUrl;
 
       let error;
@@ -3077,7 +3078,7 @@ longitude: longitude,
       if (note) note.classList.toggle('hidden', !closed);
       if (!closed && typeof initAdminBookshopMap === 'function') setTimeout(() => { try { initAdminBookshopMap(); } catch (e) {} }, 50);
     }
-    function editBookshop(b) {
+    function editBookshop(b) { fillExtra('bs', b);
       document.getElementById('bs-id').value = b.id;
       document.getElementById('bs-name').value = b.name;
       document.getElementById('bs-region').value = b.region;
@@ -3125,7 +3126,7 @@ longitude: longitude,
       }, 450);
     }
 
-    function resetBookshopForm() {
+    function resetBookshopForm() { fillExtra('bs', {});
   document.getElementById('bookshop-form').reset();
   document.getElementById('bs-id').value = '';
   document.getElementById('bs-lat').value = '';
@@ -3204,7 +3205,7 @@ longitude: longitude,
     }
 
     async function fetchAuthors() {
-      const { data } = await _supabase.from('authors').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('authors').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       const el = document.getElementById('admin-author-list');
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無作者資料</p>`; return; }
       el.innerHTML = data.map(a => `
@@ -3245,6 +3246,7 @@ longitude: longitude,
           facebook_url: document.getElementById('au-fb').value,
           books: await collectAuthorBooks()
         };
+        Object.assign(payload, extraFields('au'));
         if (imageUrl) payload.image_url = imageUrl;
 
         const { error } = id
@@ -3260,7 +3262,7 @@ longitude: longitude,
       }
     }
 
-    function editAuthor(a) {
+    function editAuthor(a) { fillExtra('au', a);
       document.getElementById('au-id').value = a.id;
       document.getElementById('au-name').value = a.name;
       document.getElementById('au-phone').value = a.phone || '';
@@ -3273,7 +3275,7 @@ longitude: longitude,
       document.getElementById('author-form-title').innerText = "編輯本地作者";
     }
 
-    function resetAuthorForm() {
+    function resetAuthorForm() { fillExtra('au', {});
       document.getElementById('author-form').reset();
       document.getElementById('au-id').value = '';
       document.getElementById('au-books-list').innerHTML = '';
@@ -3288,13 +3290,13 @@ longitude: longitude,
 
     // --- 6. 本地出版社管理 ---
     async function fetchPublishers() {
-      const { data } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('publishers').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       const el = document.getElementById('admin-publisher-list');
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無出版社資料</p>`; return; }
       el.innerHTML = data.map(p => `
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
-            <span class="font-bold text-slate-800">${p.name}</span>
+            <span class="font-bold text-slate-800">${p.name}</span>${p.status === 'closed' ? `<span class="ml-2 bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold">🕯️ 已結業${p.closed_year ? `（${p.closed_year} 年）` : ''}</span>` : ''}${p.sort_order != null ? `<span class="ml-2 text-slate-400">排序 ${p.sort_order}</span>` : ''}
             <p class="text-slate-500 mt-0.5 line-clamp-1">${p.description || '無簡介'}</p>
           </div>
           <div class="flex gap-2">
@@ -3326,6 +3328,7 @@ longitude: longitude,
         instagram_url: document.getElementById('pub-ig').value,
         facebook_url: document.getElementById('pub-fb').value
       };
+      Object.assign(payload, extraFields('pub'));
       if (imageUrl) payload.image_url = imageUrl;
 
       if (id) await _supabase.from('publishers').update(payload).eq('id', id);
@@ -3336,7 +3339,7 @@ longitude: longitude,
       alert("儲存成功！");
     }
 
-    function editPublisher(p) {
+    function editPublisher(p) { fillExtra('pub', p);
       document.getElementById('pub-id').value = p.id;
       document.getElementById('pub-name').value = p.name;
       document.getElementById('pub-phone').value = p.phone || '';
@@ -3347,7 +3350,7 @@ longitude: longitude,
       document.getElementById('publisher-form-title').innerText = "編輯本地出版社";
     }
 
-    function resetPublisherForm() {
+    function resetPublisherForm() { fillExtra('pub', {});
       document.getElementById('publisher-form').reset();
       document.getElementById('pub-id').value = '';
       document.getElementById('publisher-form-title').innerText = "新增本地出版社";
@@ -3388,7 +3391,7 @@ longitude: longitude,
       });
     }
     async function fetchProducts() {
-      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('shop_products').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       const el = document.getElementById('admin-product-list');
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-slate-400 italic">暫無商品</p>`; return; }
       el.innerHTML = data.map(p => `
@@ -3818,6 +3821,7 @@ longitude: longitude,
         creator_fb: document.getElementById('p-creator-fb').value.trim() || null,
         creator_website: document.getElementById('p-creator-web').value.trim() || null
       };
+      Object.assign(payload, extraFields('p'));
       if (payload.product_type === '文創周邊') { Object.assign(payload, { author: null, translator: null, publisher: null, isbn: null, weight: null, is_second_hand: false, original_price: null, book_condition: null }); payload.price = Number(document.getElementById('p-price').value); }
       if (!imageUrl) imageUrl = document.getElementById('p-image-url').value || null;
       if (imageUrl) payload.image_url = imageUrl;
@@ -3831,7 +3835,7 @@ longitude: longitude,
       alert("商品儲存成功！");
     }
 
-    function editProduct(p) {
+    function editProduct(p) { fillExtra('p', p);
       clearIsbnCover();
       setExtraUrls(Array.isArray(p.extra_images) ? p.extra_images : []);
 
@@ -3897,7 +3901,7 @@ longitude: longitude,
       document.getElementById('p-creator').required = merch;
     }
 
-    function resetProductForm() {
+    function resetProductForm() { fillExtra('p', {});
       setTimeout(() => { document.getElementById('p-used').checked = false; document.getElementById('p-used-box').classList.add('hidden'); setProductType('書籍', ''); }, 0);
       stopIsbnScan();
       clearIsbnCover();
@@ -4397,6 +4401,33 @@ async function rraDelPass(id){if(!confirm('確定刪除通行證？'))return;awa
     apply();
   });
 })();
+</script>
+
+<script>
+  // 排序 / 出版社結業 / 空間類型 額外欄位
+  (function(){
+    const box = (pre, html) => { const n = document.getElementById(pre + '-name'); if (!n) return; const d = document.createElement('div'); d.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm'; d.innerHTML = html; n.insertAdjacentElement('afterend', d); };
+    const sortHtml = pre => `<label class="block"><span class="text-xs text-slate-500">排序（數字細排先，留空按時間）</span><input type="number" id="${pre}-sort" class="w-full border rounded px-3 py-2"></label>`;
+    function init(){
+      box('bs', sortHtml('bs') + `<label class="block"><span class="text-xs text-slate-500">空間類型</span><select id="bs-ptype" class="w-full border rounded px-3 py-2"><option value="bookshop">📚 書店</option><option value="reading_corner">☕ 閱讀角／咖啡座（有擺書）</option><option value="book_crossing">📦 社區漂書點</option></select></label><label class="block sm:col-span-2"><span class="text-xs text-slate-500">漂書規則／消費提示（如：低消一杯飲品、帶一走一）</span><input type="text" id="bs-rnote" class="w-full border rounded px-3 py-2"></label>`);
+      box('au', sortHtml('au'));
+      box('p', sortHtml('p'));
+      box('pub', sortHtml('pub') + `<label class="block"><span class="text-xs text-slate-500">營運狀態</span><select id="pub-status" class="w-full border rounded px-3 py-2" onchange="document.getElementById('pub-closed-wrap').classList.toggle('hidden', this.value!=='closed')"><option value="active">🟢 營運中</option><option value="closed">🕯️ 已結業</option></select></label><label id="pub-closed-wrap" class="block hidden"><span class="text-xs text-slate-500">結業年份</span><input type="number" id="pub-closed-year" class="w-full border rounded px-3 py-2" placeholder="例如 2019"></label>`);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    const g = id => document.getElementById(id);
+    window.extraFields = pre => {
+      const o = {}; const s = g(pre + '-sort'); if (s) o.sort_order = s.value === '' ? null : Number(s.value);
+      if (pre === 'bs') { o.place_type = g('bs-ptype').value || 'bookshop'; o.reading_note = g('bs-rnote').value.trim() || null; }
+      if (pre === 'pub') { o.status = g('pub-status').value; o.closed_year = o.status === 'closed' ? (Number(g('pub-closed-year').value) || null) : null; }
+      return o;
+    };
+    window.fillExtra = (pre, r) => {
+      r = r || {}; const s = g(pre + '-sort'); if (s) s.value = r.sort_order ?? '';
+      if (pre === 'bs' && g('bs-ptype')) { g('bs-ptype').value = r.place_type || 'bookshop'; g('bs-rnote').value = r.reading_note || ''; }
+      if (pre === 'pub' && g('pub-status')) { g('pub-status').value = r.status || 'active'; g('pub-closed-year').value = r.closed_year || ''; g('pub-closed-wrap').classList.toggle('hidden', g('pub-status').value !== 'closed'); }
+    };
+  })();
 </script>
 </body>
 </html>

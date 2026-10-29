@@ -226,6 +226,12 @@
           <a href="https://www.xplorehk.com/signin.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 mt-2 border border-bookshop-line bg-bookshop-soft text-bookshop hover:bg-surface px-2.5 py-1 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-link"></i>探索更多本地活動：香港活動搜尋器 XploreHK ↗</a>
         </div>
         
+        <div id="place-type-filters" class="flex flex-wrap gap-1.5" role="group" aria-label="空間類型">
+          <button data-ptype="ALL" onclick="filterPlaceType('ALL')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition filter-active">全部</button>
+          <button data-ptype="bookshop" onclick="filterPlaceType('bookshop')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">📚 書店</button>
+          <button data-ptype="reading_corner" onclick="filterPlaceType('reading_corner')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">☕ 閱讀角</button>
+          <button data-ptype="book_crossing" onclick="filterPlaceType('book_crossing')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">📦 漂書點</button>
+        </div>
         <div class="relative w-full md:w-64">
           <input type="text" id="bookshop-search" oninput="handleBookshopSearch(this.value)" placeholder="搜尋書店名稱/地址/簡介..." class="w-full pl-9 pr-3 py-2 text-xs border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-bookshop shadow-sm">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-faint text-xs"></i>
@@ -324,6 +330,11 @@
             <span><i class="fa-solid fa-building-columns mr-2"></i>本地出版社</span>
             <span class="text-xs font-normal text-faint">點擊查看詳情</span>
           </h3>
+          <div id="pub-status-filters" class="flex flex-wrap gap-1.5 mb-3">
+            <button data-pst="ALL" onclick="filterPubStatus('ALL')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition filter-active">全部</button>
+            <button data-pst="active" onclick="filterPubStatus('active')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">🟢 營運中</button>
+            <button data-pst="closed" onclick="filterPubStatus('closed')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">🕯️ 已結業</button>
+          </div>
           <div class="dir-scroll-wrap">
             <div id="publisher-list" class="dir-scroll-list space-y-3 text-sm text-muted-ink"><p class="text-faint italic">暫無出版社資料</p></div>
             <div class="dir-rail"><span class="dir-thumb"></span></div>
@@ -1110,8 +1121,9 @@
       if (!map) return;
       mapMarkers.forEach(marker => map.removeLayer(marker));
       mapMarkers = [];
-      const icon = L.divIcon({className: 'culture-marker', html: '<span><i class="fa-solid fa-book-open"></i></span>', iconSize: [32, 38], iconAnchor: [16, 38], popupAnchor: [0, -38]});
+      const ICONS = { bookshop: 'fa-book-open', reading_corner: 'fa-mug-hot', book_crossing: 'fa-box-open' };
       shops.forEach(shop => {
+        const icon = L.divIcon({className: 'culture-marker', html: `<span><i class="fa-solid ${ICONS[shop.place_type] || ICONS.bookshop}"></i></span>`, iconSize: [32, 38], iconAnchor: [16, 38], popupAnchor: [0, -38]});
         const lat = Number(shop.latitude), lng = Number(shop.longitude);
         if (!shop.latitude || !shop.longitude || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
         const links = [['website_url','官方網站'],['instagram_url','Instagram'],['facebook_url','Facebook'],['google_map_url','Google Map']]
@@ -1119,6 +1131,7 @@
         const preview = `<div class="shop-quick-preview">
           ${shopUrl(shop.image_url) ? `<img class="preview-image" src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}">` : ''}
           <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}
+          ${PLACE_TAG[shop.place_type] ? `<p><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
           <p>${escapeShop(shop.address || '未提供地址')}</p><p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
           ${shop.phone ? `<p>電話：${escapeShop(shop.phone)}</p>` : ''}
           ${shop.opened_year || shop.closed_year ? `<p>${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
@@ -1570,7 +1583,7 @@
 
     // --- 書店 ---
     async function fetchBookshops() {
-      const { data } = await _supabase.from('bookshops').select('*').order('id', { ascending: true });
+      const { data } = await _supabase.from('bookshops').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: true });
       allBookshops = data || [];
       applyBookshopFilters();
     }
@@ -1625,6 +1638,7 @@
           <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
           <div class="shop-card-copy"><span class="shop-region">${escapeShop(shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region)}</span>
             <h3>${escapeShop(shop.name)}${shop.status === 'closing_soon' ? '<span class="closing-tag">⏳ 準備結業</span>' : ''}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
+            ${PLACE_TAG[shop.place_type] ? `<p class="shop-hours"><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
             <p class="shop-hours">${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
             ${shop.opened_year || shop.closed_year ? `<p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
             <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
@@ -1654,6 +1668,19 @@
       applyBookshopFilters();
     }
 
+    let currentPlaceType = 'ALL';
+    const PLACE_TAG = { reading_corner: '☕ 閱讀角', book_crossing: '📦 漂書點' };
+    function filterPlaceType(t) {
+      currentPlaceType = t;
+      document.querySelectorAll('#place-type-filters button').forEach(b => b.classList.toggle('filter-active', b.dataset.ptype === t));
+      applyBookshopFilters();
+    }
+    let currentPubStatus = 'ALL';
+    function filterPubStatus(t) {
+      currentPubStatus = t;
+      document.querySelectorAll('#pub-status-filters button').forEach(b => b.classList.toggle('filter-active', b.dataset.pst === t));
+      renderPublishers(allPublishers);
+    }
     function applyBookshopFilters() {
       let filtered = allBookshops;
 
@@ -1674,6 +1701,7 @@
         filtered = filtered.filter(b => b.country === currentBookshopCountry);
       }
 
+      if (!memory && currentPlaceType !== 'ALL') filtered = filtered.filter(b => (b.place_type || 'bookshop') === currentPlaceType);
       if (currentBookshopSearch) {
         filtered = filtered.filter(b => 
           (b.name && b.name.toLowerCase().includes(currentBookshopSearch)) ||
@@ -1688,8 +1716,8 @@
 
     // --- 作者 & 出版社 ---
     async function fetchAuthorsAndPublishers() {
-      const { data: authors } = await _supabase.from('authors').select('*').order('id', { ascending: false });
-      const { data: publishers } = await _supabase.from('publishers').select('*').order('id', { ascending: false });
+      const { data: authors } = await _supabase.from('authors').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
+      const { data: publishers } = await _supabase.from('publishers').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       
       allAuthors = authors || [];
       allPublishers = publishers || [];
@@ -1716,6 +1744,7 @@
 
     function renderPublishers(data) {
       const el = document.getElementById('publisher-list');
+      if (data && currentPubStatus !== 'ALL') data = data.filter(p => (p.status || 'active') === currentPubStatus);
       if (!data || data.length === 0) { el.innerHTML = `<p class="text-faint italic">暫無出版社資料</p>`; return; }
       el.innerHTML = data.map(p => `
         <div onclick="openDirectoryModal('publisher', ${p.id})" class="p-3 border rounded-lg hover:bg-bookshop-soft cursor-pointer transition flex items-center space-x-3">
@@ -1723,7 +1752,7 @@
             ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-building text-faint"></i>`}
           </div>
           <div>
-            <h4 class="font-bold text-ink">${p.name}</h4>
+            <h4 class="font-bold text-ink">${p.name}${p.status === 'closed' ? `<span class="ml-2 text-xs font-normal text-muted-ink">🕯️ 已結業${p.closed_year ? `（${p.closed_year} 年）` : ''}</span>` : ''}</h4>
             <p class="text-xs text-muted-ink line-clamp-1">${p.description || '點擊查看詳細簡介'}</p>
           </div>
         </div>
@@ -1795,7 +1824,7 @@
       const item = (type === 'author' ? allAuthors : allPublishers).find(x => x.id === id);
       if (!item) return;
 
-      document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 本地作者' : '🏛️ 本地出版社';
+      document.getElementById('dir-modal-tag').innerText = type === 'author' ? '✍️ 本地作者' : (item.status === 'closed' ? `🕯️ 已結業出版社${item.closed_year ? '（' + item.closed_year + ' 年）' : ''}` : '🏛️ 本地出版社');
       document.getElementById('dir-modal-title').innerText = item.name;
       document.getElementById('dir-modal-phone').innerText = item.phone ? `電話：${item.phone}` : '';
       document.getElementById('dir-modal-desc').innerText = (type === 'author' ? item.bio : item.description) || '暫無簡介';
@@ -1844,7 +1873,7 @@
 
     // --- 網店商品 ---
     async function fetchProducts() {
-      const { data } = await _supabase.from('shop_products').select('*').order('id', { ascending: false });
+      const { data } = await _supabase.from('shop_products').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false });
       allProducts = data || [];
       renderProducts(allProducts);
     }
