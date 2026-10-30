@@ -524,6 +524,20 @@
           <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎟️ 1-Day Pass 單日漫讀證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$50</p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・當日最多 4 小時</li><li>・室內藏書自由翻閱</li></ul></div>
           <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎫 1-Month Pass 月度漫步證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$160 <span class="text-sm font-normal">/ 10 小時</span></p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・首次使用起 60 日內用完</li><li>・每次按實際時數扣減</li><li>・優先預約時段</li><li>・購書專屬折扣</li><li>・店長每月推薦書籍展示分享</li></ul></div>
         </div>
+        <div class="rr-card" id="rrb-wrap">
+          <div class="flex flex-wrap items-end justify-between gap-2"><div><h3 class="font-bold text-lg" style="color:var(--ink)">🌟 今期在架精選</h3><p class="text-xs" style="color:var(--muted-ink)">店長本期擺出嚟嘅書，僅供室內閱覽，不設外借。</p></div><button class="rr-btn-ghost" onclick="rrbToggleCat()" id="rrb-cat-btn">📖 睇完整藏書目錄</button></div>
+          <div id="rrb-feat" class="flex gap-3 overflow-x-auto mt-3 pb-2" style="scroll-snap-type:x mandatory"></div>
+          <div id="rrb-cat" class="hidden mt-4">
+            <div class="flex flex-wrap gap-2"><input id="rrb-q" class="rr-input" style="flex:1;min-width:160px" placeholder="搜尋書名或作者" oninput="rrbRenderCat()"><select id="rrb-c" class="rr-input" style="width:auto" onchange="rrbRenderCat()"><option value="">全部分類</option></select><select id="rrb-s" class="rr-input" style="width:auto" onchange="rrbRenderCat()"><option value="sort">店長排序</option><option value="title">書名</option><option value="author">作者</option><option value="new">最新上架</option></select></div>
+            <div id="rrb-list" class="mt-3 divide-y" style="border-color:var(--line)"></div>
+          </div>
+        </div>
+        <div class="rr-card">
+          <h3 class="font-bold" style="color:var(--ink)">🎫 通行證餘額查詢</h3>
+          <p class="text-xs mt-1" style="color:var(--muted-ink)">輸入通行證編號同登記電話後 4 位。</p>
+          <form class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3" onsubmit="rrPassLookup(event)"><input id="rrq-code" class="rr-input" placeholder="通行證編號 e.g. PASS-001" required maxlength="40"><input id="rrq-p4" class="rr-input" placeholder="電話後 4 位" required maxlength="4" inputmode="numeric" pattern="\d{4}"><button class="rr-btn" type="submit">查詢</button></form>
+          <div id="rrq-out" class="text-sm mt-3"></div>
+        </div>
         <div class="rr-card">
           <h3 class="font-bold text-lg" style="color:var(--ink)">📅 預約到訪</h3>
           <p id="rrt-note" class="text-xs mt-1" style="color:var(--muted-ink)">💡 空間由店長一人打理，開放時段以店長在場時間為準。亮起的日子可直接預約；想約其他時間，可撳下面「申請其他時段」。</p>
@@ -2420,7 +2434,7 @@ const rrPad=n=>String(n).padStart(2,'0');const rrFmt=d=>d.getFullYear()+'-'+rrPa
 async function rrtApply(){try{const {data}=await _supabase.from('payment_settings').select('instructions').eq('id','reading_room').maybeSingle();if(!data||!data.instructions)return;const c=JSON.parse(data.instructions);const esc=t=>String(t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 if(c.badge)document.getElementById('rrt-badge').textContent=c.badge;if(c.intro)document.getElementById('rrt-intro').textContent=c.intro;if(c.note)document.getElementById('rrt-note').textContent=c.note;
 const cards=document.querySelectorAll('#rrt-features .rr-card');(c.features||[]).forEach((f,k)=>{const el=cards[k];if(!el||!(f.t||f.d))return;el.innerHTML=`<div class="text-2xl">${esc(f.i)}</div><h3 class="font-bold mt-2" style="color:var(--ink)">${esc(f.t)}</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">${esc(f.d)}</p>`;});}catch(e){}}
-function rrInit(){rrtApply();if(!rrLoaded){rrLoaded=true;const h=document.getElementById('rr-req-hour');for(let i=9;i<=22;i++)h.innerHTML+=`<option value="${i}">${rrPad(i)}:00</option>`;}rrLoad();}
+function rrInit(){rrtApply();rrbLoad();if(!rrLoaded){rrLoaded=true;const h=document.getElementById('rr-req-hour');for(let i=9;i<=22;i++)h.innerHTML+=`<option value="${i}">${rrPad(i)}:00</option>`;}rrLoad();}
 function rrShiftMonth(n){rrMonth.setMonth(rrMonth.getMonth()+n);rrLoad();}
 async function rrLoad(){const y=rrMonth.getFullYear(),m=rrMonth.getMonth();document.getElementById('rr-month-label').textContent=`${y} 年 ${m+1} 月`;
  const {data}=await _supabase.rpc('reading_room_availability',{_from:rrFmt(new Date(y,m,1)),_to:rrFmt(new Date(y,m+1,0))});rrAvail=data||[];rrRenderCal();}
@@ -2450,6 +2464,30 @@ function rrUpdatePrice(){const plan=document.getElementById('rr-plan').value;con
  document.getElementById('rr-pass-wrap').style.display=plan==='使用已有 Pass'?'block':'none';
  let amt=0;if(plan==='時鐘計')amt=20*h*p;else if(plan==='1-Day Pass')amt=50*p;else if(plan.startsWith('1-Month'))amt=160;
  document.getElementById('rr-amount').textContent=amt;}
+
+let rrbAll=[];
+function rrbEsc(t){return String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+async function rrbLoad(){const {data}=await _supabase.from('reading_room_books').select('*').eq('archived',false).order('sort_order',{ascending:true,nullsFirst:false}).order('id',{ascending:false});rrbAll=data||[];
+ const w=document.getElementById('rrb-wrap');if(!rrbAll.length){w.style.display='none';return;}w.style.display='';
+ const f=rrbAll.filter(b=>b.featured);document.getElementById('rrb-feat').innerHTML=(f.length?f:rrbAll.slice(0,6)).map(b=>`<div style="scroll-snap-align:start;min-width:160px;max-width:180px;flex:0 0 auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px">${b.cover_url?`<img src="${rrbEsc(b.cover_url)}" alt="${rrbEsc(b.title)}" loading="lazy" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px">`:`<div style="width:100%;aspect-ratio:3/4;border-radius:8px;background:var(--bookshop-soft);display:flex;align-items:center;justify-content:center;font-size:32px">📕</div>`}<div class="font-bold text-sm mt-2" style="color:var(--ink)">${rrbEsc(b.title)}</div><div class="text-xs" style="color:var(--muted-ink)">${rrbEsc(b.author||'')}</div>${b.note?`<div class="text-xs mt-1 italic" style="color:var(--muted-ink)">「${rrbEsc(b.note)}」</div>`:''}</div>`).join('');
+ const cats=[...new Set(rrbAll.map(b=>b.category).filter(Boolean))];document.getElementById('rrb-c').innerHTML='<option value="">全部分類</option>'+cats.map(c=>`<option>${rrbEsc(c)}</option>`).join('');
+ document.getElementById('rrb-cat-btn').textContent=`📖 睇完整藏書目錄（${rrbAll.length} 本）`;rrbRenderCat();}
+function rrbToggleCat(){document.getElementById('rrb-cat').classList.toggle('hidden');}
+function rrbRenderCat(){const q=document.getElementById('rrb-q').value.toLowerCase(),c=document.getElementById('rrb-c').value,s=document.getElementById('rrb-s').value;
+ let l=rrbAll.filter(b=>(!c||b.category===c)&&(!q||(b.title+' '+(b.author||'')).toLowerCase().includes(q)));
+ if(s==='title')l.sort((a,b)=>a.title.localeCompare(b.title,'zh-Hant'));else if(s==='author')l.sort((a,b)=>(a.author||'').localeCompare(b.author||'','zh-Hant'));else if(s==='new')l.sort((a,b)=>b.created_at.localeCompare(a.created_at));
+ document.getElementById('rrb-list').innerHTML=l.map(b=>`<div class="py-2 flex justify-between gap-3 text-sm" style="border-color:var(--line)"><div><span style="color:var(--ink);font-weight:600">${b.featured?'⭐ ':''}${rrbEsc(b.title)}</span> <span style="color:var(--muted-ink)">${rrbEsc(b.author||'')}</span>${b.note?`<div class="text-xs" style="color:var(--faint)">${rrbEsc(b.note)}</div>`:''}</div><div class="text-xs text-right shrink-0" style="color:var(--faint)">${rrbEsc(b.category||'')}${b.shelf?'<br>架位 '+rrbEsc(b.shelf):''}</div></div>`).join('')||'<div class="py-3 text-sm" style="color:var(--faint)">搵唔到相關書籍</div>';}
+async function rrPassLookup(e){e.preventDefault();const o=document.getElementById('rrq-out');o.textContent='查詢中…';
+ const {data,error}=await _supabase.rpc('reading_room_pass_lookup',{_code:document.getElementById('rrq-code').value,_phone4:document.getElementById('rrq-p4').value});
+ if(error){o.textContent='查詢失敗，請稍後再試';return;}const p=data&&data[0];if(!p){o.innerHTML='<span style="color:var(--faint)">搵唔到通行證，請檢查編號同電話後 4 位。</span>';return;}
+ const pct=p.total_hours?Math.round(p.remaining_hours/p.total_hours*100):0;
+ o.innerHTML=`<div style="background:var(--bookshop-soft);border-radius:12px;padding:12px;color:var(--ink)"><b>${rrbEsc(p.pass_type)}</b>・尚餘 <b>${p.remaining_hours}</b> / ${p.total_hours} 小時<div style="height:6px;background:var(--line);border-radius:6px;margin:8px 0"><div style="height:6px;width:${pct}%;background:var(--bookshop);border-radius:6px"></div></div><span class="text-xs" style="color:var(--muted-ink)">${p.expires_on?'有效期至 '+p.expires_on:'未開始使用（首次使用起計有效期）'}</span></div>`;}
+function rrCalLinks(date,hour,hours){const d=date.replace(/-/g,''),p=n=>String(n).padStart(2,'0');const st=`${d}T${p(hour)}0000`,en=`${d}T${p(hour+hours)}0000`;
+ const t='閱書室預約｜香港藝文生活指南',det='預約待店長確認。請保持安靜，期待見到你。';
+ const g=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t)}&dates=${st}/${en}&ctz=Asia/Hong_Kong&details=${encodeURIComponent(det)}`;
+ const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HKCultureGuide//ReadingRoom//ZH','BEGIN:VEVENT','UID:rr-'+Date.now()+'@hkcultureguide.com','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART;TZID=Asia/Hong_Kong:'+st,'DTEND;TZID=Asia/Hong_Kong:'+en,'SUMMARY:'+t,'DESCRIPTION:'+det,'BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:'+t,'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+ const u=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
+ return `<div class="flex flex-wrap gap-2 mt-3"><a class="rr-btn-ghost" target="_blank" rel="noopener" href="${g}">📅 加入 Google 日曆</a><a class="rr-btn-ghost" href="${u}" download="reading-room.ics">📱 加入手機日曆（.ics）</a></div>`;}
 async function rrSubmit(e){e.preventDefault();const plan=document.getElementById('rr-plan').value;const hours=+document.getElementById('rr-hours-n').value;
  if(plan==='1-Day Pass'&&hours>4){alert('1-Day Pass 每日最多 4 小時');return;}
  if(plan==='使用已有 Pass'&&!document.getElementById('rr-pass').value.trim()){alert('請輸入通行證編號');return;}
@@ -2461,7 +2499,7 @@ async function rrSubmit(e){e.preventDefault();const plan=document.getElementById
  const {error}=await _supabase.from('reading_room_bookings').insert(row);
  if(error){alert('送出失敗：'+error.message);return;}
  document.getElementById('rr-form').classList.add('hidden');const d=document.getElementById('rr-done');d.classList.remove('hidden');
- d.textContent=`✅ 已收到你的${rrIsReq?'到訪申請':'預約'}（${date} ${rrPad(hour)}:00，${hours} 小時）。店長會盡快經 WhatsApp / 電郵確認。`;e.target.reset();rrLoad();}
+ d.innerHTML=`✅ 已收到你的${rrIsReq?'到訪申請':'預約'}（${date} ${rrPad(hour)}:00，${hours} 小時）。店長會盡快經 WhatsApp / 電郵確認。`+rrCalLinks(date,hour,hours);e.target.reset();rrLoad();}
 </script>
 </body>
 </html>

@@ -474,6 +474,12 @@
           <div id="rra-upcoming" class="text-xs text-slate-600 mt-1 space-y-1 max-h-48 overflow-y-auto"></div>
         </div>
         <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-lg mb-1">🗓️ 今日到訪・簽到</h3>
+          <p class="text-xs text-slate-500 mb-3">顯示今日已確認嘅預約，讀者到咗就按「簽到」。</p>
+          <div id="rra-today" class="space-y-2"></div>
+          <div id="rra-pass-alerts" class="mt-3"></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h3 class="font-bold text-lg">📋 預約及申請</h3>
             <select id="rra-filter" onchange="rraLoadBookings()" class="border rounded-lg p-2 text-sm"><option value="">全部</option><option>待確認</option><option>已確認</option><option>已完成</option><option>未能安排</option><option>已取消</option></select></div>
           <div id="rra-bookings" class="space-y-2 max-h-[600px] overflow-y-auto"></div>
@@ -489,6 +495,24 @@
             <button onclick="rraAddPass()" class="bg-amber-900 text-white rounded-lg text-sm font-semibold">新增</button>
           </div>
           <div id="rra-passes" class="mt-3 space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 class="font-bold text-lg mb-1">📚 閱書室藏書庫</h3>
+          <p class="text-xs text-slate-500 mb-3">剔「今期精選」會顯示喺閱書室頁頂；「封存」嘅書唔會喺網站出現，之後可以隨時重新在架。</p>
+          <input type="hidden" id="rrb-id">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <input id="rrb-title" placeholder="書名 *" class="border rounded-lg p-2 text-sm">
+            <input id="rrb-author" placeholder="作者" class="border rounded-lg p-2 text-sm">
+            <select id="rrb-cat" class="border rounded-lg p-2 text-sm"><option>文學小說</option><option>香港地方誌</option><option>自資刊物</option><option>小誌</option><option>藝術設計</option><option>歷史社會</option><option>繪本</option><option>其他</option></select>
+            <input id="rrb-shelf" placeholder="架位 e.g. A-2" class="border rounded-lg p-2 text-sm">
+            <input id="rrb-sort" type="number" placeholder="排序（數字細排先）" class="border rounded-lg p-2 text-sm">
+            <input id="rrb-cover" type="file" accept="image/*" class="text-xs sm:col-span-2">
+            <div class="flex gap-3 text-sm items-center"><label><input type="checkbox" id="rrb-feat"> ⭐ 今期精選</label><label><input type="checkbox" id="rrb-arch"> 📦 封存</label></div>
+            <textarea id="rrb-note" rows="2" placeholder="店長手記（點解推介呢本）" class="border rounded-lg p-2 text-sm col-span-2 sm:col-span-4"></textarea>
+          </div>
+          <div class="flex gap-2 mt-2"><button onclick="rrbSave()" class="bg-amber-900 text-white px-4 py-2 rounded-lg text-sm font-semibold">儲存</button><button onclick="rrbReset()" class="border px-3 py-2 rounded-lg text-sm">清空</button></div>
+          <div class="flex flex-wrap gap-2 mt-4 items-center"><select id="rrb-view" onchange="rrbLoad()" class="border rounded-lg p-2 text-sm"><option value="shelf">在架</option><option value="feat">今期精選</option><option value="arch">📦 封存箱</option></select><input id="rrb-q" oninput="rrbRender()" placeholder="搜尋書名/作者" class="border rounded-lg p-2 text-sm flex-1"></div>
+          <div id="rrb-list" class="mt-3 space-y-2 max-h-[600px] overflow-y-auto"></div>
         </div>
       </div>
     </section>
@@ -4332,7 +4356,7 @@ longitude: longitude,
 <script>
 const rraPad=n=>String(n).padStart(2,'0');const rraEsc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let rraDaySlots=[];let rraB={};
-function rraInit(){const d=document.getElementById('rra-date');if(!d.value){const t=new Date();d.value=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());}rraLoadDay();rraLoadUpcoming();rraLoadBookings();rraLoadPasses();rrtLoad();}
+function rraInit(){const d=document.getElementById('rra-date');if(!d.value){const t=new Date();d.value=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());}rraLoadDay();rraLoadUpcoming();rraLoadBookings();rraLoadPasses();rrtLoad();;rraLoadToday();rraLoadPassAlerts();rrbLoad();}
 const RRT_DEFAULT={badge:'籌備整理中・敬請期待 Coming Soon',intro:'百呎私密角落，每次只容兩三讀者。\n遠離鬧市喧囂，放下手機與日常牽絆，\n在這裡，時間只留給紙頁翻動的安靜時光。',features:[{i:'🕯️',t:'極致私密・安靜',d:'100 呎專屬天地，每小時最多 2–3 位讀者，杜絕干擾與喧嘩。'},{i:'📚',t:'店長精選藏書',d:'自資刊物、文學小說、香港地方誌等私藏書籍，自由翻閱。'},{i:'🛋️',t:'專屬閱讀席位',d:'舒適閱讀座椅與專屬燈光，享受專心看書的平靜節奏。'}],note:'💡 空間由店長一人打理，開放時段以店長在場時間為準。亮起的日子可直接預約；想約其他時間，可撳下面「申請其他時段」。'};
 function rrtFill(c){const g=id=>document.getElementById(id);g('rrt-badge').value=c.badge||'';g('rrt-intro').value=c.intro||'';g('rrt-note').value=c.note||'';[0,1,2].forEach(k=>{const f=(c.features||[])[k]||{};g('rrt-f'+(k+1)+'i').value=f.i||'';g('rrt-f'+(k+1)+'t').value=f.t||'';g('rrt-f'+(k+1)+'d').value=f.d||'';});}
 async function rrtLoad(){const {data}=await _supabase.from('payment_settings').select('instructions').eq('id','reading_room').maybeSingle();let c=RRT_DEFAULT;try{if(data&&data.instructions)c=JSON.parse(data.instructions);}catch(e){}rrtFill(c);}
@@ -4356,13 +4380,47 @@ async function rraLoadBookings(){let q=_supabase.from('reading_room_bookings').s
  el.innerHTML=(data||[]).map(b=>{rraB[b.id]=b;const wa='https://wa.me/'+String(b.phone).replace(/\D/g,'').replace(/^(\d{8})$/,'852$1');
   return `<div class="border rounded-xl p-3 text-sm ${b.is_request?'bg-yellow-50':''}"><div class="flex flex-wrap justify-between gap-2"><div class="font-bold">${b.is_request?'🟡 申請':'🟢 預約'} ${rraEsc(b.booking_date)} ${rraPad(b.start_hour)}:00–${rraPad(b.start_hour+b.hours)}:00・${b.people} 位</div><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100">${rraEsc(b.status)}</span></div>
   <div class="text-xs text-slate-600 mt-1">${rraEsc(b.name)}・<a class="underline" target="_blank" href="${wa}">${rraEsc(b.phone)}</a>${b.email?'・'+rraEsc(b.email):''}<br>方案：${rraEsc(b.plan)}${b.pass_code?'（'+rraEsc(b.pass_code)+'）':''}・HK$${b.amount}・${rraEsc(b.payment_method||'')}${b.notes?'<br>備註：'+rraEsc(b.notes):''}</div>
-  <div class="flex flex-wrap gap-1 mt-2">${['已確認','已完成','未能安排','已取消'].map(s=>`<button onclick="rraSetStatus(${b.id},'${s}')" class="border rounded px-2 py-1 text-xs">${s}</button>`).join('')}<button onclick="rraDelBooking(${b.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button></div></div>`;}).join('')||'<div class="text-sm text-slate-500">暫無紀錄</div>';}
+  <div class="flex flex-wrap gap-1 mt-2">${['已確認','已完成','未能安排','已取消'].map(s=>`<button onclick="rraSetStatus(${b.id},'${s}')" class="border rounded px-2 py-1 text-xs">${s}</button>`).join('')}<a target="_blank" href="${rraWaUrl(b.phone,rraWaMsg(b,'confirm'))}" class="border border-emerald-400 text-emerald-700 rounded px-2 py-1 text-xs">💬 WhatsApp 確認</a><a target="_blank" href="${rraWaUrl(b.phone,rraWaMsg(b,'decline'))}" class="border rounded px-2 py-1 text-xs">💬 未能安排</a><button onclick="rraDelBooking(${b.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button></div></div>`;}).join('')||'<div class="text-sm text-slate-500">暫無紀錄</div>';}
 async function rraSetStatus(id,s){const b=rraB[id];const {error}=await _supabase.from('reading_room_bookings').update({status:s}).eq('id',id);if(error)return alert(error.message);
  if(s==='已完成'&&b&&b.pass_code&&b.plan==='使用已有 Pass'&&confirm(`喺通行證 ${b.pass_code} 扣減 ${b.hours*b.people} 小時？`)){
   const {data:p}=await _supabase.from('reading_room_passes').select('*').eq('pass_code',b.pass_code).maybeSingle();
   if(!p)alert('搵唔到此通行證');else{const upd={remaining_hours:Math.max(0,p.remaining_hours-b.hours*b.people)};if(!p.expires_on){const e=new Date();e.setDate(e.getDate()+(p.pass_type==='1-Day Pass'?0:60));upd.expires_on=e.toISOString().slice(0,10);}await _supabase.from('reading_room_passes').update(upd).eq('id',p.id);rraLoadPasses();}}
- rraLoadBookings();}
+ rraLoadBookings();rraLoadToday();}
 async function rraDelBooking(id){if(!confirm('確定刪除？'))return;const {error}=await _supabase.from('reading_room_bookings').delete().eq('id',id);if(error)alert(error.message);rraLoadBookings();}
+
+function rraWaUrl(phone,text){return 'https://wa.me/'+String(phone).replace(/\D/g,'').replace(/^(\d{8})$/,'852$1')+'?text='+encodeURIComponent(text);}
+function rraWaMsg(b,kind){const t=`${b.booking_date} ${rraPad(b.start_hour)}:00–${rraPad(b.start_hour+b.hours)}:00（${b.people} 位）`;
+ if(kind==='confirm')return `${b.name} 你好！你喺「閱書室」嘅預約已確認 ✅\n📅 ${t}\n方案：${b.plan}${b.amount?`\n金額：HK$${b.amount}（${b.payment_method||''}）`:''}\n到時請保持安靜，期待見到你 📚`;
+ if(kind==='decline')return `${b.name} 你好，好抱歉 ${t} 暫時未能安排，可以揀其他時段再預約，多謝體諒 🙏`;
+ return `${b.name} 你好！提提你今日 ${rraPad(b.start_hour)}:00 有閱書室預約，到時見 📚`;}
+async function rraLoadToday(){const t=new Date();const ds=t.getFullYear()+'-'+rraPad(t.getMonth()+1)+'-'+rraPad(t.getDate());
+ const {data}=await _supabase.from('reading_room_bookings').select('*').eq('booking_date',ds).in('status',['已確認','已完成']).order('start_hour');
+ const el=document.getElementById('rra-today');if(!el)return;(data||[]).forEach(b=>rraB[b.id]=b);
+ el.innerHTML=(data||[]).map(b=>`<div class="border rounded-xl p-3 text-sm flex flex-wrap justify-between gap-2 items-center ${b.checked_in_at?'bg-emerald-50':''}"><div><b>${rraPad(b.start_hour)}:00–${rraPad(b.start_hour+b.hours)}:00</b>・${rraEsc(b.name)}・${b.people} 位<br><span class="text-xs text-slate-600">${rraEsc(b.plan)}${b.pass_code?'（'+rraEsc(b.pass_code)+'）':''}${b.checked_in_at?'・✅ '+new Date(b.checked_in_at).toTimeString().slice(0,5)+' 已簽到':''}</span></div>
+ <div class="flex gap-1">${b.checked_in_at?'':`<button onclick="rraCheckIn(${b.id})" class="bg-emerald-700 text-white rounded px-3 py-1 text-xs">簽到</button>`}<a target="_blank" href="${rraWaUrl(b.phone,rraWaMsg(b,'remind'))}" class="border rounded px-2 py-1 text-xs">💬 提醒</a></div></div>`).join('')||'<div class="text-sm text-slate-500">今日未有已確認預約</div>';}
+async function rraCheckIn(id){const {error}=await _supabase.from('reading_room_bookings').update({checked_in_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);rraLoadToday();}
+async function rraLoadPassAlerts(){const {data}=await _supabase.from('reading_room_passes').select('*');const el=document.getElementById('rra-pass-alerts');if(!el)return;
+ const soon=new Date();soon.setDate(soon.getDate()+7);const ss=soon.toISOString().slice(0,10),today=new Date().toISOString().slice(0,10);
+ const list=(data||[]).filter(p=>p.remaining_hours>0&&((p.expires_on&&p.expires_on>=today&&p.expires_on<=ss)||(p.pass_type!=='1-Day Pass'&&p.remaining_hours<=2)));
+ el.innerHTML=list.length?`<div class="text-sm font-semibold mt-2">⚠️ 通行證提示</div>`+list.map(p=>{const msg=`${p.holder_name} 你好！你嘅閱書室通行證 ${p.pass_code} 尚餘 ${p.remaining_hours} 小時${p.expires_on?'，'+p.expires_on+' 到期':''}，歡迎預約再嚟 📚`;
+  return `<div class="border border-amber-300 bg-amber-50 rounded-xl p-2 text-xs mt-1 flex justify-between gap-2 items-center"><span><b>${rraEsc(p.pass_code)}</b>・${rraEsc(p.holder_name)}・剩 ${p.remaining_hours} 小時${p.expires_on?'・'+p.expires_on+' 到期':''}</span>${p.holder_phone?`<a target="_blank" href="${rraWaUrl(p.holder_phone,msg)}" class="border rounded px-2 py-1">💬 通知</a>`:''}</div>`;}).join(''):'';}
+let rrbAll=[];
+async function rrbLoad(){const v=document.getElementById('rrb-view').value;let q=_supabase.from('reading_room_books').select('*').order('sort_order',{ascending:true,nullsFirst:false}).order('id',{ascending:false});
+ q=v==='arch'?q.eq('archived',true):q.eq('archived',false);if(v==='feat')q=q.eq('featured',true);
+ const {data,error}=await q;if(error){document.getElementById('rrb-list').textContent='讀取失敗：'+error.message;return;}rrbAll=data||[];rrbRender();}
+function rrbRender(){const k=(document.getElementById('rrb-q').value||'').toLowerCase();const arch=document.getElementById('rrb-view').value==='arch';
+ const l=rrbAll.filter(b=>!k||(b.title+' '+(b.author||'')).toLowerCase().includes(k));
+ document.getElementById('rrb-list').innerHTML=l.map(b=>`<div class="border rounded-xl p-2 text-sm flex gap-3 items-center">${b.cover_url?`<img src="${rraEsc(b.cover_url)}" class="w-10 h-14 object-cover rounded">`:'<div class="w-10 h-14 bg-slate-100 rounded flex items-center justify-center">📕</div>'}<div class="flex-1"><b>${b.featured?'⭐ ':''}${rraEsc(b.title)}</b> <span class="text-xs text-slate-500">${rraEsc(b.author||'')}</span><br><span class="text-xs text-slate-600">${rraEsc(b.category||'')}${b.shelf?'・架位 '+rraEsc(b.shelf):''}${b.sort_order!=null?'・排序 '+b.sort_order:''}</span></div>
+ <div class="flex flex-col gap-1"><button onclick="rrbEdit(${b.id})" class="border rounded px-2 py-1 text-xs">編輯</button><button onclick="rrbToggle(${b.id},${!b.archived})" class="border rounded px-2 py-1 text-xs">${arch?'🔄 重新在架':'📦 封存'}</button>${arch?`<button onclick="rrbDel(${b.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button>`:''}</div></div>`).join('')||'<div class="text-sm text-slate-500">暫無書籍</div>';}
+function rrbReset(){['rrb-id','rrb-title','rrb-author','rrb-shelf','rrb-sort','rrb-note','rrb-cover'].forEach(i=>document.getElementById(i).value='');document.getElementById('rrb-feat').checked=false;document.getElementById('rrb-arch').checked=false;}
+function rrbEdit(id){const b=rrbAll.find(x=>x.id===id);if(!b)return;const g=(i,v)=>document.getElementById(i).value=v??'';g('rrb-id',b.id);g('rrb-title',b.title);g('rrb-author',b.author);g('rrb-cat',b.category||'其他');g('rrb-shelf',b.shelf);g('rrb-sort',b.sort_order);g('rrb-note',b.note);document.getElementById('rrb-feat').checked=b.featured;document.getElementById('rrb-arch').checked=b.archived;document.getElementById('rrb-title').scrollIntoView({block:'center'});}
+async function rrbSave(){const g=i=>document.getElementById(i).value.trim();if(!g('rrb-title'))return alert('請填書名');
+ const row={title:g('rrb-title'),author:g('rrb-author')||null,category:g('rrb-cat'),shelf:g('rrb-shelf')||null,note:g('rrb-note')||null,sort_order:g('rrb-sort')===''?null:+g('rrb-sort'),featured:document.getElementById('rrb-feat').checked,archived:document.getElementById('rrb-arch').checked};
+ const f=document.getElementById('rrb-cover').files[0];if(f){const fn='rrbook_'+Date.now()+'.jpg';const {error}=await _supabase.storage.from('images').upload(fn,await compressImage(f,1200));if(error)return alert('上載失敗：'+error.message);row.cover_url=_supabase.storage.from('images').getPublicUrl(fn).data.publicUrl;}
+ const id=g('rrb-id');const {error}=id?await _supabase.from('reading_room_books').update(row).eq('id',+id):await _supabase.from('reading_room_books').insert(row);
+ if(error)return alert('儲存失敗：'+error.message);rrbReset();rrbLoad();}
+async function rrbToggle(id,arch){const {error}=await _supabase.from('reading_room_books').update(arch?{archived:true,featured:false}:{archived:false}).eq('id',id);if(error)alert(error.message);rrbLoad();}
+async function rrbDel(id){if(!confirm('永久刪除呢本書？'))return;await _supabase.from('reading_room_books').delete().eq('id',id);rrbLoad();}
 async function rraLoadPasses(){const {data}=await _supabase.from('reading_room_passes').select('*').order('id',{ascending:false});
  document.getElementById('rra-passes').innerHTML=(data||[]).map(p=>`<div class="border rounded-xl p-3 text-sm flex flex-wrap justify-between gap-2"><div><b>${rraEsc(p.pass_code)}</b>・${rraEsc(p.holder_name)} ${rraEsc(p.holder_phone||'')}<br><span class="text-xs text-slate-600">${rraEsc(p.pass_type)}・剩 ${p.remaining_hours}/${p.total_hours} 小時${p.expires_on?'・到期 '+p.expires_on:'・未開始使用'}</span></div>
  <div class="flex gap-1 items-center"><button onclick="rraAdjPass(${p.id},${p.remaining_hours})" class="border rounded px-2 py-1 text-xs">改時數</button><button onclick="rraDelPass(${p.id})" class="border border-red-300 text-red-600 rounded px-2 py-1 text-xs">刪除</button></div></div>`).join('')||'<div class="text-sm text-slate-500">暫無通行證</div>';}
