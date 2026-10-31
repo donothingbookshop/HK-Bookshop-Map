@@ -296,6 +296,10 @@
               <label class="font-bold text-slate-700">購買書籍 / 商品項目 *</label>
               <button type="button" onclick="addManualItemRow()" class="bg-amber-900 text-white px-2.5 py-1 rounded text-[11px] font-semibold"><i class="fa-solid fa-plus mr-1"></i>新增項目</button>
             </div>
+            <div class="flex items-center gap-2 mb-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <label class="text-xs font-bold text-amber-900 whitespace-nowrap">🏬 售出門市／分店</label>
+              <select id="m-sale-branch" onchange="applySaleBranch()" class="flex-grow border rounded px-2 py-1 bg-white text-sm"><option>觀塘店</option><option>西營盤店</option><option>荃灣店</option><option>網店</option></select>
+            </div>
             <select id="m-product-picker" onfocus="loadManualProductPicker()" onchange="pickManualProduct(this)" class="w-full border rounded-lg px-3 py-2 bg-white mb-2 text-slate-600 focus:ring-2 focus:ring-amber-800 focus:outline-none">
               <option value="">📚 從已上架網店商品揀選，自動帶入名稱同價錢…</option>
             </select>
@@ -304,6 +308,7 @@
                 <input type="text" placeholder="書籍 / 商品名稱 *" class="m-item-name flex-grow border rounded px-3 py-1.5" required>
                 <input type="number" placeholder="單價" value="0" oninput="calcManualTotal()" class="m-item-price w-20 border rounded px-2 py-1.5" required>
                 <input type="number" placeholder="數量" value="1" min="1" oninput="calcManualTotal()" class="m-item-qty w-16 border rounded px-2 py-1.5" required>
+                <select class="m-item-branch w-28 border rounded px-1 py-1.5 bg-white text-xs" title="售出分店"><option>觀塘店</option><option>西營盤店</option><option>荃灣店</option><option>網店</option></select>
                 <button type="button" onclick="this.parentElement.remove(); calcManualTotal();" class="text-red-500 hover:text-red-700 px-2"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
@@ -2057,7 +2062,7 @@ window.onload = async function () {
         if (typeof itemsArr === 'string') { try { itemsArr = JSON.parse(itemsArr); } catch(e) { itemsArr = []; } }
 
         itemsArr.forEach(i => {
-          itemsHtml += `<p class="text-xs text-slate-700">• ${i.name}：HK$ ${i.price} × ${i.qty}</p>`;
+          itemsHtml += `<p class="text-xs text-slate-700">• ${i.name}${i.branch ? ` <span class="text-[10px] bg-amber-100 text-amber-900 rounded px-1">[${i.branch}]</span>` : ''}：HK$ ${i.price} × ${i.qty}</p>`;
         });
 
         let notesHtml = '';
@@ -2688,11 +2693,25 @@ window.onload = async function () {
         <input type="text" placeholder="書籍 / 商品名稱 *" class="m-item-name flex-grow border rounded px-3 py-1.5" required>
         <input type="number" placeholder="單價" value="0" oninput="calcManualTotal()" class="m-item-price w-20 border rounded px-2 py-1.5" required>
         <input type="number" placeholder="數量" value="1" min="1" oninput="calcManualTotal()" class="m-item-qty w-16 border rounded px-2 py-1.5" required>
+                <select class="m-item-branch w-28 border rounded px-1 py-1.5 bg-white text-xs" title="售出分店"><option>觀塘店</option><option>西營盤店</option><option>荃灣店</option><option>網店</option></select>
         <button type="button" onclick="this.parentElement.remove(); calcManualTotal();" class="text-red-500 hover:text-red-700 px-2"><i class="fa-solid fa-trash"></i></button>
       `;
       container.appendChild(row);
+      row.querySelector('.m-item-branch').value = document.getElementById('m-sale-branch').value;
     }
 
+    const SALE_BRANCHES = ['觀塘店','西營盤店','荃灣店','網店'];
+    function branchOptionsHtml(stocks) {
+      return SALE_BRANCHES.map(b => `<option value="${b}">${b}${stocks ? `（存 ${Number(stocks[b]) || 0} 本）` : ''}</option>`).join('');
+    }
+    function setRowBranchHints(row, cls, stocks) {
+      const sel = row.querySelector('.' + cls); if (!sel) return;
+      const v = sel.value; sel.innerHTML = branchOptionsHtml(stocks); sel.value = v || '網店';
+    }
+    function applySaleBranch() {
+      const b = document.getElementById('m-sale-branch').value;
+      document.querySelectorAll('#manual-items-container .m-item-branch').forEach(s => s.value = b);
+    }
     let _mrProducts = null;
     async function loadManualProductPicker() {
       const sel = document.getElementById('m-product-picker');
@@ -2723,7 +2742,10 @@ window.onload = async function () {
       row.querySelector('.m-item-price').value = Number(p.price) || 0;
       row.dataset.productId = p.id;
       const stocks = parseStocks(p);
-      row.dataset.branch = Object.keys(stocks).find(b => stocks[b] > 0) || Object.keys(stocks)[0] || '網店';
+      setRowBranchHints(row, 'm-item-branch', stocks);
+      row.querySelector('.m-item-branch').value = document.getElementById('m-sale-branch').value;
+      const chosen = row.querySelector('.m-item-branch').value;
+      if ((Number(stocks[chosen]) || 0) <= 0) alert(`提示：「${p.name}」喺${chosen}暫時冇庫存，請確認分店是否正確。`);
       calcManualTotal();
     }
 
@@ -2763,14 +2785,10 @@ window.onload = async function () {
           qty: Number(row.querySelector('.m-item-qty').value)
         };
         let pid = Number(row.dataset.productId) || null;
-        let branch = row.dataset.branch || null;
+        const branch = row.querySelector('.m-item-branch')?.value || '網店';
         if (!pid && _mrProducts) {
           const match = _mrProducts.find(p => (p.name || '').trim() === itemName);
-          if (match) {
-            pid = match.id;
-            const s = parseStocks(match);
-            branch = Object.keys(s).find(b => s[b] > 0) || Object.keys(s)[0] || '網店';
-          }
+          if (match) pid = match.id;
         }
         if (pid) { item.id = pid; item.branch = branch || '網店'; }
         items.push(item);
@@ -2803,9 +2821,10 @@ window.onload = async function () {
       if (deduct) await adjustStockForOrder(orderRow, -1);
       _mrProducts = null;
       document.getElementById('m-product-picker').querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
-      alert("手動收據建立成功！已同步至訂單記錄" + (deduct ? "，並已扣減網店庫存。" : "。"));
+      alert("手動收據建立成功！已同步至訂單記錄" + (deduct ? "，並已扣減所選分店庫存。" : "。"));
       document.getElementById('manual-receipt-form').reset();
-      document.querySelectorAll('#manual-items-container .manual-item-row').forEach(r => { delete r.dataset.productId; delete r.dataset.branch; });
+      document.querySelectorAll('#manual-items-container .manual-item-row').forEach(r => { delete r.dataset.productId; delete r.dataset.branch; setRowBranchHints(r, 'm-item-branch', null); });
+      applySaleBranch();
       document.getElementById('manual-deposit-inputs').classList.add('hidden');
       calcManualTotal();
       fetchOrders();
@@ -2833,10 +2852,12 @@ window.onload = async function () {
         <input type="text" class="eo-name flex-grow min-w-0 border rounded px-2 py-1.5" placeholder="名稱">
         <input type="number" class="eo-price w-20 border rounded px-2 py-1.5" oninput="calcEditOrder()">
         <input type="number" min="1" class="eo-qty w-14 border rounded px-2 py-1.5" oninput="calcEditOrder()">
+        <select class="eo-branch w-28 border rounded px-1 py-1.5 bg-white text-xs" title="售出分店">${branchOptionsHtml(i._stocks)}</select>
         <button type="button" onclick="this.parentElement.remove(); calcEditOrder();" class="text-red-500 px-1"><i class="fa-solid fa-trash"></i></button>`;
       row.querySelector('.eo-name').value = i.name || '';
       row.querySelector('.eo-price').value = Number(i.price) || 0;
       row.querySelector('.eo-qty').value = Number(i.qty) || 1;
+      row.querySelector('.eo-branch').value = i.branch || '網店';
       document.getElementById('eo-items').appendChild(row);
     }
     async function openEditOrder(id) {
@@ -2851,7 +2872,13 @@ window.onload = async function () {
       document.getElementById('eo-notes').value = o.notes || '';
       document.getElementById('eo-deposit').value = Number(o.deposit_amount) || 0;
       document.getElementById('eo-items').innerHTML = '';
-      parseItems(o).forEach(i => addEditOrderRow(i));
+      const ids = parseItems(o).map(i => i.id).filter(Boolean);
+      let stockMap = {};
+      if (ids.length) {
+        const { data: ps } = await _supabase.from('shop_products').select('id,branch_stocks,quantity').in('id', ids);
+        (ps || []).forEach(p => stockMap[p.id] = parseStocks(p));
+      }
+      parseItems(o).forEach(i => addEditOrderRow({ ...i, _stocks: i.id ? stockMap[i.id] : null }));
       calcEditOrder();
       if (o.balance_amount != null && Number(o.deposit_amount) > 0) document.getElementById('eo-balance').value = Number(o.balance_amount);
       document.getElementById('edit-order-modal').classList.remove('hidden');
@@ -2862,7 +2889,8 @@ window.onload = async function () {
       const o = _editOrder; if (!o) return;
       const items = [...document.querySelectorAll('#eo-items .eo-row')].map(r => {
         const it = { name: r.querySelector('.eo-name').value.trim(), price: Number(r.querySelector('.eo-price').value) || 0, qty: Number(r.querySelector('.eo-qty').value) || 0 };
-        if (r.dataset.productId) { it.id = Number(r.dataset.productId); it.branch = r.dataset.branch || '網店'; }
+        it.branch = r.querySelector('.eo-branch')?.value || '網店';
+        if (r.dataset.productId) it.id = Number(r.dataset.productId);
         return it;
       }).filter(i => i.name);
       if (!items.length) { alert('最少要有一個項目'); return; }
