@@ -3025,7 +3025,7 @@ window.onload = async function () {
         <div class="border p-3 rounded-lg flex justify-between items-center text-xs">
           <div>
             <span class="font-bold text-slate-800">${b.name}</span>${b.status === 'closing_soon' ? '<span class="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-semibold">⏳ 準備結業</span>' : ''}
-            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${b.region}</span>${b.place_type === 'reading_corner' ? '<span class="ml-2 bg-orange-50 text-orange-800 px-2 py-0.5 rounded">☕ 閱讀角</span>' : b.place_type === 'book_crossing' ? '<span class="ml-2 bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">📦 漂書點</span>' : ''}${b.sort_order != null ? `<span class="ml-2 text-slate-400">排序 ${b.sort_order}</span>` : ''}
+            <span class="ml-2 bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${b.region}</span>${b.place_type === 'reading_corner' ? '<span class="ml-2 bg-orange-50 text-orange-800 px-2 py-0.5 rounded">☕ 閱讀角</span>' : b.place_type === 'book_crossing' ? '<span class="ml-2 bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">📦 漂書點</span>' : ''}${b.sort_order != null ? `<span class="ml-2 text-slate-400">排序 ${b.sort_order}</span>` : ''}${(b.tags||[]).map(t=>`<span class="ml-1 bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">#${t}</span>`).join('')}
             <p class="text-slate-500 mt-0.5">${b.address || '無地址'}</p>
           </div>
           <div class="flex gap-2">
@@ -4495,7 +4495,14 @@ async function rraDelPass(id){if(!confirm('確定刪除通行證？'))return;awa
     const box = (pre, html) => { const n = document.getElementById(pre + '-name'); if (!n) return; const d = document.createElement('div'); d.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm'; d.innerHTML = html; n.insertAdjacentElement('afterend', d); };
     const sortHtml = pre => `<label class="block"><span class="text-xs text-slate-500">排序（數字細排先，留空按時間）</span><input type="number" id="${pre}-sort" class="w-full border rounded px-3 py-2"></label>`;
     function init(){
-      box('bs', sortHtml('bs') + `<label class="block"><span class="text-xs text-slate-500">空間類型</span><select id="bs-ptype" class="w-full border rounded px-3 py-2"><option value="bookshop">📚 書店</option><option value="reading_corner">☕ 閱讀角／咖啡座（有擺書）</option><option value="book_crossing">📦 社區漂書點</option></select></label><label class="block sm:col-span-2"><span class="text-xs text-slate-500">漂書規則／消費提示（如：低消一杯飲品、帶一走一）</span><input type="text" id="bs-rnote" class="w-full border rounded px-3 py-2"></label>`);
+      const PRESET_TAGS = ['二手舊書','英文選書','繪本童書','漫畫專門','宗教心靈','文史哲','藝術設計','音樂主題','社會人文','本土出版','日本文學','咖啡閱讀','講座活動'];
+      box('bs', sortHtml('bs') + `<label class="block"><span class="text-xs text-slate-500">空間類型</span><select id="bs-ptype" class="w-full border rounded px-3 py-2"><option value="bookshop">📚 書店</option><option value="reading_corner">☕ 閱讀角／咖啡座（有擺書）</option><option value="book_crossing">📦 社區漂書點</option></select></label><label class="block sm:col-span-2"><span class="text-xs text-slate-500">漂書規則／消費提示（如：低消一杯飲品、帶一走一）</span><input type="text" id="bs-rnote" class="w-full border rounded px-3 py-2"></label><div class="block sm:col-span-2"><span class="text-xs text-slate-500">主題標籤（點選常用，或用逗號輸入自訂）</span><div id="bs-tag-presets" class="flex flex-wrap gap-1 my-1">${PRESET_TAGS.map(t => `<button type="button" data-t="${t}" class="bs-tag-btn px-2 py-0.5 rounded-full border text-xs">${t}</button>`).join('')}</div><input type="text" id="bs-tags" class="w-full border rounded px-3 py-2" placeholder="例如：二手舊書, 英文選書"></div>`);
+      const tagInput = document.getElementById('bs-tags');
+      const readTags = () => (tagInput.value || '').split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+      const syncBtns = () => { const cur = readTags(); document.querySelectorAll('.bs-tag-btn').forEach(b => { const on = cur.includes(b.dataset.t); b.classList.toggle('bg-amber-100', on); b.classList.toggle('border-amber-400', on); }); };
+      window.syncBsTags = syncBtns;
+      tagInput.addEventListener('input', syncBtns);
+      document.querySelectorAll('.bs-tag-btn').forEach(b => b.onclick = () => { let cur = readTags(); cur = cur.includes(b.dataset.t) ? cur.filter(x => x !== b.dataset.t) : [...cur, b.dataset.t]; tagInput.value = cur.join(', '); syncBtns(); });
       box('au', sortHtml('au'));
       box('p', sortHtml('p'));
       box('pub', sortHtml('pub') + `<label class="block"><span class="text-xs text-slate-500">營運狀態</span><select id="pub-status" class="w-full border rounded px-3 py-2" onchange="document.getElementById('pub-closed-wrap').classList.toggle('hidden', this.value!=='closed')"><option value="active">🟢 營運中</option><option value="closed">🕯️ 已結業</option></select></label><label id="pub-closed-wrap" class="block hidden"><span class="text-xs text-slate-500">結業年份</span><input type="number" id="pub-closed-year" class="w-full border rounded px-3 py-2" placeholder="例如 2019"></label>`);
@@ -4504,13 +4511,13 @@ async function rraDelPass(id){if(!confirm('確定刪除通行證？'))return;awa
     const g = id => document.getElementById(id);
     window.extraFields = pre => {
       const o = {}; const s = g(pre + '-sort'); if (s) o.sort_order = s.value === '' ? null : Number(s.value);
-      if (pre === 'bs') { o.place_type = g('bs-ptype').value || 'bookshop'; o.reading_note = g('bs-rnote').value.trim() || null; }
+      if (pre === 'bs') { o.place_type = g('bs-ptype').value || 'bookshop'; o.reading_note = g('bs-rnote').value.trim() || null; o.tags = [...new Set((g('bs-tags').value || '').split(/[,，、]/).map(s => s.trim()).filter(Boolean))]; }
       if (pre === 'pub') { o.status = g('pub-status').value; o.closed_year = o.status === 'closed' ? (Number(g('pub-closed-year').value) || null) : null; }
       return o;
     };
     window.fillExtra = (pre, r) => {
       r = r || {}; const s = g(pre + '-sort'); if (s) s.value = r.sort_order ?? '';
-      if (pre === 'bs' && g('bs-ptype')) { g('bs-ptype').value = r.place_type || 'bookshop'; g('bs-rnote').value = r.reading_note || ''; }
+      if (pre === 'bs' && g('bs-ptype')) { g('bs-ptype').value = r.place_type || 'bookshop'; g('bs-rnote').value = r.reading_note || ''; g('bs-tags').value = (r.tags || []).join(', '); window.syncBsTags && window.syncBsTags(); }
       if (pre === 'pub' && g('pub-status')) { g('pub-status').value = r.status || 'active'; g('pub-closed-year').value = r.closed_year || ''; g('pub-closed-wrap').classList.toggle('hidden', g('pub-status').value !== 'closed'); }
     };
   })();

@@ -242,6 +242,7 @@
           <button data-ptype="reading_corner" onclick="filterPlaceType('reading_corner')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">☕ 閱讀角</button>
           <button data-ptype="book_crossing" onclick="filterPlaceType('book_crossing')" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition">📦 漂書點</button>
         </div>
+        <div id="shop-tag-filters" class="hidden flex flex-wrap gap-1.5" role="group" aria-label="主題分類"></div>
         <div class="relative w-full md:w-64">
           <input type="text" id="bookshop-search" oninput="handleBookshopSearch(this.value)" placeholder="搜尋書店名稱/地址/簡介..." class="w-full pl-9 pr-3 py-2 text-xs border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-bookshop shadow-sm">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-faint text-xs"></i>
@@ -1163,6 +1164,7 @@
           ${shopUrl(shop.image_url) ? `<img class="preview-image" src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}">` : ''}
           <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}
           ${PLACE_TAG[shop.place_type] ? `<p><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
+          ${shopTagChips(shop)}
           <p>${ghost ? '📍 原址：' : ''}${escapeShop(shop.address || '未提供地址')}</p>${ghost ? '<p>🕯️ 已結業</p>' : `<p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>`}
           ${shop.phone ? `<p>電話：${escapeShop(shop.phone)}</p>` : ''}
           ${shop.opened_year || shop.closed_year ? `<p>${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
@@ -1671,6 +1673,7 @@
           <div class="shop-card-copy"><span class="shop-region">${escapeShop(shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region)}</span>
             <h3>${escapeShop(shop.name)}${shop.status === 'closing_soon' ? '<span class="closing-tag">⏳ 準備結業</span>' : ''}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
             ${PLACE_TAG[shop.place_type] ? `<p class="shop-hours"><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
+            ${shopTagChips(shop)}
             <p class="shop-hours">${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
             ${shop.opened_year || shop.closed_year ? `<p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
             <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
@@ -1725,6 +1728,22 @@
     }
     let currentPlaceType = 'ALL';
     const PLACE_TAG = { reading_corner: '☕ 閱讀角', book_crossing: '📦 漂書點' };
+    let currentShopTag = 'ALL';
+    function shopTagChips(shop) {
+      const t = shop.tags || [];
+      return t.length ? `<p class="shop-tags flex flex-wrap gap-1 my-1">${t.map(x => `<span class="px-2 py-0.5 rounded-full bg-bookshop-soft text-bookshop border border-bookshop-line text-[11px]">#${escapeShop(x)}</span>`).join('')}</p>` : '';
+    }
+    function renderTagFilters(list) {
+      const box = document.getElementById('shop-tag-filters'); if (!box) return;
+      const counts = {};
+      list.forEach(b => (b.tags || []).forEach(t => counts[t] = (counts[t] || 0) + 1));
+      const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+      if (currentShopTag !== 'ALL' && !counts[currentShopTag]) tags.unshift(currentShopTag);
+      box.classList.toggle('hidden', !tags.length);
+      const btn = (v, label) => `<button type="button" data-tag="${escapeShop(v)}" class="px-2.5 py-1 rounded-full border border-line text-xs font-semibold hover:bg-bookshop-soft transition${currentShopTag === v ? ' filter-active' : ''}">${label}</button>`;
+      box.innerHTML = btn('ALL', '全部主題') + tags.map(t => btn(t, `#${escapeShop(t)} <span class="text-faint">${counts[t] || 0}</span>`)).join('');
+      box.querySelectorAll('button').forEach(b => b.onclick = () => { currentShopTag = b.dataset.tag; applyBookshopFilters(); });
+    }
     function filterPlaceType(t) {
       currentPlaceType = t;
       document.querySelectorAll('#place-type-filters button').forEach(b => b.classList.toggle('filter-active', b.dataset.ptype === t));
@@ -1763,6 +1782,8 @@
       }
 
       if (!memory && currentPlaceType !== 'ALL') filtered = filtered.filter(b => (b.place_type || 'bookshop') === currentPlaceType);
+      renderTagFilters(filtered);
+      if (currentShopTag !== 'ALL') filtered = filtered.filter(b => (b.tags || []).includes(currentShopTag));
       if (currentBookshopSearch) {
         filtered = filtered.filter(b => 
           (b.name && b.name.toLowerCase().includes(currentBookshopSearch)) ||
