@@ -734,7 +734,7 @@
                 <input type="number" id="bs-closed" min="1800" max="2100" disabled class="w-full border rounded px-3 py-2 bg-slate-100" placeholder="例：2024">
               </div>
             </div>
-            <p id="bs-closed-note" class="hidden text-[11px] text-slate-600 bg-slate-50 border rounded-xl p-3">🕯️ 已結業書店喺網站以「書店記憶」卡片顯示，毋須設定地圖位置。地址欄可填舊址。</p>
+            <p id="bs-closed-note" class="hidden text-[11px] text-slate-600 bg-slate-50 border rounded-xl p-3">🕯️ 已結業書店會以「時光卡片」顯示，並按開業／結業年份自動放入時代年表。地址欄填舊址；如喺地圖揀返舊址位置，就會出現喺「昔日地圖足跡」（可留空）。</p>
                     <!-- 書店地圖位置：不需手動輸入經緯度 -->
             <div id="bs-map-box" class="border border-amber-200 bg-amber-50/50 p-3 rounded-xl space-y-2">
               <div class="flex flex-wrap items-center justify-between gap-2">
@@ -3126,9 +3126,9 @@ longitude: longitude,
       const el = document.getElementById('bs-closed'); const closed = bsStatus() === 'closed';
       el.disabled = !closed; el.classList.toggle('bg-slate-100', !closed); if (!closed) el.value = '';
       const mapBox = document.getElementById('bs-map-box'), note = document.getElementById('bs-closed-note');
-      if (mapBox) mapBox.classList.toggle('hidden', closed);
+      if (mapBox) mapBox.classList.remove('hidden');
       if (note) note.classList.toggle('hidden', !closed);
-      if (!closed && typeof initAdminBookshopMap === 'function') setTimeout(() => { try { initAdminBookshopMap(); } catch (e) {} }, 50);
+      if (typeof initAdminBookshopMap === 'function') setTimeout(() => { try { initAdminBookshopMap(); } catch (e) {} }, 50);
     }
     function editBookshop(b) { fillExtra('bs', b);
       document.getElementById('bs-id').value = b.id;

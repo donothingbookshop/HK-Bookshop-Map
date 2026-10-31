@@ -141,6 +141,16 @@
     .memory-tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--muted, #ece6db); color: var(--muted-ink, #6b6257); margin-left: 6px; vertical-align: middle; font-weight: 500; }
     .closing-tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--bookshop-soft); color: var(--bookshop); border: 1px solid var(--bookshop-line); margin-left: 6px; vertical-align: middle; font-weight: 600; }
     .memory-mode-active .map-view-toggle { display: none !important; }
+    .era-timeline { display: flex; gap: 0; margin-top: 12px; overflow-x: auto; border-top: 1px solid var(--line); padding-top: 10px; }
+    .era-timeline button { flex: 1 0 auto; text-align: left; padding: 6px 12px; border-left: 2px solid var(--line); color: var(--muted-ink); line-height: 1.4; }
+    .era-timeline button b { display: block; color: var(--ink); font-size: 12px; }
+    .era-timeline button[aria-selected="true"] { border-left-color: var(--primary); background: var(--surface); }
+    .memory-years { font-weight: 700; color: var(--ink); letter-spacing: .02em; }
+    .bookshop-workspace[data-mode="memory"][data-ghost="on"] .bookshop-map-panel { display: block !important; }
+    .bookshop-workspace[data-mode="memory"][data-ghost="on"] .memory-board { display: none !important; }
+    @media (max-width: 767px) { .bookshop-workspace[data-mode="memory"][data-ghost="on"] .bookshop-map-panel { height: 60vh; } }
+    #bookstoreMap.ghost .leaflet-tile-pane { filter: sepia(.65) grayscale(.35) contrast(.95); }
+    .ghost-marker span { filter: sepia(1) saturate(1.6) hue-rotate(-10deg); }
     @media (max-width: 767px) {
       .shop-card-image { width: 82px; height: 96px; }
       .shop-quick-preview .preview-image { height: 70px; }
@@ -263,9 +273,15 @@
         <span class="hidden md:inline-block w-px bg-line mx-1" aria-hidden="true"></span>
         <button id="memory-mode-btn" onclick="filterRegion('已結業書店')" class="bg-muted text-muted-ink px-3 py-1.5 rounded-full text-xs font-medium border border-line transition">🕯️ 書店記憶（已結業）</button>
       </div>
-      <div id="memory-mode-bar" class="hidden bg-muted border border-line rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-ink">
-        <span>🕯️ 正在瀏覽「書店記憶」：曾經存在過的書店，按結業年份由新到舊排列。</span>
-        <button onclick="filterRegion('ALL')" class="bg-primary text-primary-contrast px-3 py-1.5 rounded-full font-semibold">← 返回營業中地圖</button>
+      <div id="memory-mode-bar" class="hidden bg-muted border border-line rounded-xl p-3 mb-4 text-xs text-muted-ink">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span>🕯️ 正在瀏覽「書店記憶」：曾經存在過的書店，按時代排列。</span>
+          <div class="flex gap-2">
+            <button id="ghost-toggle" onclick="toggleGhostMap()" aria-pressed="false" class="bg-surface border border-line px-3 py-1.5 rounded-full font-semibold">🗺️ 昔日地圖足跡</button>
+            <button onclick="filterRegion('ALL')" class="bg-primary text-primary-contrast px-3 py-1.5 rounded-full font-semibold">← 返回營業中地圖</button>
+          </div>
+        </div>
+        <div id="era-filters" class="era-timeline" role="tablist" aria-label="書店時代"></div>
       </div>
 
       <div id="country-filter-bar" class="hidden bg-bookshop-soft p-3 rounded-xl border border-bookshop-line mb-6 flex flex-wrap items-center gap-2 text-xs">
@@ -1137,7 +1153,8 @@
       mapMarkers = [];
       const ICONS = { bookshop: 'fa-book-open', reading_corner: 'fa-mug-hot', book_crossing: 'fa-box-open' };
       shops.forEach(shop => {
-        const icon = L.divIcon({className: 'culture-marker', html: `<span><i class="fa-solid ${ICONS[shop.place_type] || ICONS.bookshop}"></i></span>`, iconSize: [32, 38], iconAnchor: [16, 38], popupAnchor: [0, -38]});
+        const ghost = shop.status === 'closed' || shop.region === '已結業書店';
+        const icon = L.divIcon({className: 'culture-marker' + (ghost ? ' ghost-marker' : ''), html: `<span><i class="fa-solid ${ICONS[shop.place_type] || ICONS.bookshop}"></i></span>`, iconSize: [32, 38], iconAnchor: [16, 38], popupAnchor: [0, -38]});
         const lat = Number(shop.latitude), lng = Number(shop.longitude);
         if (!shop.latitude || !shop.longitude || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
         const links = [['website_url','官方網站'],['instagram_url','Instagram'],['facebook_url','Facebook'],['google_map_url','Google Map']]
@@ -1146,7 +1163,7 @@
           ${shopUrl(shop.image_url) ? `<img class="preview-image" src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}">` : ''}
           <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}
           ${PLACE_TAG[shop.place_type] ? `<p><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
-          <p>${escapeShop(shop.address || '未提供地址')}</p><p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
+          <p>${ghost ? '📍 原址：' : ''}${escapeShop(shop.address || '未提供地址')}</p>${ghost ? '<p>🕯️ 已結業</p>' : `<p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>`}
           ${shop.phone ? `<p>電話：${escapeShop(shop.phone)}</p>` : ''}
           ${shop.opened_year || shop.closed_year ? `<p>${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '至今')}</p>` : ''}
           ${shop.description ? `<details><summary>書店簡介</summary><p>${escapeShop(shop.description)}</p></details>` : ''}
@@ -1636,15 +1653,16 @@
       if (!list.length) { container.innerHTML = `<p class="empty-shops">${currentBookshopRegion === '已結業書店' ? '書店記憶仍在整理中，歡迎聯絡我分享你記得的書店。' : '暫無符合條件的書店。'}</p>`; return; }
       if (currentBookshopRegion === '已結業書店') {
         container.innerHTML = list.map(shop => `
-        <article class="bookshop-card memory-card" data-shop-id="${escapeShop(shop.id)}">
+        <article class="bookshop-card memory-card" data-shop-id="${escapeShop(shop.id)}" tabindex="0" role="button">
           <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
           <div class="shop-card-copy">
             <h3>${escapeShop(shop.name)}<span class="memory-tag">🕯️ 已結業</span></h3>
-            <p class="shop-hours">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '?')}</p>
-            <p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
+            <p class="shop-hours memory-years">${escapeShop(shop.opened_year || '?')} – ${escapeShop(shop.closed_year || '?')}${eraOf(shop) ? ' · ' + eraOf(shop).name : ''}</p>
+            <p class="shop-address">📍 原址：${escapeShop(shop.address || '未提供地址')}${hasCoords(shop) ? '' : '（未有地圖位置）'}</p>
             <p class="shop-excerpt">${escapeShop(shop.description || '')}</p>
           </div>
         </article>`).join('');
+        container.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => { const s = allBookshops.find(b => String(b.id) === card.dataset.shopId); if (s && hasCoords(s)) { if (!ghostMap) toggleGhostMap(); focusBookshop(s.id); } }));
         return;
       }
       container.innerHTML = list.map(shop => `
@@ -1682,6 +1700,29 @@
       applyBookshopFilters();
     }
 
+    const ERAS = [
+      { id: 'e1', name: '開埠與西學', range: '1840–1949', from: 1840, to: 1949 },
+      { id: 'e2', name: '冷戰與文藝萌芽', range: '1950–1979', from: 1950, to: 1979 },
+      { id: 'e3', name: '二樓書店全盛期', range: '1980–1999', from: 1980, to: 1999 },
+      { id: 'e4', name: '社區小店浪潮', range: '2000–2019', from: 2000, to: 2019 },
+      { id: 'e5', name: '轉型與遷徙', range: '2020 至今', from: 2020, to: 9999 },
+    ];
+    let currentEra = 'ALL', ghostMap = false;
+    const hasCoords = s => Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude)) && s.latitude && s.longitude;
+    function inEra(s, e) { const o = Number(s.opened_year) || Number(s.closed_year), c = Number(s.closed_year) || Number(s.opened_year); return !!o && o <= e.to && c >= e.from; }
+    function eraOf(s) { const y = Number(s.opened_year) || Number(s.closed_year); return y ? ERAS.find(e => y >= e.from && y <= e.to) : null; }
+    function renderEraFilters(list) {
+      const btn = (id, name, sub, n) => `<button role="tab" aria-selected="${currentEra === id}" onclick="filterEra('${id}')"><b>${name}</b>${sub} · ${n} 間</button>`;
+      document.getElementById('era-filters').innerHTML = btn('ALL', '全部年代', '時光隧道', list.length) + ERAS.map(e => btn(e.id, e.name, e.range, list.filter(s => inEra(s, e)).length)).join('');
+    }
+    function filterEra(id) { currentEra = id; applyBookshopFilters(); }
+    function toggleGhostMap() {
+      ghostMap = !ghostMap;
+      document.getElementById('ghost-toggle').setAttribute('aria-pressed', String(ghostMap));
+      document.getElementById('ghost-toggle').textContent = ghostMap ? '📋 返回時光卡片導言' : '🗺️ 昔日地圖足跡';
+      applyBookshopFilters();
+      if (ghostMap && map) setTimeout(() => { map.invalidateSize(); map.setView([22.31, 114.17], 12); }, 120);
+    }
     let currentPlaceType = 'ALL';
     const PLACE_TAG = { reading_corner: '☕ 閱讀角', book_crossing: '📦 漂書點' };
     function filterPlaceType(t) {
@@ -1709,7 +1750,13 @@
       document.getElementById('tab-map').classList.toggle('memory-mode-active', memory);
       document.getElementById('memory-mode-bar').classList.toggle('hidden', !memory);
       document.querySelector('.list-caption span').textContent = memory ? '書店記憶' : '書店名冊';
-      if (memory) filtered = [...filtered].sort((a, b) => (Number(b.closed_year) || 0) - (Number(a.closed_year) || 0));
+      if (memory) {
+        renderEraFilters(filtered);
+        if (currentEra !== 'ALL') { const e = ERAS.find(x => x.id === currentEra); filtered = filtered.filter(b => inEra(b, e)); }
+        filtered = [...filtered].sort((a, b) => (Number(a.opened_year || a.closed_year) || 9999) - (Number(b.opened_year || b.closed_year) || 9999));
+      }
+      ws.dataset.ghost = memory && ghostMap ? 'on' : 'off';
+      document.getElementById('bookstoreMap').classList.toggle('ghost', memory && ghostMap);
 
       if (currentBookshopRegion === '外國香港書店/圖書館' && currentBookshopCountry !== 'ALL_OVERSEAS') {
         filtered = filtered.filter(b => b.country === currentBookshopCountry);
@@ -1725,7 +1772,7 @@
       }
 
       renderBookshops(filtered);
-      if (!memory) { updateMapMarkers(filtered); setTimeout(() => map?.invalidateSize(), 50); }
+      if (!memory || ghostMap) { updateMapMarkers(filtered); setTimeout(() => map?.invalidateSize(), 50); }
     }
 
     // --- 作者 & 出版社 ---
