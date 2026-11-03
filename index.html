@@ -414,15 +414,21 @@
           <div class="flex items-center space-x-2">
             <select id="category-select" style="max-width:9.5rem" onchange="filterProductCategory(this.value)" class="border border-line rounded-lg px-3 py-1.5 text-xs bg-surface focus:outline-none focus:ring-2 focus:ring-bookshop shadow-sm cursor-pointer font-medium text-ink">
               <option value="ALL">📖 全部主題</option>
-              <option value="文學小說（文學／散文／愛情）">📖 文學小說</option><option value="類型小說（推理／懸疑／科幻／奇幻／歷史）">🔍 類型小說</option>
+              <option value="文學小說">📖 文學小說</option>
+              <option value="類型小說（推理／懸疑／科幻／奇幻／歷史）">🔍 類型小說</option>
+              <option value="詩集／散文隨筆">📜 詩集／散文隨筆</option>
               <option value="Zine／雜誌">📰 Zine／雜誌</option>
               <option value="童書繪本">🎨 童書繪本</option>
               <option value="漫畫">💬 漫畫</option>
-              <option value="詩集">📜 詩集</option>
-              <option value="心理勵志">🧠 心理勵志</option>
+              <option value="哲學與心理思辨">💭 哲學與心理思辨</option>
+              <option value="歷史與地理">🗺️ 歷史與地理</option>
+              <option value="社會與文化觀察">🔭 社會與文化觀察</option>
               <option value="人文社科">🏛️ 人文社科</option>
+              <option value="香港研究／本土文史">🏙️ 香港研究／本土文史</option>
+              <option value="自然生態／環境">🌿 自然生態／環境</option>
               <option value="藝術設計">🎨 藝術設計</option>
-              <option value="生活風格">🌱 生活風格</option>
+              <option value="生活風格與飲食">🌱 生活風格與飲食</option>
+              <option value="心理勵志">🧠 心理勵志</option>
               <option value="其他">其他</option>
             </select>
           </div>
@@ -1071,7 +1077,9 @@
     function cleanCategory(str) {
       if (!str) return '其他';
       let clean = str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-      if (clean === '文學小說' || clean.startsWith('小說（文學/散文/愛情/推理')) return '文學小說（文學／散文／愛情）';
+      if (clean === '文學小說（文學／散文／愛情）' || clean.startsWith('小說（文學/散文/愛情/推理')) return '文學小說';
+      if (clean === '詩集') return '詩集／散文隨筆';
+      if (clean === '生活風格') return '生活風格與飲食';
       return clean;
     }
 

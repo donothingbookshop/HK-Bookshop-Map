@@ -1296,16 +1296,16 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border h-fit">
           <h2 id="card-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增解憂籤</h2>
           <form id="card-form" onsubmit="saveCard(event)" class="space-y-3 text-xs">
-            <input type="hidden" id="c-id">
-            <div><label class="block font-bold text-slate-700 mb-1">類型</label><select id="c-type" class="w-full border rounded px-3 py-2 bg-white"><option value="excerpt">📕 書籍節錄</option><option value="author">✍️ 作者駐足寄語</option><option value="walker">📮 漫步者手記</option></select></div>
-            <div><label class="block font-bold text-slate-700 mb-1">心境</label><select id="c-mood" class="w-full border rounded px-3 py-2 bg-white"><option value="calm">☁️ 尋求平靜</option><option value="comfort">🌧️ 溫柔撫慰</option><option value="lost">🌿 迷惘釋懷</option><option value="walk">🚶 渴望散步</option><option value="night">🌙 深夜獨處</option></select></div>
-            <div><label class="block font-bold text-slate-700 mb-1">籤文內容 *</label><textarea id="c-content" rows="4" required class="w-full border rounded px-3 py-2"></textarea></div>
-            <div><label class="block font-bold text-slate-700 mb-1">署名（例如：本店店主、常客書友）</label><input type="text" id="c-sign" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">書名／出處</label><input type="text" id="c-source" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">關聯作者（網站會顯示「認識作者」掣）</label><select id="c-author" class="w-full border rounded px-3 py-2 bg-white"><option value="">（不關聯）</option></select></div>
-            <div><label class="block font-bold text-slate-700 mb-1">伴讀小語</label><input type="text" id="c-note" class="w-full border rounded px-3 py-2"></div>
-            <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="c-sort" class="w-full border rounded px-3 py-2"></div>
-            <label class="flex items-center gap-2"><input type="checkbox" id="c-active" checked> 喺網站顯示</label>
+            <input type="hidden" id="rc-id">
+            <div><label class="block font-bold text-slate-700 mb-1">類型</label><select id="rc-type" class="w-full border rounded px-3 py-2 bg-white"><option value="excerpt">📕 書籍節錄</option><option value="author">✍️ 作者駐足寄語</option><option value="walker">📮 漫步者手記</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">心境</label><select id="rc-mood" class="w-full border rounded px-3 py-2 bg-white"><option value="calm">☁️ 尋求平靜</option><option value="comfort">🌧️ 溫柔撫慰</option><option value="lost">🌿 迷惘釋懷</option><option value="walk">🚶 渴望散步</option><option value="night">🌙 深夜獨處</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">籤文內容 *</label><textarea id="rc-content" rows="4" required class="w-full border rounded px-3 py-2"></textarea></div>
+            <div><label class="block font-bold text-slate-700 mb-1">署名（例如：本店店主、常客書友）</label><input type="text" id="rc-sign" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">書名／出處</label><input type="text" id="rc-source" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">關聯作者（網站會顯示「認識作者」掣）</label><select id="rc-author" class="w-full border rounded px-3 py-2 bg-white"><option value="">（不關聯）</option></select></div>
+            <div><label class="block font-bold text-slate-700 mb-1">伴讀小語</label><input type="text" id="rc-note" class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="rc-sort" class="w-full border rounded px-3 py-2"></div>
+            <label class="flex items-center gap-2"><input type="checkbox" id="rc-active" checked> 喺網站顯示</label>
             <div class="flex gap-2 pt-2">
               <button type="submit" class="flex-grow bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded transition">儲存</button>
               <button type="button" onclick="resetCardForm()" class="bg-slate-200 px-3 py-2 rounded">取消</button>
@@ -3926,7 +3926,8 @@ longitude: longitude,
       document.getElementById('product-form-title').innerText = "✏️ 正在編輯：" + (p.name || '');
       document.getElementById('product-form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    const BOOK_CATS = [['文學小說（文學／散文／愛情）','📖 文學小說（文學／散文／愛情）'],['類型小說（推理／懸疑／科幻／奇幻／歷史）','🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）'],['Zine／雜誌','📰 Zine／雜誌'],['童書繪本','🎨 童書繪本'],['漫畫','💬 漫畫'],['詩集','📜 詩集'],['心理勵志','🧠 心理勵志'],['人文社科','🏛️ 人文社科'],['藝術設計','🎨 藝術設計'],['生活風格','🌱 生活風格'],['其他','其他']];
+    const BOOK_CATS = [['文學小說','📖 文學小說'],['類型小說（推理／懸疑／科幻／奇幻／歷史）','🔍 類型小說（推理／懸疑／科幻／奇幻／歷史）'],['詩集／散文隨筆','📜 詩集／散文隨筆'],['Zine／雜誌','📰 Zine／雜誌'],['童書繪本','🎨 童書繪本'],['漫畫','💬 漫畫'],['哲學與心理思辨','💭 哲學與心理思辨'],['歷史與地理','🗺️ 歷史與地理'],['社會與文化觀察','🔭 社會與文化觀察'],['人文社科','🏛️ 人文社科'],['香港研究／本土文史','🏙️ 香港研究／本土文史'],['自然生態／環境','🌿 自然生態／環境'],['藝術設計','🎨 藝術設計'],['生活風格與飲食','🌱 生活風格與飲食'],['心理勵志','🧠 心理勵志'],['其他','其他']];
+    const OLD_BOOK_CATS = {'文學小說（文學／散文／愛情）':'文學小說','詩集':'詩集／散文隨筆','生活風格':'生活風格與飲食'};
     const MERCH_CATS = [['明信片／卡片','💌 明信片／卡片'],['貼紙／紙膠帶','🎨 貼紙／紙膠帶'],['布袋／Tote Bag','👜 布袋／Tote Bag'],['文具／筆記簿','✏️ 文具／筆記簿'],['飾品／徽章','💍 飾品／徽章'],['手作生活','🌿 手作生活'],['其他文創','🎁 其他文創']];
     function currentPType() { return document.getElementById('p-type').value; }
     function setProductType(t, keepCat) {
@@ -3935,7 +3936,8 @@ longitude: longitude,
         const on = b.dataset.t === t;
         b.className = 'flex-1 py-2 font-bold rounded ' + (on ? 'bg-amber-900 text-white' : 'bg-white text-slate-700 border');
       });
-      const sel = document.getElementById('p-category'); const prev = keepCat != null ? keepCat : sel.value;
+      const sel = document.getElementById('p-category'); let prev = keepCat != null ? keepCat : sel.value;
+      if (OLD_BOOK_CATS[prev]) prev = OLD_BOOK_CATS[prev];
       const list = t === '文創周邊' ? MERCH_CATS : BOOK_CATS;
       sel.innerHTML = list.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
       if (prev && !list.some(([v]) => v === prev)) sel.insertAdjacentHTML('beforeend', `<option value="${prev.replace(/"/g,'&quot;')}">${prev}</option>`);
@@ -4176,7 +4178,7 @@ longitude: longitude,
         _supabase.from('authors').select('id,name').order('name')
       ]);
       adminCards = data || [];
-      const sel = document.getElementById('c-author'); const cur = sel.value;
+      const sel = document.getElementById('rc-author'); const cur = sel.value;
       sel.innerHTML = '<option value="">（不關聯）</option>' + (au || []).map(a => `<option value="${a.id}">${zx(a.name)}</option>`).join(''); sel.value = cur;
       renderCards();
     }
@@ -4190,7 +4192,7 @@ longitude: longitude,
       el.innerHTML = list.map(c => `
         <div class="border p-3 rounded-lg flex justify-between items-start gap-3 text-xs ${c.active ? '' : 'opacity-50'}">
           <div><p class="text-slate-800">${zx(c.content)}</p>
-            <p class="mt-1"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${CARD_TYPE[c.card_type] || ''}</span>
+            <p class="mt-1"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">${CARD_TYPE[c.card_type] || '未分類'}</span>
             <span class="ml-1 bg-slate-100 px-2 py-0.5 rounded">${CARD_MOOD[c.mood] || ''}</span>
             <span class="ml-1 text-slate-500">${zx(c.signature || '')}</span>${c.active ? '' : ' <span class="text-red-600">（已暫停）</span>'}</p></div>
           <div class="flex gap-2 shrink-0">
@@ -4202,10 +4204,10 @@ longitude: longitude,
     async function saveCard(e) {
       e.preventDefault();
       const v = id => document.getElementById(id).value.trim() || null;
-      const payload = { card_type: v('c-type') || 'excerpt', mood: v('c-mood') || 'calm', content: v('c-content'), source_title: v('c-source'), signature: v('c-sign'), note: v('c-note'),
-        author_id: v('c-author') ? parseInt(v('c-author')) : null, sort_order: parseInt(document.getElementById('c-sort').value) || 0, active: document.getElementById('c-active').checked };
+      const payload = { card_type: v('rc-type') || 'excerpt', mood: v('rc-mood') || 'calm', content: v('rc-content'), source_title: v('rc-source'), signature: v('rc-sign'), note: v('rc-note'),
+        author_id: v('rc-author') ? parseInt(v('rc-author')) : null, sort_order: parseInt(document.getElementById('rc-sort').value) || 0, active: document.getElementById('rc-active').checked };
       if (!payload.content) { alert('請填寫籤文內容。'); return; }
-      const id = document.getElementById('c-id').value;
+      const id = document.getElementById('rc-id').value;
       const { data, error } = id ? await _supabase.from('reading_cards').update(payload).eq('id', id).select() : await _supabase.from('reading_cards').insert([payload]).select();
       if (error) { alert('儲存失敗：' + error.message); return; }
       if (!data || !data.length) { alert('儲存失敗：你冇權限修改解憂籤。'); return; }
@@ -4219,22 +4221,22 @@ longitude: longitude,
     }
     function editCard(id) {
       const c = adminCards.find(x => x.id === id); if (!c) return;
-      document.getElementById('c-id').value = c.id;
-      const map = {'c-type':'card_type','c-mood':'mood','c-content':'content','c-source':'source_title','c-sign':'signature','c-note':'note','c-author':'author_id','c-sort':'sort_order'};
+      document.getElementById('rc-id').value = c.id;
+      const map = {'rc-type':'card_type','rc-mood':'mood','rc-content':'content','rc-source':'source_title','rc-sign':'signature','rc-note':'note','rc-author':'author_id','rc-sort':'sort_order'};
       for (const [el, k] of Object.entries(map)) document.getElementById(el).value = c[k] ?? '';
-      document.getElementById('c-active').checked = !!c.active;
+      document.getElementById('rc-active').checked = !!c.active;
       document.getElementById('card-form-title').innerText = '編輯解憂籤';
       document.getElementById('card-form').scrollIntoView({ behavior: 'smooth' });
     }
     function resetCardForm() {
-      document.getElementById('card-form').reset(); document.getElementById('c-id').value = '';
+      document.getElementById('card-form').reset(); document.getElementById('rc-id').value = '';
       document.getElementById('card-form-title').innerText = '新增解憂籤';
     }
     async function deleteCard(id) {
       if (!confirm('確定刪除呢條籤文？刪除後無法復原。')) return;
       const { data, error } = await _supabase.from('reading_cards').delete().eq('id', id).select();
       if (error || !data || !data.length) { alert('刪除失敗：' + (error ? error.message : '冇權限')); return; }
-      if (document.getElementById('c-id').value == id) resetCardForm();
+      if (document.getElementById('rc-id').value == id) resetCardForm();
       await fetchCards(); alert('已刪除籤文。');
     }
 
