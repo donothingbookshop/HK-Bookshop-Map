@@ -1191,7 +1191,13 @@
         });
         mapMarkers.push(marker);
       });
-      if (mapMarkers.length) map.fitBounds(L.featureGroup(mapMarkers).getBounds(), {padding: [40, 40], maxZoom: 14, animate: false});
+      if (!mapMarkers.length) return;
+      // 預設聚焦香港；只有選擇海外分類時才框入海外標記（縮小地圖仍可見海外點）
+      const inHK = m => { const p = m.getLatLng(); return p.lat > 22.1 && p.lat < 22.6 && p.lng > 113.8 && p.lng < 114.5; };
+      const overseasView = typeof currentBookshopRegion !== 'undefined' && currentBookshopRegion === '外國香港書店/圖書館';
+      const focus = overseasView ? mapMarkers : mapMarkers.filter(inHK);
+      if (focus.length) map.fitBounds(L.featureGroup(focus).getBounds(), {padding: [40, 40], maxZoom: overseasView ? 12 : 14, animate: false});
+      else map.setView([22.3193, 114.1694], 11, {animate: false});
     }
 
     // --- 主題文化散步路線 ---
