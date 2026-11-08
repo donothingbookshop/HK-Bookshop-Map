@@ -626,6 +626,8 @@
         <button onclick="filterTheatre('香港島')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-theatre-soft transition">香港島</button>
         <button onclick="filterTheatre('九龍')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-theatre-soft transition">九龍</button>
         <button onclick="filterTheatre('新界')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-theatre-soft transition">新界</button>
+        <button onclick="filterTheatre('PLATFORM')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-theatre-soft transition">🏛️ 空間／平台</button>
+        <button onclick="filterTheatre('ACTIVE')" class="bg-surface border px-3 py-1 rounded-full text-xs hover:bg-theatre-soft transition">只看活躍中</button>
       </div>
 
       <div class="dir-scroll-wrap dir-scroll-tall"><div id="theatre-list" class="dir-scroll-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 content-start">
@@ -2475,9 +2477,13 @@
           <div>
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-bold text-base text-ink group-hover:text-theatre transition">${t.name}</h3>
+              <div class="flex flex-wrap gap-1 justify-end shrink-0">
+              ${t.kind === '空間／平台' ? `<span class="bg-theatre-soft text-theatre text-xs px-2.5 py-0.5 rounded-full font-bold">🏛️ 空間／平台</span>` : ''}
               ${(t.region && t.region!=='沒有') ? `<span class="bg-theatre-soft text-theatre text-xs px-2.5 py-0.5 rounded-full font-bold">${t.region}</span>` : ''}
+              ${theatreStatusBadge(t)}
+              </div>
             </div>
-            <p class="text-xs text-muted-ink mb-1"><i class="fa-solid fa-location-dot mr-1 text-theatre"></i>${t.address || '無地址'}</p>
+            ${t.address ? `<p class="text-xs text-muted-ink mb-1"><i class="fa-solid fa-location-dot mr-1 text-theatre"></i>${t.address}</p>` : ''}
             ${t.phone ? `<p class="text-xs text-muted-ink mb-2"><i class="fa-solid fa-phone mr-1 text-theatre"></i>${t.phone}</p>` : ''}
             <p class="text-xs text-muted-ink line-clamp-2 mt-2">${t.description || '點擊查看詳細資料...'}</p>
           </div>
@@ -2489,8 +2495,15 @@
       `).join('');
     }
 
+    function theatreStatusBadge(t) {
+      if (t.status === 'inactive') return `<span class="bg-muted text-muted-ink border border-line text-xs px-2.5 py-0.5 rounded-full font-bold">⏸️ 已停運${t.status_note ? '（' + t.status_note.replace(/年?停運/, '') + '）' : ''}</span>`;
+      if (t.status === 'no_update') return `<span class="bg-muted text-muted-ink border border-line text-xs px-2.5 py-0.5 rounded-full font-bold">⏸️ 暫無更新</span>`;
+      return '';
+    }
     function filterTheatre(reg) {
       if (reg === 'ALL') renderTheatre(allTheatre);
+      else if (reg === 'PLATFORM') renderTheatre(allTheatre.filter(t => t.kind === '空間／平台'));
+      else if (reg === 'ACTIVE') renderTheatre(allTheatre.filter(t => (t.status || 'active') === 'active'));
       else renderTheatre(allTheatre.filter(t => t.region === reg));
     }
 
