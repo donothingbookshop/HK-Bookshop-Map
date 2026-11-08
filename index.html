@@ -159,7 +159,8 @@
       .shop-quick-preview .preview-image { height: 70px; }
     }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
-  </style>
+  .closing-tag.new-tag{background:var(--eco-soft);color:var(--eco);border-color:var(--eco-line)}
+</style>
 <script>
 /* 全站圖片優化：Supabase 圖片自動縮圖，失敗時退回原圖 */
 (function(){
@@ -1176,7 +1177,7 @@
           .filter(([key]) => shopUrl(shop[key])).map(([key,label]) => `<a href="${shopUrl(shop[key])}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');
         const preview = `<div class="shop-quick-preview">
           ${shopUrl(shop.image_url) ? `<img class="preview-image" src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}">` : ''}
-          <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}
+          <span class="shop-region">${escapeShop(shop.region)}</span><h3>${escapeShop(shop.name)}</h3>${shop.status === 'closing_soon' ? '<p class="closing-tag">⏳ 準備結業，歡迎把握時間到訪</p>' : ''}${shop.status === 'newly_opened' ? '<p class="closing-tag new-tag">🌱 新開，歡迎前往支持</p>' : ''}
           ${PLACE_TAG[shop.place_type] ? `<p><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
           ${shopTagChips(shop)}
           <p>${ghost ? '📍 原址：' : ''}${escapeShop(shop.address || '未提供地址')}</p>${ghost ? '<p>🕯️ 已結業</p>' : `<p>${escapeShop(shop.opening_hours || '未提供營業時間')}</p>`}
@@ -1692,7 +1693,7 @@
         <article class="bookshop-card ${String(shop.id) === selectedShopId ? 'selected' : ''}" data-shop-id="${escapeShop(shop.id)}" tabindex="0" role="button" aria-label="${escapeShop(shop.name)}，查看地圖位置">
           <div class="shop-card-image">${shopUrl(shop.image_url) ? `<img src="${shopUrl(shop.image_url)}" alt="${escapeShop(shop.name)}" loading="lazy">` : '<i class="fa-solid fa-book-open"></i>'}</div>
           <div class="shop-card-copy"><span class="shop-region">${escapeShop(shop.region === '外國香港書店/圖書館' ? (shop.country || '海外') : shop.region)}</span>
-            <h3>${escapeShop(shop.name)}${shop.status === 'closing_soon' ? '<span class="closing-tag">⏳ 準備結業</span>' : ''}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
+            <h3>${escapeShop(shop.name)}${shop.status === 'closing_soon' ? '<span class="closing-tag">⏳ 準備結業</span>' : ''}${shop.status === 'newly_opened' ? '<span class="closing-tag new-tag">🌱 新開</span>' : ''}</h3><p class="shop-address">${escapeShop(shop.address || '未提供地址')}</p>
             ${PLACE_TAG[shop.place_type] ? `<p class="shop-hours"><strong>${PLACE_TAG[shop.place_type]}</strong>${shop.reading_note ? ' · ' + escapeShop(shop.reading_note) : ''}</p>` : ''}
             ${shopTagChips(shop)}
             <p class="shop-hours">${escapeShop(shop.opening_hours || '未提供營業時間')}</p>
