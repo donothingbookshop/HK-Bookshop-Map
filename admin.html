@@ -554,7 +554,7 @@
               <select id="mk-it-cat" class="border rounded-lg px-3 py-2 text-sm"><option value="書籍">書籍</option><option value="文創周邊">文創周邊</option><option value="其他">其他</option></select>
               <select id="mk-it-type" class="border rounded-lg px-3 py-2 text-sm"><option value="買斷">買斷</option><option value="寄售">寄售</option></select>
               <input id="mk-it-qty" type="number" min="0" value="1" required placeholder="帶去數量" class="border rounded-lg px-3 py-2 text-sm">
-              <div class="md:col-span-3 flex items-center gap-2"><label class="text-xs text-slate-600">書籍 / 商品圖片</label><input id="mk-it-img" type="file" accept="image/*" class="text-xs"><img id="mk-it-preview" class="h-12 hidden rounded"></div>
+              <div class="md:col-span-3 flex items-center gap-2"><label class="text-xs text-slate-600">書籍 / 商品圖片</label><input id="mk-it-img" type="file" accept="image/*" class="text-xs"><img id="mk-it-preview" alt="圖片預覽" onclick="mkOpenImage(this.src)" class="h-32 max-w-[160px] object-contain bg-slate-50 border hidden rounded cursor-zoom-in"></div>
               <button class="md:col-span-2 bg-amber-900 hover:bg-amber-800 text-white font-bold py-2 rounded-xl text-sm">儲存貨品</button>
               <button type="button" onclick="resetMarketItemForm()" class="border py-2 rounded-xl text-sm">清除</button>
             </form>
@@ -1851,6 +1851,26 @@ async function savePerms(uid) {
 }
 
 // ===== 市集 =====
+function mkOpenImage(src) {
+  if (!src) return;
+  let box = document.getElementById('mk-lightbox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'mk-lightbox';
+    box.className = 'fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4 cursor-zoom-out';
+    box.innerHTML = '<button type="button" aria-label="關閉" class="absolute top-3 right-4 text-white text-3xl">×</button><img alt="全圖" class="max-w-full max-h-full object-contain rounded-lg">';
+    box.onclick = () => box.remove();
+    document.body.appendChild(box);
+  }
+  box.querySelector('img').src = src;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('mk-lightbox')?.remove(); });
+document.addEventListener('change', e => {
+  if (e.target.id !== 'mk-it-img') return;
+  const f = e.target.files[0], pv = document.getElementById('mk-it-preview');
+  if (!f) return;
+  pv.src = URL.createObjectURL(f); pv.classList.remove('hidden');
+});
 let mkEvents = [], mkItems = [], mkSales = [], mkCurrent = null;
 async function fetchMarket() {
   const sel = document.getElementById('mk-event-select'); if (!sel) return;
@@ -1894,7 +1914,7 @@ function renderMarket() {
   document.getElementById('mk-items').innerHTML = mkItems.map(i => {
     const sold = mkSoldOf(i.id), left = i.quantity - sold, out = left <= 0;
     return `<div class="border rounded-xl p-2 flex flex-col ${out ? 'opacity-60' : ''}">
-      ${i.image_url ? `<img src="${escHtml(i.image_url)}" class="h-24 w-full object-cover rounded-lg mb-1">` : ''}
+      ${i.image_url ? `<img src="${escHtml(i.image_url)}" alt="${escHtml(i.name)}" onclick="mkOpenImage(this.src)" class="h-32 w-full object-contain bg-slate-50 rounded-lg mb-1 cursor-zoom-in">` : ''}
       <div class="font-semibold text-slate-800 leading-tight">${escHtml(i.name)}</div>
       <div class="text-xs text-slate-500">${escHtml(i.category || '')} · ${escHtml(i.stock_type || '')}</div>
       <div class="text-amber-900 font-bold">HK$${Number(i.price)}</div>
