@@ -547,7 +547,7 @@
           <div class="rr-card"><div class="text-2xl">📚</div><h3 class="font-bold mt-2" style="color:var(--ink)">店長精選藏書</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">自資刊物、文學小說、香港地方誌等私藏書籍，自由翻閱。</p></div>
           <div class="rr-card"><div class="text-2xl">🛋️</div><h3 class="font-bold mt-2" style="color:var(--ink)">專屬閱讀席位</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">舒適閱讀座椅與專屬燈光，享受專心看書的平靜節奏。</p></div>
         </div>
-        <div class="grid sm:grid-cols-3 gap-4">
+        <div class="grid sm:grid-cols-3 gap-4" id="rrt-plans">
           <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">⏱️ 時鐘計</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$20 <span class="text-sm font-normal">/ 小時</span></p><p class="text-sm mt-2" style="color:var(--muted-ink)">自選開始時間及時數，即揀即預約。</p></div>
           <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎟️ 1-Day Pass 單日漫讀證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$50</p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・當日最多 4 小時</li><li>・室內藏書自由翻閱</li></ul></div>
           <div class="rr-card"><h3 class="font-bold" style="color:var(--ink)">🎫 1-Month Pass 月度漫步證</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$160 <span class="text-sm font-normal">/ 10 小時</span></p><ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)"><li>・首次使用起 60 日內用完</li><li>・每次按實際時數扣減</li><li>・優先預約時段</li><li>・購書專屬折扣</li><li>・店長每月推薦書籍展示分享</li></ul></div>
@@ -2531,11 +2531,13 @@
     function closeTheatreModal() { document.getElementById('theatre-modal').classList.add('hidden'); }
   </script>
 <script>
+const RR_PRICES=[20,50,160];
 let rrMonth=new Date();rrMonth.setDate(1);let rrAvail=[];let rrSel={date:null,hour:null};let rrIsReq=false;let rrLoaded=false;
 const rrPad=n=>String(n).padStart(2,'0');const rrFmt=d=>d.getFullYear()+'-'+rrPad(d.getMonth()+1)+'-'+rrPad(d.getDate());
 async function rrtApply(){try{const {data}=await _supabase.from('payment_settings').select('instructions').eq('id','reading_room').maybeSingle();if(!data||!data.instructions)return;const c=JSON.parse(data.instructions);const esc=t=>String(t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 if(c.badge)document.getElementById('rrt-badge').textContent=c.badge;if(c.intro)document.getElementById('rrt-intro').textContent=c.intro;if(c.note)document.getElementById('rrt-note').textContent=c.note;
-const cards=document.querySelectorAll('#rrt-features .rr-card');(c.features||[]).forEach((f,k)=>{const el=cards[k];if(!el||!(f.t||f.d))return;el.innerHTML=`<div class="text-2xl">${esc(f.i)}</div><h3 class="font-bold mt-2" style="color:var(--ink)">${esc(f.t)}</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">${esc(f.d)}</p>`;});}catch(e){}}
+const cards=document.querySelectorAll('#rrt-features .rr-card');(c.features||[]).forEach((f,k)=>{const el=cards[k];if(!el||!(f.t||f.d))return;el.innerHTML=`<div class="text-2xl">${esc(f.i)}</div><h3 class="font-bold mt-2" style="color:var(--ink)">${esc(f.t)}</h3><p class="text-sm mt-1" style="color:var(--muted-ink)">${esc(f.d)}</p>`;});
+if(Array.isArray(c.plans)){const pc=document.querySelectorAll('#rrt-plans .rr-card');const opt=document.getElementById('rr-plan').options;const lbl=['時鐘計 $','1-Day Pass $','購買 1-Month Pass $'];c.plans.slice(0,3).forEach((p,k)=>{if(typeof p.p==='number'&&p.p>=0){RR_PRICES[k]=p.p;opt[k].textContent=lbl[k]+p.p+(k===0?'/小時':'');}const el=pc[k];if(!el||!p.t)return;const d=p.d||[];el.innerHTML=`<h3 class="font-bold" style="color:var(--ink)">${esc(p.t)}</h3><p class="text-2xl font-bold mt-2" style="color:var(--bookshop)">HK$${esc(RR_PRICES[k])}${p.u?` <span class="text-sm font-normal">${esc(p.u)}</span>`:''}</p>`+(d.length===1?`<p class="text-sm mt-2" style="color:var(--muted-ink)">${esc(d[0])}</p>`:d.length?`<ul class="text-sm mt-2 space-y-1" style="color:var(--muted-ink)">${d.map(x=>`<li>・${esc(x)}</li>`).join('')}</ul>`:'');});rrUpdatePrice();}}catch(e){}}
 function rrInit(){rrtApply();rrbLoad();if(!rrLoaded){rrLoaded=true;const h=document.getElementById('rr-req-hour');for(let i=9;i<=22;i++)h.innerHTML+=`<option value="${i}">${rrPad(i)}:00</option>`;}rrLoad();}
 function rrShiftMonth(n){rrMonth.setMonth(rrMonth.getMonth()+n);rrLoad();}
 async function rrLoad(){const y=rrMonth.getFullYear(),m=rrMonth.getMonth();document.getElementById('rr-month-label').textContent=`${y} 年 ${m+1} 月`;
@@ -2564,7 +2566,7 @@ function rrOpenForm(isReq){rrIsReq=isReq;const f=document.getElementById('rr-for
  rrUpdatePrice();f.scrollIntoView({behavior:'smooth',block:'center'});}
 function rrUpdatePrice(){const plan=document.getElementById('rr-plan').value;const h=+document.getElementById('rr-hours-n').value||1;const p=+document.getElementById('rr-people').value||1;
  document.getElementById('rr-pass-wrap').style.display=plan==='使用已有 Pass'?'block':'none';
- let amt=0;if(plan==='時鐘計')amt=20*h*p;else if(plan==='1-Day Pass')amt=50*p;else if(plan.startsWith('1-Month'))amt=160;
+ let amt=0;if(plan==='時鐘計')amt=RR_PRICES[0]*h*p;else if(plan==='1-Day Pass')amt=RR_PRICES[1]*p;else if(plan.startsWith('1-Month'))amt=RR_PRICES[2];
  document.getElementById('rr-amount').textContent=amt;}
 
 let rrbAll=[];
