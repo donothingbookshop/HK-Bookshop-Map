@@ -1355,7 +1355,7 @@
           <h2 id="trail-form-title" class="text-lg font-bold text-amber-900 mb-4 border-b pb-2">新增散步路線</h2>
           <form id="trail-form" onsubmit="saveTrail(event)" class="space-y-3 text-xs">
             <input type="hidden" id="t-id">
-            <div><label class="block font-bold text-slate-700 mb-1">路線名稱 *</label><input type="text" id="t-name" required class="w-full border rounded px-3 py-2"></div>
+            <div><label class="block font-bold text-slate-700 mb-1">路線名稱 *</label><input type="text" id="trail-name" required class="w-full border rounded px-3 py-2"></div>
             <div><label class="block font-bold text-slate-700 mb-1">簡介</label><textarea id="t-intro" rows="3" class="w-full border rounded px-3 py-2"></textarea></div>
             <div><label class="block font-bold text-slate-700 mb-1">排序（數字細排先）</label><input type="number" id="t-sort" class="w-full border rounded px-3 py-2"></div>
             <label class="flex items-center gap-2"><input type="checkbox" id="t-active" checked> 喺網站顯示</label>
@@ -4333,7 +4333,7 @@ longitude: longitude,
         id: Number(r.querySelector('.t-shop').value) || null, walk: r.querySelector('.t-walk').value.trim(), note: r.querySelector('.t-note').value.trim()
       })).filter(s => s.id);
       if (stops.length < 2) { alert('路線最少要有 2 站。'); return; }
-      const payload = { name: document.getElementById('t-name').value.trim(), intro: document.getElementById('t-intro').value.trim() || null,
+      const payload = { name: document.getElementById('trail-name').value.trim(), intro: document.getElementById('t-intro').value.trim() || null,
         sort_order: parseInt(document.getElementById('t-sort').value) || 0, active: document.getElementById('t-active').checked, stops };
       const id = document.getElementById('t-id').value;
       const { error } = id ? await _supabase.from('cultural_trails').update(payload).eq('id', id) : await _supabase.from('cultural_trails').insert([payload]);
@@ -4343,7 +4343,7 @@ longitude: longitude,
     function editTrail(id) {
       const t = adminTrails.find(x => x.id === id); if (!t) return;
       document.getElementById('t-id').value = t.id;
-      document.getElementById('t-name').value = t.name;
+      document.getElementById('trail-name').value = t.name;
       document.getElementById('t-intro').value = t.intro || '';
       document.getElementById('t-sort').value = t.sort_order ?? 0;
       document.getElementById('t-active').checked = !!t.active;
